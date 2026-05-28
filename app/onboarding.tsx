@@ -78,6 +78,12 @@ export default function OnboardingScreen() {
     </View>
   );
 
+  const getItemLayout = (_: any, index: number) => ({
+    length: width,
+    offset: width * index,
+    index,
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Skip Button */}
@@ -94,6 +100,7 @@ export default function OnboardingScreen() {
         showsHorizontalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
+        getItemLayout={getItemLayout}
         keyExtractor={(item) => item.id}
       />
 
