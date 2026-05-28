@@ -8,5 +8,27 @@ export const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/
 
 export const OPENAI_MODEL = 'gpt-4o-mini';
 
-// Backend URL - Using your specific local IP
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://10.89.146.146:8000';
+const getBaseUrl = () => {
+  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
+    return process.env.EXPO_PUBLIC_API_BASE_URL;
+  }
+  
+  if (typeof window !== 'undefined' && window.location) {
+    const hostname = window.location.hostname;
+    // Check if it's running on a public deployed domain (like Vercel)
+    const isLocal = hostname === 'localhost' || 
+                    hostname === '127.0.0.1' || 
+                    hostname.startsWith('192.168.') || 
+                    hostname.startsWith('10.') || 
+                    hostname.startsWith('172.');
+                    
+    if (!isLocal) {
+      return 'https://nutrisnapai.onrender.com';
+    }
+  }
+  
+  return 'http://10.89.146.146:8000';
+};
+
+// Backend URL
+export const API_BASE_URL = getBaseUrl();
