@@ -53,7 +53,18 @@ export default function LoginScreen() {
         ]);
       }
     } catch (error: any) {
-      Alert.alert("Error", "Could not verify email. Please try again.");
+      console.error("Check email error details:", error);
+      const status = error.response?.status;
+      const detail = error.response?.data?.detail;
+      let errorMsg = "Could not verify email. Please try again.";
+      if (!error.response) {
+        errorMsg = "Network error. Please check if the backend server is running and reachable.";
+      } else if (status === 404) {
+        errorMsg = "Verification route not found on the server (404). Please ensure the backend is fully redeployed.";
+      } else if (status) {
+        errorMsg = `Server error (${status}): ${detail || 'Please try again.'}`;
+      }
+      Alert.alert("Error", errorMsg);
     } finally {
       setIsLoading(false);
     }
