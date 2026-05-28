@@ -1,0 +1,29 @@
+bubble: {
+    padding: 15,
+    borderRadius: 20,
+    marginBottom: 15,
+    maxWidth: '85%',
+  },
+  aiBubble: {
+    backgroundColor: '#F0F0F0',
+    borderTopLeftRadius: 0,
+    alignSelf: 'flex-start',
+  },
+  userBubble: {
+    backgroundColor: '#A855F7', // Matches your AI theme purple
+    borderTopRightRadius: 0,
+    alignSelf: 'flex-end',
+  },
+  bubbleText: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  sendBtn: { 
+    backgroundColor: '#D1A3FF', // Light purple from your image
+    width: 50, 
+    height: 50, 
+    borderRadius: 25, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginLeft: 10 
+  },

@@ -1,0 +1,151 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  Animated, 
+  Image,
+  ActivityIndicator 
+} from 'react-native';
+import { router } from 'expo-router';
+
+export default function WelcomeScreen() {
+  const [loading, setLoading] = useState(true);
+  const logoPop = useRef(new Animated.Value(0)).current;
+  const fadeContent = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Start animations once the component mounts
+    Animated.sequence([
+      Animated.spring(logoPop, {
+        toValue: 1,
+        friction: 4,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeContent, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        
+        {/* Animated 3D Logo Area */}
+        <Animated.View style={[
+          styles.logoWrapper, 
+          { transform: [{ scale: logoPop }] }
+        ]}>
+          <View style={styles.logoCircle}>
+            {/* 3D Apple Image from a Remote URL */}
+            <Image 
+              source={require('../assets/logo.png')} 
+              style={styles.appleImage}
+              onLoadEnd={() => setLoading(false)}
+              resizeMode="contain" 
+            />
+            {loading && (
+              <ActivityIndicator 
+                style={styles.loader} 
+                color="#fff" 
+              />
+            )}
+          </View>
+        </Animated.View>
+
+        {/* Text Area */}
+        <Animated.View style={{ opacity: fadeContent, alignItems: 'center' }}>
+          <Text style={styles.appName}>NutriSnap AI</Text>
+          <Text style={styles.title}>Your AI-Powered Health Partner</Text>
+          <Text style={styles.subtitle}>
+            Snap your meals, analyze nutrients, and stay healthy with personalized AI insights.
+          </Text>
+        </Animated.View>
+
+        {/* Button Area */}
+        <Animated.View style={{ opacity: fadeContent, width: '100%' }}>
+          <TouchableOpacity 
+            style={styles.button} 
+            activeOpacity={0.8}
+            onPress={() => router.push('/onboarding')}
+          >
+            <Text style={styles.buttonText}>Get Started</Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#fff' },
+  content: { 
+    flex: 1, 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingVertical: 80, 
+    paddingHorizontal: 40 
+  },
+  logoWrapper: { marginTop: 40 },
+  logoCircle: { 
+    width: 200, 
+    height: 200, 
+    borderRadius: 100, 
+    backgroundColor: '#00C853', 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+  },
+  appleImage: {
+    width: 130,
+    height: 130,
+  },
+  loader: {
+    position: 'absolute',
+  },
+  appName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#00C853',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  title: { 
+    fontSize: 28, 
+    fontWeight: '800', 
+    textAlign: 'center', 
+    marginBottom: 15, 
+    color: '#011627' 
+  },
+  subtitle: { 
+    fontSize: 16, 
+    textAlign: 'center', 
+    color: '#707070', 
+    lineHeight: 24,
+    paddingHorizontal: 10 
+  },
+  button: { 
+    backgroundColor: '#00C853', 
+    width: '100%', 
+    padding: 20, 
+    borderRadius: 18, 
+    alignItems: 'center',
+    elevation: 5
+  },
+  buttonText: { 
+    color: '#fff', 
+    fontSize: 18, 
+    fontWeight: 'bold' 
+  }
+});

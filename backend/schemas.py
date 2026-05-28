@@ -1,0 +1,202 @@
+from pydantic import BaseModel, EmailStr, field_validator
+from typing import Optional, List, Any
+from datetime import datetime, date, time
+
+# Auth Schemas
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    code: str
+    new_password: str
+
+class EmailVerificationRequest(BaseModel):
+    email: EmailStr
+    code: str
+
+class EmailCheckRequest(BaseModel):
+    email: EmailStr
+
+class RegisterStartRequest(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+
+class RegisterVerifyRequest(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    code: str
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserResponse
+
+# Profile Schemas
+class ProfileBase(BaseModel):
+    age: int
+    gender: str
+    weight: float
+    height: float
+    bmi: float
+    goal: str
+    selected_mode: str
+    suggested_mode: Optional[str] = None
+    calorie_target: int
+    protein_target: int
+
+class ProfileCreate(ProfileBase):
+    pass
+
+class ProfileResponse(ProfileBase):
+    id: int
+    user_id: int
+
+    class Config:
+        from_attributes = True
+
+# Meal Schemas
+class MealBase(BaseModel):
+    food_name: str
+    quantity: float
+    unit: str
+    calories: float
+    protein: float
+    carbs: float
+    fat: float
+
+class MealCreate(MealBase):
+    date: str
+    time: str
+
+class MealResponse(MealBase):
+    id: int
+    user_id: int
+    date: date
+    time: time
+
+    class Config:
+        from_attributes = True
+
+# Health Log Schemas
+class HealthLogBase(BaseModel):
+    date: Optional[Any] = None
+    water_intake_ml: Optional[int] = 0
+    water_goal_ml: Optional[int] = 2000
+    sleep_hours: Optional[float] = 0.0
+    sleep_score: Optional[int] = 0
+    steps: Optional[int] = 0
+    calories_burned: Optional[int] = 0
+    mood: Optional[str] = None
+    health_tip: Optional[str] = None
+
+    @field_validator('date', mode='before')
+    @classmethod
+    def parse_date(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, datetime):
+            return v.date()
+        if isinstance(v, date):
+            return v
+        if isinstance(v, str):
+            try:
+                # Handle ISO strings from JS (e.g., 2026-05-12T...)
+                if 'T' in v:
+                    return datetime.fromisoformat(v.replace('Z', '+00:00')).date()
+                return date.fromisoformat(v)
+            except:
+                return v
+        return v
+
+class HealthLogCreate(HealthLogBase):
+    pass
+
+class HealthLogResponse(HealthLogBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# Gym Log Schemas
+class GymLogBase(BaseModel):
+    date: Optional[Any] = None
+    workout_name: Optional[str] = None
+    workout_status: Optional[str] = "pending"
+    workout_duration_seconds: Optional[int] = 0
+    workout_calories_burned: Optional[int] = 0
+    protein_goal: Optional[int] = 0
+    protein_consumed: Optional[int] = 0
+    calories_goal: Optional[int] = 0
+    calories_consumed: Optional[int] = 0
+
+    @field_validator('date', mode='before')
+    @classmethod
+    def parse_date(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, datetime):
+            return v.date()
+        if isinstance(v, date):
+            return v
+        if isinstance(v, str):
+            try:
+                # Handle ISO strings from JS (e.g., 2026-05-12T...)
+                if 'T' in v:
+                    return datetime.fromisoformat(v.replace('Z', '+00:00')).date()
+                return date.fromisoformat(v)
+            except:
+                return v
+        return v
+
+class GymLogCreate(GymLogBase):
+    pass
+
+class GymLogResponse(GymLogBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# AI Chat History Schemas
+class AIChatHistoryBase(BaseModel):
+    mode: str
+    question: str
+    answer: str
+
+class AIChatHistoryCreate(AIChatHistoryBase):
+    pass
+
+class AIChatHistoryResponse(AIChatHistoryBase):
+    id: int
+    user_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
