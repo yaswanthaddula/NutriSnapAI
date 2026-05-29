@@ -10,13 +10,15 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/check-email")
 def check_email(request: schemas.EmailCheckRequest, db: Session = Depends(database.get_db)):
     import traceback
-    print(f"[AUTH ROUTE LOG] POST /check-email request: email={request.email}")
+    from sqlalchemy import func
+    email_cleaned = request.email.strip()
+    print(f"[AUTH ROUTE LOG] POST /check-email request: email={request.email} (cleaned={email_cleaned})")
     try:
-        user = db.query(models.User).filter(models.User.email == request.email).first()
+        user = db.query(models.User).filter(func.lower(models.User.email) == func.lower(email_cleaned)).first()
         if user:
             res = {"exists": True, "message": "Email found."}
         else:
-            res = {"exists": False, "message": "Email not registered. Please sign up first."}
+            res = {"exists": False, "message": "Sign up first."}
         print(f"[AUTH ROUTE LOG] POST /check-email response: {res}")
         return res
     except Exception as e:
@@ -38,7 +40,7 @@ def check_email(request: schemas.EmailCheckRequest, db: Session = Depends(databa
         except Exception as ie:
             print(f"Failed to inspect database tables/columns: {str(ie)}")
             
-        res = {"exists": False, "message": "Email not registered. Please sign up first."}
+        res = {"exists": False, "message": "Sign up first."}
         print(f"[AUTH ROUTE LOG] POST /check-email response (fallback): {res}")
         return res
 

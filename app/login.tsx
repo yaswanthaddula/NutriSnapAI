@@ -49,7 +49,7 @@ export default function LoginScreen() {
       if (response.data.exists) {
         setStep(2);
       } else {
-        setEmailError("Email not registered. Please sign up first.");
+        setEmailError("Sign up first.");
       }
     } catch (error: any) {
       console.error("Check email error details:", error);
@@ -190,7 +190,7 @@ export default function LoginScreen() {
                   {emailError ? (
                     <View style={styles.errorContainer}>
                       <Text style={styles.errorText}>{emailError}</Text>
-                      {emailError.includes("not registered") && (
+                      {emailError.includes("Sign up first") && (
                         <TouchableOpacity onPress={() => router.push('/signup')} style={styles.errorSignUpLink}>
                           <Text style={styles.errorSignUpLinkText}>Sign Up</Text>
                         </TouchableOpacity>
