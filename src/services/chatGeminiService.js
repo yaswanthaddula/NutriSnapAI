@@ -112,7 +112,7 @@ export const chatWithAi = async (userMessage, history = []) => {
 
     // Fallback if primary fails
     if (!response.ok) {
-      const fallbackModel = 'gemini-2.5-flash';
+      const fallbackModel = 'gemini-1.5-flash';
       const fallbackEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${fallbackModel}:generateContent`;
       console.warn("Primary model failed, trying fallback:", fallbackModel);
       
