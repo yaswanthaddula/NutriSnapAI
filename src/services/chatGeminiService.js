@@ -1,4 +1,4 @@
-import { CHAT_GEMINI_API_KEY, GEMINI_API_URL } from '../config/apiConfig';
+import { CHAT_GEMINI_API_KEY, SCANNER_GEMINI_API_KEY, SCANNER_GEMINI_API_KEY_ALT } from '../config/apiConfig';
 
 const CHAT_PROMPT = `You are the NutriSnap AI Fitness Assistant. 
 Your goal is to provide expert advice on:
@@ -11,7 +11,6 @@ Do NOT return JSON. Answer in plain text only.`;
 
 /**
  * Debug function to list all models available for the current API key.
- * Log this to console to check available model names.
  */
 export const listModels = async () => {
   try {
@@ -28,8 +27,19 @@ export const listModels = async () => {
 };
 
 export const chatWithAi = async (userMessage, history = []) => {
-  console.log("Chat Service Started. Key present:", !!CHAT_GEMINI_API_KEY);
-  if (!CHAT_GEMINI_API_KEY || CHAT_GEMINI_API_KEY.length < 10) {
+  console.log("Chat Service Started.");
+
+  // Rotate through all available keys to handle quota exhaustion dynamically
+  const keysToTry = [
+    CHAT_GEMINI_API_KEY,
+    SCANNER_GEMINI_API_KEY_ALT,
+    SCANNER_GEMINI_API_KEY
+  ].filter(k => k && k.length > 10);
+
+  // Get unique keys
+  const uniqueKeys = [...new Set(keysToTry)];
+
+  if (uniqueKeys.length === 0) {
     throw new Error('Gemini API key not configured correctly in apiConfig.js');
   }
 
@@ -38,13 +48,12 @@ export const chatWithAi = async (userMessage, history = []) => {
     {
       role: 'user',
       parts: [{ text: CHAT_PROMPT }]
+    },
+    {
+      role: 'model',
+      parts: [{ text: "Understood. I am ready to help as your NutriSnap AI Fitness Assistant." }]
     }
   ];
-
-  contents.push({
-    role: 'model',
-    parts: [{ text: "Understood. I am ready to help as your NutriSnap AI Fitness Assistant." }]
-  });
 
   history.forEach(msg => {
     const role = msg.isAi ? 'model' : 'user';
@@ -77,67 +86,43 @@ export const chatWithAi = async (userMessage, history = []) => {
     },
   };
 
-  const callApi = async (url) => {
-    let retries = 1;
-    while (retries >= 0) {
-      const response = await fetch(
-        `${url}?key=${CHAT_GEMINI_API_KEY}`,
-        {
+  const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
+  let lastError = null;
+
+  for (const apiKey of uniqueKeys) {
+    for (const modelName of modelsToTry) {
+      try {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+        console.log(`Chat: Trying ${modelName} with key starting ${apiKey.substring(0, 5)}...`);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const response = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        const data = await response.json();
+
+        if (response.ok) {
+          const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (reply) {
+            return reply;
+          }
+        } else {
+          console.warn(`Chat: ${modelName} failed with status ${response.status}`);
+          lastError = data?.error?.message || `Status ${response.status}`;
         }
-      );
-
-      const data = await response.json();
-      if (response.status === 429 && retries > 0) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        retries--;
-        continue;
+      } catch (err) {
+        console.error(`Chat error: ${err.message}`);
+        lastError = err.message;
       }
-      return { response, data };
     }
-  };
-
-  try {
-    let modelName = 'gemini-2.0-flash';
-    let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
-    
-    console.log("Chat model:", modelName);
-    console.log("Chat endpoint:", endpoint);
-
-    let { response, data } = await callApi(endpoint);
-    console.log("Gemini status:", response.status);
-    console.log("Gemini raw body:", JSON.stringify(data));
-
-    // Fallback if primary fails
-    if (!response.ok) {
-      const fallbackModel = 'gemini-1.5-flash';
-      const fallbackEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${fallbackModel}:generateContent`;
-      console.warn("Primary model failed, trying fallback:", fallbackModel);
-      
-      const fallbackResult = await callApi(fallbackEndpoint);
-      response = fallbackResult.response;
-      data = fallbackResult.data;
-      
-      console.log("Chat model (Fallback):", fallbackModel);
-      console.log("Chat endpoint (Fallback):", fallbackEndpoint);
-      console.log("Gemini status (Fallback):", response.status);
-      console.log("Gemini raw body (Fallback):", JSON.stringify(data));
-    }
-
-    if (!response.ok) {
-      if (response.status === 401) throw new Error("Invalid API key.");
-      if (response.status === 429) throw new Error("Quota exceeded.");
-      if (response.status === 404) throw new Error("Model not found.");
-      if (response.status === 400) throw new Error("Invalid request format.");
-      
-      throw new Error(data?.error?.message || "AI assistant model unavailable. Please try later.");
-    }
-
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "AI assistant model unavailable. Please try later.";
-  } catch (error) {
-    console.error('Final Chat Service Error:', error.message);
-    throw error;
   }
+
+  throw new Error(lastError || "AI assistant model unavailable. Please try later.");
 };

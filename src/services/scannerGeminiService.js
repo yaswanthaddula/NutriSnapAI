@@ -97,7 +97,7 @@ export const analyzeImage = async (imageUri) => {
     }
 
     const keysToTry = [SCANNER_GEMINI_API_KEY, SCANNER_GEMINI_API_KEY_ALT];
-    const modelsToTry = ['gemini-1.5-flash', 'gemini-2.0-flash'];
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
 
     let lastError = null;
 
