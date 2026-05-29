@@ -372,3 +372,11 @@ def reset_password(request: schemas.ResetPasswordRequest, db: Session = Depends(
     res = {"detail": "Password reset successful"}
     print(f"[AUTH ROUTE LOG] POST /reset-password response: {res}")
     return res
+
+@router.get("/diagnostic-users")
+def diagnostic_users(db: Session = Depends(database.get_db)):
+    try:
+        users = db.query(models.User).all()
+        return [{"id": u.id, "email": u.email, "is_verified": u.is_verified} for u in users]
+    except Exception as e:
+        return {"error": str(e)}
