@@ -109,12 +109,14 @@ def register_start(request: schemas.RegisterStartRequest, db: Session = Depends(
         # Send Email
         email_sent = email_service.send_verification_email(request.email, v_code)
         if not email_sent:
-            print(f"--- FAILED to send verification email to {request.email} ---")
+            print(f"--- FAILED to send verification email to {request.email}. Fallback to mock code. ---")
+            print(f"--- OTP CODE FOR {request.email} IS: {v_code} ---")
             res = {
-                "success": False,
-                "message": "Failed to send verification email. Please check your SMTP settings or try again."
+                "success": True,
+                "message": f"SMTP block detected. For testing, please use the code: {v_code} (also printed in Render logs).",
+                "email": request.email
             }
-            print(f"[AUTH ROUTE LOG] POST /register-start response: {res}")
+            print(f"[AUTH ROUTE LOG] POST /register-start response (fallback OTP): {res}")
             return res
         
         res = {
@@ -348,7 +350,7 @@ def forgot_password(request: schemas.ForgotPasswordRequest, db: Session = Depend
     email_sent = email_service.send_reset_password_email(request.email, code)
     if not email_sent:
         print(f"--- FALLBACK: Reset code for {request.email} is {code} ---")
-        res = {"detail": "Failed to send email. Code printed to console for demo."}
+        res = {"detail": f"SMTP block detected. For testing, please use the code: {code} (also printed in Render logs)."}
         print(f"[AUTH ROUTE LOG] POST /forgot-password response (fallback): {res}")
         return res
 

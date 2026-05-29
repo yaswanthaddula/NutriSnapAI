@@ -1,60 +1,63 @@
-import smtplib
 import os
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import json
+import urllib.request
+import urllib.error
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# SMTP Configuration
-EMAIL_HOST = os.getenv("SMTP_HOST") or os.getenv("EMAIL_HOST") or "smtp.gmail.com"
-EMAIL_PORT = int(os.getenv("SMTP_PORT") or os.getenv("EMAIL_PORT") or 587)
-EMAIL_USER = os.getenv("SMTP_USERNAME") or os.getenv("EMAIL_USER")
-EMAIL_PASSWORD = os.getenv("SMTP_PASSWORD") or os.getenv("EMAIL_PASSWORD")
-
-SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL")
-SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "NutriSnap AI")
-
-if SMTP_FROM_EMAIL:
-    EMAIL_FROM = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
-else:
-    EMAIL_FROM = os.getenv("EMAIL_FROM") or f"NutriSnap AI <{EMAIL_USER}>"
+# Resend API Configuration (HTTP-based, works on Render free tier)
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+# From address - must be either:
+# 1. onboarding@resend.dev (for testing, sends only to your registered Resend email)
+# 2. A verified domain address (for production, sends to anyone)
+RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "NutriSnap AI <onboarding@resend.dev>")
 
 def send_email(subject, recipient_email, html_content):
-    print(f"--- DEBUG: Attempting to send email via {EMAIL_HOST}:{EMAIL_PORT} ---")
-    print(f"--- DEBUG: Using User: {EMAIL_USER} ---")
-    if not EMAIL_USER or not EMAIL_PASSWORD:
-        print("--- EMAIL ERROR: Credentials not configured in .env ---")
+    """Send email via Resend HTTP API - works on Render free tier (no SMTP blocking)."""
+    print(f"--- DEBUG: Attempting to send email via Resend API ---")
+    print(f"--- DEBUG: To: {recipient_email}, Subject: {subject} ---")
+
+    if not RESEND_API_KEY:
+        print("--- EMAIL ERROR: RESEND_API_KEY not configured in environment variables ---")
         return False
 
     try:
-        # Create message
-        msg = MIMEMultipart()
-        msg['From'] = EMAIL_FROM
-        msg['To'] = recipient_email
-        msg['Subject'] = subject
+        payload = json.dumps({
+            "from": RESEND_FROM_EMAIL,
+            "to": [recipient_email],
+            "subject": subject,
+            "html": html_content,
+        }).encode("utf-8")
 
-        msg.attach(MIMEText(html_content, 'html'))
+        req = urllib.request.Request(
+            "https://api.resend.com/emails",
+            data=payload,
+            headers={
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
 
-        # Connect and send
-        if EMAIL_PORT == 465:
-            server = smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT, timeout=20)
-            server.ehlo()
-        else:
-            server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT, timeout=20)
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            
-        server.login(EMAIL_USER, EMAIL_PASSWORD)
-        server.send_message(msg)
-        server.quit()
-        
-        print(f"--- EMAIL SENT TO {recipient_email}: {subject} ---")
-        return True
+        with urllib.request.urlopen(req, timeout=15) as response:
+            resp_body = response.read().decode("utf-8")
+            print(f"--- EMAIL SENT TO {recipient_email}: {subject} ---")
+            print(f"--- Resend Response: {resp_body} ---")
+            return True
+
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode("utf-8") if e.fp else str(e)
+        print(f"--- EMAIL FAILED (HTTP {e.code}): {error_body} ---")
+        # If the error is about domain restrictions (free plan), log it clearly
+        if "not verified" in error_body.lower() or "domain" in error_body.lower():
+            print("--- RESEND DOMAIN NOTE: You need a verified domain to send to external emails.")
+            print("--- Until then, only emails to your Resend account email will be delivered. ---")
+        return False
     except Exception as e:
         print(f"--- EMAIL FAILED: {str(e)} ---")
         return False
+
 
 def send_verification_email(email, code):
     subject = "Verify your NutriSnap AI Account"
@@ -76,6 +79,7 @@ def send_verification_email(email, code):
     </html>
     """
     return send_email(subject, email, html)
+
 
 def send_reset_password_email(email, code):
     subject = "Reset your NutriSnap AI Password"

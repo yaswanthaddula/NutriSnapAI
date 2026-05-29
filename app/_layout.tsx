@@ -1,13 +1,28 @@
 import React, { useState, createContext, useContext } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, LogBox } from 'react-native';
+import { Platform, LogBox, Alert } from 'react-native';
 
 // Ignore the SDK 53+ Expo Go notification warning/error globally
 LogBox.ignoreLogs([
   'expo-notifications functionality is not fully supported in Expo Go',
   'Android Push notifications (remote notifications) functionality provided by expo-notifications was removed from Expo Go'
 ]);
+
+// Polyfill Alert.alert for Web platform to execute callbacks and show browser alerts
+if (Platform.OS === 'web') {
+  Alert.alert = (title, message, buttons) => {
+    const text = message ? `${title}\n\n${message}` : title;
+    alert(text);
+    if (buttons && buttons.length > 0) {
+      // Execute the first non-cancel button's callback
+      const defaultButton = buttons.find(b => b.style !== 'cancel') || buttons[0];
+      if (defaultButton && defaultButton.onPress) {
+        defaultButton.onPress();
+      }
+    }
+  };
+}
 
 // 1. Create a Theme Context to hold the Dark Mode state
 export const ThemeContext = createContext({
