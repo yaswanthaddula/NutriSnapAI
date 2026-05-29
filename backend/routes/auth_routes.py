@@ -9,11 +9,35 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post("/check-email")
 def check_email(request: schemas.EmailCheckRequest, db: Session = Depends(database.get_db)):
-    user = db.query(models.User).filter(models.User.email == request.email).first()
-    if user:
-        return {"exists": True, "message": "Email found. Please log in."}
-    else:
-        return {"exists": False, "message": "Sign up first."}
+    import traceback
+    try:
+        user = db.query(models.User).filter(models.User.email == request.email).first()
+        if user:
+            return {"exists": True, "message": "Email found."}
+        else:
+            return {"exists": False, "message": "Email not registered. Please sign up first."}
+    except Exception as e:
+        print(f"--- ERROR IN /auth/check-email ---")
+        print(f"Request email: {request.email}")
+        print(f"Exception: {str(e)}")
+        traceback.print_exc()
+        
+        # Log table and column information to help debug database issues on Render
+        try:
+            from sqlalchemy import inspect
+            inspector = inspect(db.bind)
+            if inspector is not None:
+                tables = inspector.get_table_names()
+                print(f"Database tables: {tables}")
+                for table in tables:
+                    columns = [col['name'] for col in inspector.get_columns(table)]
+                    print(f"Table '{table}' columns: {columns}")
+            else:
+                print("SQLAlchemy inspector is None")
+        except Exception as ie:
+            print(f"Failed to inspect database tables/columns: {str(ie)}")
+            
+        return {"exists": False, "message": "Email not registered. Please sign up first."}
 
 @router.post("/register-start")
 def register_start(request: schemas.RegisterStartRequest, db: Session = Depends(database.get_db)):
