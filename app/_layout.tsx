@@ -34,6 +34,7 @@ import { notificationService } from '../src/services/notificationService';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 
 export default function RootLayout() {
+  console.log("API URL:", process.env.EXPO_PUBLIC_API_BASE_URL);
   const [isDark, setIsDark] = useState(false);
 
   React.useEffect(() => {

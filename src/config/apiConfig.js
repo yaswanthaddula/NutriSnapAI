@@ -23,3 +23,4 @@ const getBaseUrl = () => {
 
 // Backend API base URL
 export const API_BASE_URL = getBaseUrl();
+console.log("apiConfig: Resolved API_BASE_URL =", API_BASE_URL);

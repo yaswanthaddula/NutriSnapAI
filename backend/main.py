@@ -81,6 +81,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    client_host = request.client.host if request.client else "unknown"
+    print(f"\n[REQUEST RECEIVED] {request.method} {request.url.path} from client {client_host}")
+    start_time = time.time()
+    response = await call_next(request)
+    duration = time.time() - start_time
+    print(f"[RESPONSE SENT] {request.method} {request.url.path} -> Status {response.status_code} (took {duration:.4f}s)")
+    return response
+
 @app.on_event("startup")
 def list_users_on_startup():
     try:

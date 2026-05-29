@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../_layout'; 
 import useAppStore from '../../src/store/useAppStore';
 import apiService from '../../src/services/apiService';
@@ -28,6 +29,13 @@ export default function ProfileScreen() {
   const handleLogout = async () => {
     const doLogout = async () => {
       await apiService.logout();
+      await useAppStore.getState().resetStore();
+      try {
+        await AsyncStorage.removeItem('gym_chat_session');
+        await AsyncStorage.removeItem('health_chat_session');
+      } catch (e) {
+        console.warn("Failed to clear chat sessions", e);
+      }
       router.replace('/login');
     };
 

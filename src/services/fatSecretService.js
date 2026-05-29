@@ -1,9 +1,7 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../config/apiConfig';
 
-// Base URL for your FastAPI backend
-// If testing on Android emulator, use 10.0.2.2 instead of localhost
-// Current backend IP detected from logs
-const BACKEND_URL = 'http://172.25.29.186:8000'; 
+const BACKEND_URL = API_BASE_URL;
 
 /**
  * Search for foods using the FatSecret API via our backend.

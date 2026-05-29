@@ -502,6 +502,70 @@ const useAppStore = create((set, get) => ({
     get().recalculateWaterGoal();
   },
 
+  resetStore: async () => {
+    const defaultProfile = {
+      name: 'User',
+      email: '',
+      age: 25,
+      height: 170,
+      weight: 60,
+      gender: 'Male',
+      activityLevel: 'Light Active',
+      goal: 'Maintain Weight',
+      calorieTarget: 2000,
+      proteinTarget: 100,
+      carbsTarget: 250,
+      fatsTarget: 70,
+      bmi: 20.8,
+      bmiStatus: 'Normal Weight',
+      selected_mode: null,
+      suggested_mode: null,
+    };
+    
+    set({
+      userProfile: defaultProfile,
+      meals: [],
+      weightHistory: [],
+      steps: 0,
+      caloriesBurned: 0,
+      lastStepDate: new Date().toISOString().split('T')[0],
+      themeMode: 'light',
+      workouts: [],
+      activeWorkout: null,
+      notificationPrefs: {
+        meals: true,
+        workout: true,
+        water: true,
+        goals: true,
+        reports: true,
+        quotes: true,
+      },
+      waterData: {
+        date: new Date().toISOString().split('T')[0],
+        waterIntake: 0,
+        waterGoal: 2500,
+      },
+      streak: 0,
+      lastStreakDate: null,
+      todayMood: null,
+      todaySleep: 0,
+      lastActiveDate: null,
+      activityHistory: [],
+      waterHistory: [],
+      notifications: [],
+    });
+
+    const keys = [
+      'userProfile', 'meals', 'themeMode', 'steps', 'caloriesBurned', 'lastStepDate', 
+      'workouts', 'activeWorkout', 'weightHistory', 'notifications', 'notificationPrefs',
+      'waterData', 'streak', 'lastStreakDate', 'todayMood', 'todaySleep', 'lastActiveDate',
+      'activityHistory', 'waterHistory'
+    ];
+    for (const key of keys) {
+      await storage.removeData(key);
+    }
+  },
+
   saveStoredData: async () => {
     const { 
       userProfile, meals, themeMode, steps, caloriesBurned, lastStepDate, 
