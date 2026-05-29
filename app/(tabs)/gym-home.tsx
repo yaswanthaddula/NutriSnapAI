@@ -85,8 +85,9 @@ export default function GymHomeScreen() {
     try {
       const backendMeals = await apiService.getTodayMeals();
       if (backendMeals) {
-        // Map backend format to frontend format
-        const formattedMeals = backendMeals.map((bm: any) => ({
+        // Filter and Map backend format to frontend format
+        const gymBackendMeals = backendMeals.filter((bm: any) => bm.mode === 'gym');
+        const formattedMeals = gymBackendMeals.map((bm: any) => ({
           id: bm.id,
           name: bm.food_name,
           calories: bm.calories,
@@ -101,10 +102,9 @@ export default function GymHomeScreen() {
           date: bm.date
         }));
         
-        // Merge with local meals to avoid losing non-synced data
-        // For strict user isolation on login, we use the backend data as truth for today
-        const otherDayMeals = meals.filter((m: any) => m.date !== todayStr);
-        setMeals([...formattedMeals, ...otherDayMeals]);
+        // Merge with local meals, replacing only today's gym meals
+        const otherMeals = meals.filter((m: any) => !(m.date === todayStr && m.mode === 'gym'));
+        setMeals([...formattedMeals, ...otherMeals]);
         await saveStoredData();
       }
     } catch (error) {

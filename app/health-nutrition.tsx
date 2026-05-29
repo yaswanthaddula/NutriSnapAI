@@ -95,7 +95,8 @@ export default function HealthNutritionScreen() {
           carbs: Number(mealObject.carbs) || 0,
           fat: Number(mealObject.fat) || 0,
           date: dateStr,
-          time: timeStr
+          time: timeStr,
+          mode: "health"
         };
 
         console.log("Meal payload:", backendPayload);

@@ -58,6 +58,7 @@ class Meal(Base):
     fat: Mapped[float] = mapped_column(Float)
     date: Mapped[dt_date] = mapped_column(Date, default=lambda: datetime.now(timezone.utc).date())
     time: Mapped[dt_time] = mapped_column(Time, default=lambda: datetime.now(timezone.utc).time())
+    mode: Mapped[str] = mapped_column(String, default="health")
 
     user: Mapped["User"] = relationship("User", back_populates="meals")
 

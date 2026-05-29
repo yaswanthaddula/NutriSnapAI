@@ -114,9 +114,11 @@ export default function HealthHomeScreen() {
       const backendMeals = await apiService.getTodayMeals();
       console.log("Fetched today meals:", backendMeals);
 
-      if (backendMeals) {
-        // Map backend format to frontend format
-        const formattedMeals = backendMeals.map((bm: any) => ({
+       if (backendMeals) {
+        // Filter and Map backend format to frontend format
+        // Handle cases where mode might be null/missing by default as 'health'
+        const healthBackendMeals = backendMeals.filter((bm: any) => !bm.mode || bm.mode === 'health');
+        const formattedMeals = healthBackendMeals.map((bm: any) => ({
           id: bm.id,
           name: bm.food_name,
           calories: bm.calories,
@@ -131,9 +133,9 @@ export default function HealthHomeScreen() {
           date: bm.date
         }));
         
-        // Strict isolation: Backend is source of truth for today
-        const otherDayMeals = meals.filter((m: any) => m.date && m.date !== todayStr);
-        useAppStore.getState().setMeals([...formattedMeals, ...otherDayMeals]);
+        // Merge with local meals, replacing only today's health meals
+        const otherMeals = meals.filter((m: any) => !(m.date === todayStr && m.mode === 'health'));
+        useAppStore.getState().setMeals([...formattedMeals, ...otherMeals]);
         await saveStoredData();
       }
     } catch (error) {

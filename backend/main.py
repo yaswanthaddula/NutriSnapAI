@@ -55,6 +55,12 @@ try:
                 print("Adding missing column: last_active_platform to users table")
                 conn.execute(text("ALTER TABLE users ADD COLUMN last_active_platform VARCHAR;"))
             
+            # 6. Ensure mode exists in meals table
+            meal_columns = [c['name'] for c in inspector.get_columns('meals')]
+            if 'mode' not in meal_columns:
+                print("Adding missing column: mode to meals table")
+                conn.execute(text("ALTER TABLE meals ADD COLUMN mode VARCHAR DEFAULT 'health';"))
+            
             conn.commit()
 except Exception as e:
     print(f"Auto-migration notice: {e}")

@@ -85,6 +85,7 @@ class MealBase(BaseModel):
     protein: float
     carbs: float
     fat: float
+    mode: Optional[str] = "health"
 
     @field_validator('quantity', 'calories', 'protein', 'carbs', 'fat', mode='before')
     @classmethod

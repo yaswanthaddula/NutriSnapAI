@@ -84,7 +84,8 @@ export default function FinalNutritionScreen() {
       carbs: parseFloat(finalCarbs),
       fat: parseFloat(finalFat),
       date: dateStr,
-      time: timeStr
+      time: timeStr,
+      mode: fromMode === 'health' ? 'health' : 'gym'
     };
 
     const mealObject = {
