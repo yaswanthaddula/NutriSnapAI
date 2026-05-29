@@ -6,7 +6,7 @@ const BASE_URL = API_BASE_URL;
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 15000,
+  timeout: 45000,
 });
 
 // Auth Token Storage Keys
