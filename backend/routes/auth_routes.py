@@ -109,14 +109,18 @@ def register_start(request: schemas.RegisterStartRequest, db: Session = Depends(
         # Send Email
         email_sent = email_service.send_verification_email(request.email, v_code)
         if not email_sent:
-            print(f"--- FAILED to send verification email to {request.email}. Fallback to mock code. ---")
-            print(f"--- OTP CODE FOR {request.email} IS: {v_code} ---")
+            print(f"--- FAILED to send verification email to {request.email} ---")
+            # Clean up pending record so user can retry
+            try:
+                db.delete(pending)
+                db.commit()
+            except Exception:
+                pass
             res = {
-                "success": True,
-                "message": f"SMTP block detected. For testing, please use the code: {v_code} (also printed in Render logs).",
-                "email": request.email
+                "success": False,
+                "message": "Unable to send verification email. Please check your email address and try again."
             }
-            print(f"[AUTH ROUTE LOG] POST /register-start response (fallback OTP): {res}")
+            print(f"[AUTH ROUTE LOG] POST /register-start response (email failed): {res}")
             return res
         
         res = {
@@ -201,7 +205,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
                 # Send Real Email
                 email_sent = email_service.send_verification_email(user.email, v_code)
                 if not email_sent:
-                    print(f"--- FALLBACK: Verification code for {user.email} is {v_code} ---")
+                    print(f"--- FAILED to send verification email to {user.email} ---")
                 
                 print(f"[AUTH ROUTE LOG] POST /register response: user_id={existing_user.id}, email={existing_user.email}")
                 return existing_user
@@ -234,7 +238,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
         # Send Real Email
         email_sent = email_service.send_verification_email(user.email, v_code)
         if not email_sent:
-            print(f"--- FALLBACK: Verification code for {user.email} is {v_code} ---")
+            print(f"--- FAILED to send verification email to {user.email} ---")
         
         print(f"[AUTH ROUTE LOG] POST /register response: user_id={new_user.id}, email={new_user.email}")
         return new_user
@@ -349,12 +353,16 @@ def forgot_password(request: schemas.ForgotPasswordRequest, db: Session = Depend
     # Send Real Email
     email_sent = email_service.send_reset_password_email(request.email, code)
     if not email_sent:
-        print(f"--- FALLBACK: Reset code for {request.email} is {code} ---")
-        res = {"detail": f"SMTP block detected. For testing, please use the code: {code} (also printed in Render logs)."}
-        print(f"[AUTH ROUTE LOG] POST /forgot-password response (fallback): {res}")
+        print(f"--- FAILED to send reset email to {request.email} ---")
+        # Reset the code so it can't be used
+        user.verification_code = None
+        user.verification_code_expires = None
+        db.commit()
+        res = {"detail": "Unable to send reset email. Please try again later."}
+        print(f"[AUTH ROUTE LOG] POST /forgot-password response (email failed): {res}")
         return res
 
-    res = {"detail": "Reset code sent to your email."}
+    res = {"detail": "Verification code sent to your email."}
     print(f"[AUTH ROUTE LOG] POST /forgot-password response: {res}")
     return res
 
