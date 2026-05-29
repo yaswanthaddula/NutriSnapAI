@@ -18,6 +18,7 @@ class User(Base):
     reset_code: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     reset_code_expires: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    last_active_platform: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     profile: Mapped["Profile"] = relationship("Profile", back_populates="user", uselist=False)
     meals: Mapped[List["Meal"]] = relationship("Meal", back_populates="user")

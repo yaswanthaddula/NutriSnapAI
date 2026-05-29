@@ -49,6 +49,12 @@ try:
                 print("Adding missing column: suggested_mode")
                 conn.execute(text("ALTER TABLE profiles ADD COLUMN suggested_mode VARCHAR;"))
             
+            # 5. Ensure last_active_platform exists in users table
+            user_columns = [c['name'] for c in inspector.get_columns('users')]
+            if 'last_active_platform' not in user_columns:
+                print("Adding missing column: last_active_platform to users table")
+                conn.execute(text("ALTER TABLE users ADD COLUMN last_active_platform VARCHAR;"))
+            
             conn.commit()
 except Exception as e:
     print(f"Auto-migration notice: {e}")

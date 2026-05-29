@@ -43,6 +43,7 @@ class UserResponse(BaseModel):
     name: str
     email: EmailStr
     created_at: datetime
+    last_active_platform: Optional[str] = None
 
     class Config:
         from_attributes = True

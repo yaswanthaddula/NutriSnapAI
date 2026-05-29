@@ -280,8 +280,10 @@ def verify_email(request: schemas.EmailVerificationRequest, db: Session = Depend
     print(f"[AUTH ROUTE LOG] POST /verify-email response: {res}")
     return res
 
+from fastapi import Request
+
 @router.post("/login", response_model=schemas.Token)
-def login(user_credentials: schemas.UserLogin, db: Session = Depends(database.get_db)):
+def login(request: Request, user_credentials: schemas.UserLogin, db: Session = Depends(database.get_db)):
     print(f"[AUTH ROUTE LOG] POST /login request: email={user_credentials.email}")
     try:
         print(f"Login attempt: {user_credentials.email}")
@@ -309,6 +311,17 @@ def login(user_credentials: schemas.UserLogin, db: Session = Depends(database.ge
                 detail="Email not verified. Please verify your email first."
             )
         
+        # Safely track last active platform on successful login
+        try:
+            user_agent = request.headers.get("user-agent", "").lower()
+            is_mobile = "expo" in user_agent or "okhttp" in user_agent or "darwin" in user_agent or "android" in user_agent
+            platform = "app" if is_mobile else "web"
+            if hasattr(user, 'last_active_platform') and user.last_active_platform != platform:
+                user.last_active_platform = platform
+                db.commit()
+        except Exception as e:
+            print(f"Failed to save last_active_platform: {e}")
+            
         access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = auth.create_access_token(
             data={"sub": user.email}, expires_delta=access_token_expires
