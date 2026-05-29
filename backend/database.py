@@ -14,9 +14,8 @@ SQLALCHEMY_DATABASE_URL = os.getenv(
 
 # Neon PostgreSQL requires SSL — add connect_args for cloud deployment
 connect_args = {}
-if "neon.tech" in SQLALCHEMY_DATABASE_URL or "sslmode" not in SQLALCHEMY_DATABASE_URL:
-    if SQLALCHEMY_DATABASE_URL.startswith("postgresql"):
-        connect_args = {"sslmode": "require"}
+if "neon.tech" in SQLALCHEMY_DATABASE_URL:
+    connect_args = {"sslmode": "require"}
 
 # Create engine
 engine = create_engine(

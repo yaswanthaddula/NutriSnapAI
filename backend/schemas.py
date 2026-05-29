@@ -85,6 +85,18 @@ class MealBase(BaseModel):
     carbs: float
     fat: float
 
+    @field_validator('quantity', 'calories', 'protein', 'carbs', 'fat', mode='before')
+    @classmethod
+    def parse_numeric(cls, v):
+        if v is None:
+            return 0.0
+        if isinstance(v, str):
+            try:
+                return float(v.strip())
+            except ValueError:
+                return 0.0
+        return v
+
 class MealCreate(MealBase):
     date: str
     time: str

@@ -60,16 +60,10 @@ load_dotenv(env_path, override=True)
 
 app = FastAPI(title="NutriSnap FatSecret Backend")
 
-# Enable CORS for Expo and Vercel frontends
+# Enable CORS for Expo and Vercel frontends (allow any origin via regex for robust cross-platform web support)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://nutri-snap-ai-five.vercel.app",
-        "https://nutrisnapai.onrender.com",
-        "http://localhost:3000",
-        "http://localhost:19006",
-        "http://localhost:8081"
-    ],
+    allow_origin_regex="https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

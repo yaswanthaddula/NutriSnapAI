@@ -56,7 +56,8 @@ api.interceptors.request.use(async (config) => {
     console.log("API URL:", config.baseURL + (config.url || ''));
     console.log("Auth token exists:", !!token);
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers = config.headers || {};
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
   } catch (error) {
     console.error('Error fetching token:', error);
