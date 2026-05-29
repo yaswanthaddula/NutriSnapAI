@@ -15,7 +15,8 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import LottieView from 'lottie-react-native'; 
+import { Platform as RNPlatform } from 'react-native';
+const LottieView = RNPlatform.OS !== 'web' ? require('lottie-react-native').default : null;
 import { useTheme } from '../_layout';
 import useAppStore from '../../src/store/useAppStore';
 import { calculateMealTotals } from '../../src/utils/calculations';
@@ -422,12 +423,16 @@ export default function GymHomeScreen() {
 
       <Modal visible={showWelcome} transparent={false} animationType="fade">
         <View style={[styles.animationContainer, { backgroundColor: '#00C853' }]}>
-          <LottieView
-            autoPlay
-            loop
-            style={styles.lottie}
-            source={require('../../assets/animations/gym-welcome.json')} 
-          />
+          {LottieView ? (
+            <LottieView
+              autoPlay
+              loop
+              style={styles.lottie}
+              source={require('../../assets/animations/gym-welcome.json')} 
+            />
+          ) : (
+            <Text style={{ fontSize: 80, marginBottom: 20 }}>💪</Text>
+          )}
           <Text style={styles.welcomeText}>GET READY</Text>
           <Text style={styles.welcomeSub}>Crush your goals today, {userProfile.name}!</Text>
         </View>

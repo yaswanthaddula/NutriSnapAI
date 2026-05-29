@@ -1,4 +1,5 @@
 import * as ImageManipulator from 'expo-image-manipulator';
+import { Platform } from 'react-native';
 import { SCANNER_GEMINI_API_KEY, SCANNER_GEMINI_API_KEY_ALT } from '../config/apiConfig';
 
 let isScanning = false;
@@ -15,6 +16,37 @@ Choose "count" for discrete items (eggs, apples, slices), "grams" for solid/loos
 Do NOT include any other text or markdown formatting.`;
 
 /**
+ * Converts an image URI to base64.
+ * On web: uses fetch + FileReader (expo-image-manipulator doesn't work in browsers).
+ * On native: uses expo-image-manipulator to resize + compress before encoding.
+ */
+const getBase64FromUri = async (imageUri) => {
+  if (Platform.OS === 'web') {
+    // Browser: fetch the blob and convert to base64 via FileReader
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // result is "data:image/jpeg;base64,XXXX" — strip the prefix
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } else {
+    // Native: resize + compress with expo-image-manipulator
+    const manipulatedImage = await ImageManipulator.manipulateAsync(
+      imageUri,
+      [{ resize: { width: 512 } }],
+      { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+    );
+    return manipulatedImage.base64;
+  }
+};
+
+/**
  * Detects food name, confidence, and unit type from an image.
  */
 export const analyzeImage = async (imageUri) => {
@@ -23,7 +55,7 @@ export const analyzeImage = async (imageUri) => {
   }
 
   isScanning = true;
-  
+
   const callApi = async (modelName, base64Image, apiKey) => {
     const body = {
       contents: [{
@@ -35,14 +67,14 @@ export const analyzeImage = async (imageUri) => {
     };
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
           signal: controller.signal
         }
@@ -57,26 +89,26 @@ export const analyzeImage = async (imageUri) => {
   };
 
   try {
-    const manipulatedImage = await ImageManipulator.manipulateAsync(
-      imageUri,
-      [{ resize: { width: 512 } }],
-      { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG, base64: true }
-    );
-    const base64Image = manipulatedImage.base64;
-    
+    // Get base64 image — works on both web and native
+    const base64Image = await getBase64FromUri(imageUri);
+
+    if (!base64Image) {
+      throw new Error('Could not read image. Please try a different photo.');
+    }
+
     const keysToTry = [SCANNER_GEMINI_API_KEY, SCANNER_GEMINI_API_KEY_ALT];
     const modelsToTry = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash'];
-    
+
     let lastError = null;
 
     for (const apiKey of keysToTry) {
       if (!apiKey) continue;
-      
+
       for (const modelName of modelsToTry) {
         try {
           console.log(`Scanner: Trying ${modelName} with key starting ${apiKey.substring(0, 5)}...`);
           const { response, data } = await callApi(modelName, base64Image, apiKey);
-          
+
           if (response.ok) {
             const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
             if (textResult) {
@@ -101,7 +133,7 @@ export const analyzeImage = async (imageUri) => {
             console.warn(`Scanner: ${modelName} failed (Status ${response.status})`);
             lastError = data?.error?.message || `Status ${response.status}`;
             if (response.status !== 429) {
-              console.log("Scanner: Non-quota error, continuing rotation...");
+              console.log('Scanner: Non-quota error, continuing rotation...');
             }
           }
         } catch (err) {
@@ -111,10 +143,10 @@ export const analyzeImage = async (imageUri) => {
       }
     }
 
-    throw new Error(lastError || 'AI Scanner is currently busy. Please try again in a moment or search manually.');
+    throw new Error(lastError || 'AI Scanner is currently busy. Please try again or search manually.');
 
   } catch (error) {
-    console.error("Scanner Final Error:", error.message);
+    console.error('Scanner Final Error:', error.message);
     throw error;
   } finally {
     isScanning = false;

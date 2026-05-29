@@ -7,7 +7,8 @@ import {
   Animated, 
   Platform 
 } from 'react-native';
-import LottieView from 'lottie-react-native';
+import { Platform as RNPlatform } from 'react-native';
+const LottieView = RNPlatform.OS !== 'web' ? require('lottie-react-native').default : null;
 import { router, useLocalSearchParams } from 'expo-router';
 
 export default function HealthWelcomeScreen() {
@@ -41,15 +42,17 @@ export default function HealthWelcomeScreen() {
         
         {/* LOTTIE ANIMATION CONTAINER */}
         <View style={styles.lottieWrapper}>
-          <LottieView
-            autoPlay
-            loop
-            style={styles.lottie}
-            // THE EXACT PATH TO YOUR FILE
-            source={require('../assets/animations/health-mode-welcome.json')}
-            // Corrected error handling prop
-            onAnimationFailure={(error) => console.log("Lottie Error: ", error)}
-          />
+          {LottieView ? (
+            <LottieView
+              autoPlay
+              loop
+              style={styles.lottie}
+              source={require('../assets/animations/health-mode-welcome.json')}
+              onAnimationFailure={(error: any) => console.log('Lottie Error: ', error)}
+            />
+          ) : (
+            <Text style={{ fontSize: 100 }}>🥗</Text>
+          )}
         </View>
 
         <View style={styles.textGroup}>

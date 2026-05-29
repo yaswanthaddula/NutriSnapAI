@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import LottieView from 'lottie-react-native'; 
+import { Platform as RNPlatform } from 'react-native';
+const LottieView = RNPlatform.OS !== 'web' ? require('lottie-react-native').default : null;
 import { useTheme } from '../_layout';
 import useAppStore from '../../src/store/useAppStore';
 import { calculateMealTotals } from '../../src/utils/calculations';
@@ -430,12 +431,16 @@ export default function HealthHomeScreen() {
       {/* WELCOME ANIMATION MODAL */}
       <Modal visible={showWelcome} transparent={false} animationType="fade">
         <View style={[styles.animationContainer, { backgroundColor: '#00C853' }]}>
-          <LottieView
-            autoPlay
-            loop
-            style={styles.lottie}
-            source={require('../../assets/animations/health-mode-welcome.json')} 
-          />
+          {LottieView ? (
+            <LottieView
+              autoPlay
+              loop
+              style={styles.lottie}
+              source={require('../../assets/animations/health-mode-welcome.json')} 
+            />
+          ) : (
+            <Text style={{ fontSize: 80, marginBottom: 20 }}>🥗</Text>
+          )}
           <Text style={styles.welcomeText}>HEALTH MODE</Text>
           <Text style={styles.welcomeSub}>Your journey to wellness starts here, {userProfile.name}!</Text>
         </View>
