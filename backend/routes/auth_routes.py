@@ -10,13 +10,26 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/check-email")
 def check_email(request: schemas.EmailCheckRequest, db: Session = Depends(database.get_db)):
     import traceback
+    import os
+    from urllib.parse import urlparse
     from sqlalchemy import func
     
     email_received = request.email
     email_cleaned = email_received.strip().lower()
     
+    # Get database host safely
+    db_host = "unknown"
+    try:
+        db_url = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/nutrisnap")
+        parsed = urlparse(db_url)
+        db_host = parsed.hostname
+    except Exception as url_err:
+        print(f"[AUTH ROUTE LOG] Failed to parse DATABASE_URL host: {str(url_err)}")
+        
+    print(f"[AUTH ROUTE LOG] POST /check-email - DATABASE_URL host: '{db_host}'")
     print(f"[AUTH ROUTE LOG] POST /check-email - received email: '{email_received}'")
     print(f"[AUTH ROUTE LOG] POST /check-email - normalized email: '{email_cleaned}'")
+    print(f"[AUTH ROUTE LOG] POST /check-email - table queried: 'users'")
     
     # Check if database is connected
     db_connected = False
@@ -372,3 +385,26 @@ def reset_password(request: schemas.ResetPasswordRequest, db: Session = Depends(
     res = {"detail": "Password reset successful"}
     print(f"[AUTH ROUTE LOG] POST /reset-password response: {res}")
     return res
+
+
+@router.get("/diagnostic-users")
+def diagnostic_users(db: Session = Depends(database.get_db)):
+    import os
+    from urllib.parse import urlparse
+    try:
+        db_url = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/nutrisnap")
+        parsed = urlparse(db_url)
+        db_host = parsed.hostname
+    except Exception:
+        db_host = "unknown"
+        
+    try:
+        users = db.query(models.User).all()
+        users_list = [{"id": u.id, "name": u.name, "email": u.email, "is_verified": u.is_verified} for u in users]
+        return {
+            "database_host": db_host,
+            "users_count": len(users),
+            "users": users_list
+        }
+    except Exception as e:
+        return {"error": str(e)}
