@@ -8,12 +8,14 @@ import {
   SafeAreaView, 
   Switch, 
   Alert,
+  Platform,
   Image 
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTheme } from '../_layout'; 
 import useAppStore from '../../src/store/useAppStore';
+import apiService from '../../src/services/apiService';
 
 export default function ProfileScreen() {
   const { isDark, toggleTheme } = useTheme();
@@ -22,6 +24,24 @@ export default function ProfileScreen() {
   useEffect(() => {
     loadStoredData();
   }, []);
+
+  const handleLogout = async () => {
+    const doLogout = async () => {
+      await apiService.logout();
+      router.replace('/login');
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to logout?')) {
+        await doLogout();
+      }
+    } else {
+      Alert.alert('Logout', 'Are you sure?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Logout', style: 'destructive', onPress: doLogout }
+      ]);
+    }
+  };
 
   const theme = {
     background: isDark ? '#121212' : '#F9FAFB',
@@ -183,10 +203,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity 
           style={styles.logoutBtn} 
-          onPress={() => Alert.alert("Logout", "Are you sure?", [
-            { text: "Cancel" },
-            { text: "Logout", onPress: () => router.replace('/login') }
-          ])}
+          onPress={handleLogout}
         >
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>

@@ -16,6 +16,7 @@ import { router, useGlobalSearchParams } from 'expo-router';
 // --- IMPORT THE THEME HOOK ---
 import { useTheme } from '../_layout'; 
 import useAppStore from '../../src/store/useAppStore';
+import apiService from '../../src/services/apiService';
 
 export default function ProfileScreen() {
   const params = useGlobalSearchParams();
@@ -35,6 +36,24 @@ export default function ProfileScreen() {
     setName(userProfile.name);
     setAge(userProfile.age.toString());
   }, [userProfile.name, userProfile.age]);
+
+  const handleLogout = async () => {
+    const doLogout = async () => {
+      await apiService.logout();
+      router.replace('/login');
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to logout?')) {
+        await doLogout();
+      }
+    } else {
+      Alert.alert('Logout', 'Are you sure?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Logout', style: 'destructive', onPress: doLogout }
+      ]);
+    }
+  };
 
   // 4. Define Theme Colors
   const theme = {
@@ -198,10 +217,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity 
           style={styles.logoutBtn} 
-          onPress={() => Alert.alert("Logout", "Are you sure?", [
-            { text: "Cancel" },
-            { text: "Logout", onPress: () => router.replace('/login') }
-          ])}
+          onPress={handleLogout}
         >
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
