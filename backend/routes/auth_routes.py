@@ -10,16 +10,17 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/check-email")
 def check_email(request: schemas.EmailCheckRequest, db: Session = Depends(database.get_db)):
     import traceback
+    print(f"[AUTH ROUTE LOG] POST /check-email request: email={request.email}")
     try:
         user = db.query(models.User).filter(models.User.email == request.email).first()
         if user:
-            return {"exists": True, "message": "Email found."}
+            res = {"exists": True, "message": "Email found."}
         else:
-            return {"exists": False, "message": "Email not registered. Please sign up first."}
+            res = {"exists": False, "message": "Email not registered. Please sign up first."}
+        print(f"[AUTH ROUTE LOG] POST /check-email response: {res}")
+        return res
     except Exception as e:
-        print(f"--- ERROR IN /auth/check-email ---")
-        print(f"Request email: {request.email}")
-        print(f"Exception: {str(e)}")
+        print(f"[AUTH ROUTE LOG] POST /check-email error: {str(e)}")
         traceback.print_exc()
         
         # Log table and column information to help debug database issues on Render
@@ -37,48 +38,78 @@ def check_email(request: schemas.EmailCheckRequest, db: Session = Depends(databa
         except Exception as ie:
             print(f"Failed to inspect database tables/columns: {str(ie)}")
             
-        return {"exists": False, "message": "Email not registered. Please sign up first."}
+        res = {"exists": False, "message": "Email not registered. Please sign up first."}
+        print(f"[AUTH ROUTE LOG] POST /check-email response (fallback): {res}")
+        return res
 
 @router.post("/register-start")
 def register_start(request: schemas.RegisterStartRequest, db: Session = Depends(database.get_db)):
-    # Check if user already exists
-    if db.query(models.User).filter(models.User.email == request.email).first():
-         raise HTTPException(status_code=400, detail="Email already registered")
-    
-    # Generate code
-    v_code = ''.join(random.choices(string.digits, k=6))
-    
-    # Save to PendingVerification
-    pending = db.query(models.PendingVerification).filter(models.PendingVerification.email == request.email).first()
-    if pending:
-        pending.code = v_code
-        pending.expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=10)
-    else:
-        pending = models.PendingVerification(
-            email=request.email,
-            code=v_code,
-            expires_at=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=10)
-        )
-        db.add(pending)
-    
-    db.commit()
-    
-    # Send Email
-    email_sent = email_service.send_verification_email(request.email, v_code)
-    if not email_sent:
-        print(f"--- FALLBACK: Verification code for {request.email} is {v_code} ---")
-        return {"message": "Verification code generated (Check console if email fails)"}
-    
-    return {"message": "Verification code sent to email"}
+    print(f"[AUTH ROUTE LOG] POST /register-start request: name={request.name}, email={request.email}")
+    try:
+        # Check if user already exists
+        if db.query(models.User).filter(models.User.email == request.email).first():
+            res = {
+                "success": False,
+                "message": "Email already registered. Please login."
+            }
+            print(f"[AUTH ROUTE LOG] POST /register-start response: {res}")
+            return res
+        
+        # Generate code
+        v_code = ''.join(random.choices(string.digits, k=6))
+        
+        # Save to PendingVerification
+        pending = db.query(models.PendingVerification).filter(models.PendingVerification.email == request.email).first()
+        if pending:
+            pending.code = v_code
+            pending.expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=10)
+        else:
+            pending = models.PendingVerification(
+                email=request.email,
+                code=v_code,
+                expires_at=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=10)
+            )
+            db.add(pending)
+        
+        db.commit()
+        
+        # Send Email
+        email_sent = email_service.send_verification_email(request.email, v_code)
+        msg = "Registration started successfully"
+        if not email_sent:
+            print(f"--- FALLBACK: Verification code for {request.email} is {v_code} ---")
+            msg = "Registration started successfully (Check console code)"
+        
+        res = {
+            "success": True,
+            "message": msg,
+            "email": request.email
+        }
+        print(f"[AUTH ROUTE LOG] POST /register-start response: {res}")
+        return res
+    except Exception as e:
+        print(f"[AUTH ROUTE LOG] POST /register-start error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        res = {
+            "success": False,
+            "message": f"Registration failed: {str(e)}"
+        }
+        print(f"[AUTH ROUTE LOG] POST /register-start response (fallback): {res}")
+        return res
 
 @router.post("/register-verify", response_model=schemas.UserResponse)
 def register_verify(request: schemas.RegisterVerifyRequest, db: Session = Depends(database.get_db)):
+    print(f"[AUTH ROUTE LOG] POST /register-verify request: name={request.name}, email={request.email}, code={request.code}")
+    
     # 1. Verify code
     pending = db.query(models.PendingVerification).filter(models.PendingVerification.email == request.email).first()
     if not pending or pending.code != request.code:
+        print(f"[AUTH ROUTE LOG] POST /register-verify failed: Invalid code")
         raise HTTPException(status_code=400, detail="Invalid verification code")
     
     if datetime.now(timezone.utc).replace(tzinfo=None) > pending.expires_at.replace(tzinfo=None):
+        print(f"[AUTH ROUTE LOG] POST /register-verify failed: Expired code")
         raise HTTPException(status_code=400, detail="Verification code expired")
     
     # 2. Create User
@@ -96,17 +127,21 @@ def register_verify(request: schemas.RegisterVerifyRequest, db: Session = Depend
     try:
         db.commit()
         db.refresh(new_user)
+        print(f"[AUTH ROUTE LOG] POST /register-verify response: user_id={new_user.id}, email={new_user.email}")
         return new_user
     except Exception as e:
         db.rollback()
+        print(f"[AUTH ROUTE LOG] POST /register-verify error: {str(e)}")
         raise HTTPException(status_code=400, detail="Registration failed. Email might have been registered in the meantime.")
 
 @router.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
+    print(f"[AUTH ROUTE LOG] POST /register request: name={user.name}, email={user.email}")
     try:
         existing_user = db.query(models.User).filter(models.User.email == user.email).first()
         if existing_user:
             if existing_user.is_verified:
+                print(f"[AUTH ROUTE LOG] POST /register failed: Email already registered")
                 raise HTTPException(status_code=400, detail="Email already registered")
             else:
                 # If user is not verified, allow them to register again (resend code)
@@ -123,6 +158,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
                 if not email_sent:
                     print(f"--- FALLBACK: Verification code for {user.email} is {v_code} ---")
                 
+                print(f"[AUTH ROUTE LOG] POST /register response: user_id={existing_user.id}, email={existing_user.email}")
                 return existing_user
         
         # Generate 6-digit verification code
@@ -155,8 +191,10 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
         if not email_sent:
             print(f"--- FALLBACK: Verification code for {user.email} is {v_code} ---")
         
+        print(f"[AUTH ROUTE LOG] POST /register response: user_id={new_user.id}, email={new_user.email}")
         return new_user
     except HTTPException as he:
+        print(f"[AUTH ROUTE LOG] POST /register HTTPException: {he.detail}")
         raise he
     except Exception as e:
         print(f"--- CRITICAL REGISTER ERROR: {str(e)} ---")
@@ -166,32 +204,42 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
 
 @router.post("/verify-email")
 def verify_email(request: schemas.EmailVerificationRequest, db: Session = Depends(database.get_db)):
+    print(f"[AUTH ROUTE LOG] POST /verify-email request: email={request.email}, code={request.code}")
     user = db.query(models.User).filter(models.User.email == request.email).first()
     if not user:
+        print(f"[AUTH ROUTE LOG] POST /verify-email failed: User not found")
         raise HTTPException(status_code=404, detail="User not found")
     
     if user.is_verified:
-        return {"detail": "Email already verified"}
+        res = {"detail": "Email already verified"}
+        print(f"[AUTH ROUTE LOG] POST /verify-email response: {res}")
+        return res
 
     if not user.verification_code or user.verification_code != request.code:
+        print(f"[AUTH ROUTE LOG] POST /verify-email failed: Invalid verification code")
         raise HTTPException(status_code=400, detail="Invalid verification code")
 
     if not user.verification_code_expires or datetime.now(timezone.utc).replace(tzinfo=None) > user.verification_code_expires.replace(tzinfo=None):
+        print(f"[AUTH ROUTE LOG] POST /verify-email failed: Verification code expired")
         raise HTTPException(status_code=400, detail="Verification code expired. Please register again.")
     
     user.is_verified = 1
     user.verification_code = None
     user.verification_code_expires = None
     db.commit()
-    return {"detail": "Email verified successfully"}
+    res = {"detail": "Email verified successfully"}
+    print(f"[AUTH ROUTE LOG] POST /verify-email response: {res}")
+    return res
 
 @router.post("/login", response_model=schemas.Token)
 def login(user_credentials: schemas.UserLogin, db: Session = Depends(database.get_db)):
+    print(f"[AUTH ROUTE LOG] POST /login request: email={user_credentials.email}")
     try:
         print(f"Login attempt: {user_credentials.email}")
         user = db.query(models.User).filter(models.User.email == user_credentials.email).first()
         
         if not user:
+            print(f"[AUTH ROUTE LOG] POST /login failed: Account not found")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, 
                 detail="Account not found. Please sign up first."
@@ -199,12 +247,14 @@ def login(user_credentials: schemas.UserLogin, db: Session = Depends(database.ge
         
         if not auth.verify_password(user_credentials.password, user.password_hash):
             print(f"Password mismatch for {user_credentials.email}")
+            print(f"[AUTH ROUTE LOG] POST /login failed: Incorrect password")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, 
                 detail="Incorrect password"
             )
         
         if user.is_verified == 0:
+            print(f"[AUTH ROUTE LOG] POST /login failed: Email not verified")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, 
                 detail="Email not verified. Please verify your email first."
@@ -214,6 +264,7 @@ def login(user_credentials: schemas.UserLogin, db: Session = Depends(database.ge
         access_token = auth.create_access_token(
             data={"sub": user.email}, expires_delta=access_token_expires
         )
+        print(f"[AUTH ROUTE LOG] POST /login response: user_id={user.id}, email={user.email}, token_type=bearer")
         return {
             "access_token": access_token, 
             "token_type": "bearer",
@@ -229,14 +280,19 @@ def login(user_credentials: schemas.UserLogin, db: Session = Depends(database.ge
 
 @router.get("/me", response_model=schemas.UserResponse)
 def get_me(current_user: models.User = Depends(auth.get_current_user)):
+    print(f"[AUTH ROUTE LOG] GET /me request: current_user={current_user.email}")
+    print(f"[AUTH ROUTE LOG] GET /me response: user_id={current_user.id}, email={current_user.email}")
     return current_user
 
 @router.post("/forgot-password")
 def forgot_password(request: schemas.ForgotPasswordRequest, db: Session = Depends(database.get_db)):
+    print(f"[AUTH ROUTE LOG] POST /forgot-password request: email={request.email}")
     user = db.query(models.User).filter(models.User.email == request.email).first()
     if not user:
         # For security, don't reveal if user exists. Just return OK.
-        return {"detail": "If the account exists, a reset code has been sent."}
+        res = {"detail": "If the account exists, a reset code has been sent."}
+        print(f"[AUTH ROUTE LOG] POST /forgot-password response: {res}")
+        return res
     
     # Generate 6-digit code
     code = ''.join(random.choices(string.digits, k=6))
@@ -249,12 +305,17 @@ def forgot_password(request: schemas.ForgotPasswordRequest, db: Session = Depend
     email_sent = email_service.send_reset_password_email(request.email, code)
     if not email_sent:
         print(f"--- FALLBACK: Reset code for {request.email} is {code} ---")
-        return {"detail": "Failed to send email. Code printed to console for demo."}
+        res = {"detail": "Failed to send email. Code printed to console for demo."}
+        print(f"[AUTH ROUTE LOG] POST /forgot-password response (fallback): {res}")
+        return res
 
-    return {"detail": "Reset code sent to your email."}
+    res = {"detail": "Reset code sent to your email."}
+    print(f"[AUTH ROUTE LOG] POST /forgot-password response: {res}")
+    return res
 
 @router.post("/reset-password")
 def reset_password(request: schemas.ResetPasswordRequest, db: Session = Depends(database.get_db)):
+    print(f"[AUTH ROUTE LOG] POST /reset-password request: email={request.email}, code={request.code}")
     user = db.query(models.User).filter(models.User.email == request.email).first()
     
     print(f"--- DEBUG: Reset Password Attempt for {request.email} ---")
@@ -266,9 +327,11 @@ def reset_password(request: schemas.ResetPasswordRequest, db: Session = Depends(
         print(f"--- DEBUG: User {request.email} not found ---")
 
     if not user or user.verification_code != request.code:
+        print(f"[AUTH ROUTE LOG] POST /reset-password failed: Invalid reset code")
         raise HTTPException(status_code=400, detail="Invalid reset code")
     
     if not user.verification_code_expires or datetime.now(timezone.utc).replace(tzinfo=None) > user.verification_code_expires.replace(tzinfo=None):
+         print(f"[AUTH ROUTE LOG] POST /reset-password failed: Reset code expired")
          raise HTTPException(status_code=400, detail="Reset code expired")
     
     user.password_hash = auth.get_password_hash(request.new_password)
@@ -276,4 +339,6 @@ def reset_password(request: schemas.ResetPasswordRequest, db: Session = Depends(
     user.verification_code_expires = None
     
     db.commit()
-    return {"detail": "Password reset successful"}
+    res = {"detail": "Password reset successful"}
+    print(f"[AUTH ROUTE LOG] POST /reset-password response: {res}")
+    return res

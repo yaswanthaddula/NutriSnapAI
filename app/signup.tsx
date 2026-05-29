@@ -20,6 +20,7 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { setUserProfile, saveStoredData } = useAppStore();
   
   const validateEmail = (email: string) => {
@@ -44,25 +45,46 @@ export default function SignUpScreen() {
       return;
     }
 
+    setIsLoading(true);
     try {
-      // 1. Call Backend Register Start (sends code, but doesn't save user yet)
-      await apiService.registerStart(name, email, password);
+      const response = await apiService.registerStart(name, email, password);
+      const result = response.data;
       
-      Alert.alert(
-        "Verify Email", 
-        `A 6-digit verification code has been sent to ${email}. Please enter it to activate your account.`,
-        [{ text: "OK", onPress: () => router.push({
-          pathname: '/verify-email',
-          params: { 
-            email: email,
-            name: name,
-            password: password
-          }
-        }) }]
-      );
+      if (result.success) {
+        Alert.alert(
+          "Verify Email", 
+          result.message || `A 6-digit verification code has been sent to ${email}. Please enter it to activate your account.`,
+          [{ text: "OK", onPress: () => router.push({
+            pathname: '/verify-email',
+            params: { 
+              email: email,
+              name: name,
+              password: password
+            }
+          }) }]
+        );
+      } else {
+        Alert.alert("Registration Failed", result.message || "Email already registered. Please login.");
+      }
     } catch (error: any) {
-      const msg = error.response?.data?.detail || "Registration failed. Try again.";
-      Alert.alert("Error", msg);
+      console.error("Registration error details:", error);
+      const status = error.response?.status;
+      const detail = error.response?.data?.detail;
+      let errorMsg = "Could not start registration. Please try again.";
+      if (!error.response) {
+        errorMsg = "Network error. Please check if the backend server is running and reachable.";
+      } else if (status === 404) {
+        errorMsg = "Registration route not found on the server (404). Please ensure the backend is fully redeployed.";
+      } else if (status === 422) {
+        errorMsg = "Validation error (422). Please ensure you have entered a valid email and name.";
+      } else if (status === 500) {
+        errorMsg = "Server error (500). Please try again later.";
+      } else if (status) {
+        errorMsg = `Server error (${status}): ${detail || 'Please try again.'}`;
+      }
+      Alert.alert("Error", errorMsg);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -145,8 +167,12 @@ export default function SignUpScreen() {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.signUpBtn} onPress={handleSignUp}>
-            <Text style={styles.signUpBtnText}>Continue</Text>
+          <TouchableOpacity 
+            style={[styles.signUpBtn, isLoading && styles.btnDisabled]} 
+            onPress={handleSignUp}
+            disabled={isLoading}
+          >
+            <Text style={styles.signUpBtnText}>{isLoading ? "Registering..." : "Continue"}</Text>
           </TouchableOpacity>
 
           <View style={styles.divider}>
@@ -214,6 +240,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
   },
+  btnDisabled: { backgroundColor: '#A5D6A7' },
   signUpBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 25 },
   line: { flex: 1, height: 1, backgroundColor: '#EEE' },
