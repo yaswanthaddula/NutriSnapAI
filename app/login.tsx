@@ -22,6 +22,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [step, setStep] = useState(1); // 1: Email, 2: Password
   const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
   const [showGoogleAccounts, setShowGoogleAccounts] = useState(false);
@@ -42,29 +43,17 @@ export default function LoginScreen() {
     }
 
     setIsLoading(true);
+    setEmailError('');
     try {
       const response = await apiService.checkEmail(email);
       if (response.data.exists) {
         setStep(2);
       } else {
-        Alert.alert("Sign up first", "This email is not registered. Please sign up first.", [
-          { text: "Sign Up", onPress: () => router.push('/signup') },
-          { text: "Cancel", style: 'cancel' }
-        ]);
+        setEmailError("Email not registered. Please sign up first.");
       }
     } catch (error: any) {
       console.error("Check email error details:", error);
-      const status = error.response?.status;
-      const detail = error.response?.data?.detail;
-      let errorMsg = "Could not verify email. Please try again.";
-      if (!error.response) {
-        errorMsg = "Network error. Please check if the backend server is running and reachable.";
-      } else if (status === 404) {
-        errorMsg = "Verification route not found on the server (404). Please ensure the backend is fully redeployed.";
-      } else if (status) {
-        errorMsg = `Server error (${status}): ${detail || 'Please try again.'}`;
-      }
-      Alert.alert("Error", errorMsg);
+      setEmailError("Unable to connect. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -192,9 +181,22 @@ export default function LoginScreen() {
                     placeholder="your@email.com" 
                     keyboardType="email-address"
                     value={email}
-                    onChangeText={setEmail}
+                    onChangeText={(text) => {
+                      setEmail(text);
+                      setEmailError('');
+                    }}
                     autoCapitalize="none"
                   />
+                  {emailError ? (
+                    <View style={styles.errorContainer}>
+                      <Text style={styles.errorText}>{emailError}</Text>
+                      {emailError.includes("not registered") && (
+                        <TouchableOpacity onPress={() => router.push('/signup')} style={styles.errorSignUpLink}>
+                          <Text style={styles.errorSignUpLinkText}>Sign Up</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  ) : null}
                 </View>
               ) : (
                 <View>
@@ -274,6 +276,27 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginTop: -10,
+    marginBottom: 15,
+  },
+  errorText: {
+    color: '#D32F2F',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  errorSignUpLink: {
+    marginLeft: 5,
+  },
+  errorSignUpLinkText: {
+    color: '#00C853',
+    fontWeight: 'bold',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
   container: { flex: 1, backgroundColor: '#fff' },
   backBtn: { padding: 20, marginTop: 10 },
   content: { paddingHorizontal: 30, flex: 1 },
