@@ -126,10 +126,20 @@ export default function LoginScreen() {
       } else if (status === 404) {
         Alert.alert("API Error", "The login route was not found on the server. Please contact support.");
       } else if (status === 403 && detail?.includes("verified")) {
-        Alert.alert("Verify Email", detail, [
-          { text: "Verify Now", onPress: () => router.push({ pathname: '/verify-email', params: { email }}) },
-          { text: "Cancel", style: 'cancel' }
-        ]);
+        const handleNavigate = () => {
+          router.push({ pathname: '/verify-email', params: { email } });
+        };
+
+        if (Platform.OS === 'web') {
+          // On Web, if verification is required, alert and go to verification
+          alert(detail);
+          handleNavigate();
+        } else {
+          Alert.alert("Verify Email", detail, [
+            { text: "Verify Now", onPress: handleNavigate },
+            { text: "Cancel", style: 'cancel' }
+          ]);
+        }
       } else {
         const msg = detail || "Login failed. Check credentials.";
         Alert.alert(`Error (${status || 'Unknown'})`, msg);

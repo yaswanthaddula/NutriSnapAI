@@ -51,18 +51,27 @@ export default function SignUpScreen() {
       const result = response.data;
       
       if (result.success) {
-        Alert.alert(
-          "Verify Email", 
-          result.message || `A 6-digit verification code has been sent to ${email}. Please enter it to activate your account.`,
-          [{ text: "OK", onPress: () => router.push({
+        const handleNavigate = () => {
+          router.push({
             pathname: '/verify-email',
             params: { 
               email: email,
               name: name,
               password: password
             }
-          }) }]
-        );
+          });
+        };
+
+        if (Platform.OS === 'web') {
+          alert(result.message || `A 6-digit verification code has been sent to ${email}. Please enter it to activate your account.`);
+          handleNavigate();
+        } else {
+          Alert.alert(
+            "Verify Email", 
+            result.message || `A 6-digit verification code has been sent to ${email}. Please enter it to activate your account.`,
+            [{ text: "OK", onPress: handleNavigate }]
+          );
+        }
       } else {
         Alert.alert("Registration Failed", result.message || "Email already registered. Please login.");
       }

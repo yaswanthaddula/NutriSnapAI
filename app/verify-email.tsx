@@ -71,10 +71,18 @@ export default function VerifyEmailScreen() {
         // Fallback for old flow
         await apiService.verifyEmail(email as string, code);
       }
-      
-      Alert.alert("Success", "Account verified! You can now log in.", [
-        { text: "Login", onPress: () => router.replace('/login') }
-      ]);
+      const handleNavigate = () => {
+        router.replace('/login');
+      };
+
+      if (Platform.OS === 'web') {
+        alert("Account verified! You can now log in.");
+        handleNavigate();
+      } else {
+        Alert.alert("Success", "Account verified! You can now log in.", [
+          { text: "Login", onPress: handleNavigate }
+        ]);
+      }
     } catch (error: any) {
       const msg = error.response?.data?.detail || "Invalid code. Please try again.";
       Alert.alert("Error", msg);

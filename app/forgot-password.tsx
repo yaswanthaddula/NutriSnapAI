@@ -77,9 +77,18 @@ export default function ForgotPasswordScreen() {
     setLoading(true);
     try {
       await apiService.resetPassword(email, code, newPassword);
-      Alert.alert("Success", "Your password has been reset successfully.", [
-        { text: "OK", onPress: () => router.replace('/login') }
-      ]);
+      const handleNavigate = () => {
+        router.replace('/login');
+      };
+
+      if (Platform.OS === 'web') {
+        alert("Your password has been reset successfully.");
+        handleNavigate();
+      } else {
+        Alert.alert("Success", "Your password has been reset successfully.", [
+          { text: "OK", onPress: handleNavigate }
+        ]);
+      }
     } catch (error: any) {
       const msg = error.response?.data?.detail || "Invalid OTP or request expired.";
       Alert.alert("Error", msg);
