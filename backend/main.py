@@ -59,6 +59,21 @@ env_path = os.path.join(basedir, ".env")
 load_dotenv(env_path, override=True)
 
 app = FastAPI(title="NutriSnap FatSecret Backend")
+
+# Enable CORS for Expo and Vercel frontends
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://nutri-snap-ai-five.vercel.app",
+        "https://nutrisnapai.onrender.com",
+        "http://localhost:3000",
+        "http://localhost:19006",
+        "http://localhost:8081"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
         
 @app.get("/")
 async def root():
@@ -81,18 +96,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"detail": "Validation Error", "errors": exc.errors()},
     )
 
-# Enable CORS for Expo frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "https://nutri-snap-ai-five.vercel.app",
-        "http://localhost:8081",
-        "http://localhost:19006"
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # New Feature Routers
 app.include_router(auth_routes.router)
