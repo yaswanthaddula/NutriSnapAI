@@ -423,11 +423,45 @@ def diagnostic_users(db: Session = Depends(database.get_db)):
         
     try:
         users = db.query(models.User).all()
-        users_list = [{"id": u.id, "name": u.name, "email": u.email, "is_verified": u.is_verified} for u in users]
+        users_list = [{
+            "id": u.id, 
+            "name": u.name, 
+            "email": u.email, 
+            "is_verified": u.is_verified,
+            "last_active_platform": getattr(u, 'last_active_platform', None)
+        } for u in users]
+        
+        # Query meals
+        meals = db.query(models.Meal).order_by(models.Meal.id.desc()).limit(15).all()
+        meals_list = [{
+            "id": m.id,
+            "user_id": m.user_id,
+            "food_name": m.food_name,
+            "quantity": m.quantity,
+            "calories": m.calories,
+            "date": str(m.date),
+            "time": str(m.time)
+        } for m in meals]
+        
+        # Query chats
+        chats = db.query(models.AIChatHistory).order_by(models.AIChatHistory.id.desc()).limit(15).all()
+        chats_list = [{
+            "id": c.id,
+            "user_id": c.user_id,
+            "mode": c.mode,
+            "question": c.question[:50],
+            "created_at": str(c.created_at)
+        } for c in chats]
+        
         return {
             "database_host": db_host,
             "users_count": len(users),
-            "users": users_list
+            "users": users_list,
+            "meals_count": db.query(models.Meal).count(),
+            "recent_meals": meals_list,
+            "chats_count": db.query(models.AIChatHistory).count(),
+            "recent_chats": chats_list
         }
     except Exception as e:
-        return {"error": str(e)}
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()}
