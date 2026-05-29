@@ -74,7 +74,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-        
+
+@app.on_event("startup")
+def list_users_on_startup():
+    try:
+        from database import SessionLocal
+        import models
+        db = SessionLocal()
+        users = db.query(models.User).all()
+        print(f"--- STARTUP DATABASE CHECK: {len(users)} registered users found ---")
+        for u in users:
+            print(f"User ID: {u.id}, Name: {u.name}, Email: {u.email}, Verified: {u.is_verified}")
+        print("-----------------------------------------------------------------")
+        db.close()
+    except Exception as e:
+        print(f"--- STARTUP DATABASE CHECK FAILED: {str(e)} ---")
+
 @app.get("/")
 async def root():
     return {"status": "online", "message": "NutriSnap Backend is running"}

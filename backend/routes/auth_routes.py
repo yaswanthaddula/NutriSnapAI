@@ -11,13 +11,30 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 def check_email(request: schemas.EmailCheckRequest, db: Session = Depends(database.get_db)):
     import traceback
     from sqlalchemy import func
-    email_cleaned = request.email.strip()
-    print(f"[AUTH ROUTE LOG] POST /check-email request: email={request.email} (cleaned={email_cleaned})")
+    
+    email_received = request.email
+    email_cleaned = email_received.strip().lower()
+    
+    print(f"[AUTH ROUTE LOG] POST /check-email - received email: '{email_received}'")
+    print(f"[AUTH ROUTE LOG] POST /check-email - normalized email: '{email_cleaned}'")
+    
+    # Check if database is connected
+    db_connected = False
     try:
-        user = db.query(models.User).filter(func.lower(models.User.email) == func.lower(email_cleaned)).first()
+        db.execute(func.now())
+        db_connected = True
+    except Exception as e:
+        print(f"[AUTH ROUTE LOG] POST /check-email - database connection check failed: {str(e)}")
+        
+    print(f"[AUTH ROUTE LOG] POST /check-email - database connected: {db_connected}")
+    
+    try:
+        user = db.query(models.User).filter(func.lower(models.User.email) == email_cleaned).first()
         if user:
+            print("[AUTH ROUTE LOG] POST /check-email - user found: True")
             res = {"exists": True, "message": "Email found."}
         else:
+            print("[AUTH ROUTE LOG] POST /check-email - user found: False")
             res = {"exists": False, "message": "Sign up first."}
         print(f"[AUTH ROUTE LOG] POST /check-email response: {res}")
         return res
@@ -43,6 +60,7 @@ def check_email(request: schemas.EmailCheckRequest, db: Session = Depends(databa
         res = {"exists": False, "message": "Sign up first."}
         print(f"[AUTH ROUTE LOG] POST /check-email response (fallback): {res}")
         return res
+
 
 @router.post("/register-start")
 def register_start(request: schemas.RegisterStartRequest, db: Session = Depends(database.get_db)):
@@ -77,14 +95,18 @@ def register_start(request: schemas.RegisterStartRequest, db: Session = Depends(
         
         # Send Email
         email_sent = email_service.send_verification_email(request.email, v_code)
-        msg = "Registration started successfully"
         if not email_sent:
-            print(f"--- FALLBACK: Verification code for {request.email} is {v_code} ---")
-            msg = "Registration started successfully (Check console code)"
+            print(f"--- FAILED to send verification email to {request.email} ---")
+            res = {
+                "success": False,
+                "message": "Failed to send verification email. Please check your SMTP settings or try again."
+            }
+            print(f"[AUTH ROUTE LOG] POST /register-start response: {res}")
+            return res
         
         res = {
             "success": True,
-            "message": msg,
+            "message": "Verification code sent to your email.",
             "email": request.email
         }
         print(f"[AUTH ROUTE LOG] POST /register-start response: {res}")
@@ -135,6 +157,12 @@ def register_verify(request: schemas.RegisterVerifyRequest, db: Session = Depend
         db.rollback()
         print(f"[AUTH ROUTE LOG] POST /register-verify error: {str(e)}")
         raise HTTPException(status_code=400, detail="Registration failed. Email might have been registered in the meantime.")
+
+@router.post("/register-complete", response_model=schemas.UserResponse)
+def register_complete(request: schemas.RegisterVerifyRequest, db: Session = Depends(database.get_db)):
+    print(f"[AUTH ROUTE LOG] POST /register-complete request: name={request.name}, email={request.email}, code={request.code}")
+    return register_verify(request, db)
+
 
 @router.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):

@@ -7,11 +7,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # SMTP Configuration
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
-EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
-EMAIL_FROM = os.getenv("EMAIL_FROM") or ""
+EMAIL_HOST = os.getenv("SMTP_HOST") or os.getenv("EMAIL_HOST") or "smtp.gmail.com"
+EMAIL_PORT = int(os.getenv("SMTP_PORT") or os.getenv("EMAIL_PORT") or 587)
+EMAIL_USER = os.getenv("SMTP_USERNAME") or os.getenv("EMAIL_USER")
+EMAIL_PASSWORD = os.getenv("SMTP_PASSWORD") or os.getenv("EMAIL_PASSWORD")
+
+SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL")
+SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "NutriSnap AI")
+
+if SMTP_FROM_EMAIL:
+    EMAIL_FROM = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
+else:
+    EMAIL_FROM = os.getenv("EMAIL_FROM") or f"NutriSnap AI <{EMAIL_USER}>"
 
 def send_email(subject, recipient_email, html_content):
     print(f"--- DEBUG: Attempting to send email via {EMAIL_HOST}:{EMAIL_PORT} ---")
