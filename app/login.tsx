@@ -190,11 +190,6 @@ export default function LoginScreen() {
                   {emailError ? (
                     <View style={styles.errorContainer}>
                       <Text style={styles.errorText}>{emailError}</Text>
-                      {emailError.includes("Sign up first") && (
-                        <TouchableOpacity onPress={() => router.push('/signup')} style={styles.errorSignUpLink}>
-                          <Text style={styles.errorSignUpLinkText}>Sign Up</Text>
-                        </TouchableOpacity>
-                      )}
                     </View>
                   ) : null}
                 </View>
