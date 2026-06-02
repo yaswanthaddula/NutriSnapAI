@@ -11,11 +11,12 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import useAppStore from '../src/store/useAppStore';
+import apiService from '../src/services/apiService';
 
 export default function WelcomeScreen() {
   const [loading, setLoading] = useState(true);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
-  const { loadStoredData } = useAppStore();
+  const { loadStoredData, setUserProfile, saveStoredData } = useAppStore();
   const logoPop = useRef(new Animated.Value(0)).current;
   const fadeContent = useRef(new Animated.Value(0)).current;
 
@@ -34,6 +35,31 @@ export default function WelcomeScreen() {
             }
             return;
           } else {
+            // Check backend before forcing redirect to profile setup
+            try {
+              console.log("Checking backend profile for logged-in user...");
+              const profileResp = await apiService.getProfile();
+              const profileData = profileResp.data;
+              if (profileData && profileData.selected_mode) {
+                console.log("Found profile on backend:", profileData);
+                setUserProfile({
+                  ...profileData,
+                  name: profile.name || profileData.name,
+                  email: profile.email,
+                });
+                await saveStoredData();
+                
+                const mode = profileData.selected_mode.toLowerCase();
+                if (mode === 'gym') {
+                  router.replace('/(tabs)/gym-home');
+                } else {
+                  router.replace('/(health-tabs)/health-home');
+                }
+                return;
+              }
+            } catch (backendErr) {
+              console.log("No profile found on backend, routing to setup:", backendErr);
+            }
             router.replace('/profile-setup');
             return;
           }
