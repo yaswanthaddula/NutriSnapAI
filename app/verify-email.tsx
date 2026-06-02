@@ -19,6 +19,7 @@ export default function VerifyEmailScreen() {
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(60);
+  const isSubmitting = React.useRef(false);
 
   React.useEffect(() => {
     let interval: any;
@@ -31,8 +32,9 @@ export default function VerifyEmailScreen() {
   }, [timer]);
 
   const handleResend = async () => {
-    if (isLoading || timer > 0) return;
+    if (isSubmitting.current || timer > 0) return;
     
+    isSubmitting.current = true;
     setIsLoading(true);
     try {
       if (name && password) {
@@ -47,12 +49,13 @@ export default function VerifyEmailScreen() {
     } catch (error) {
       Alert.alert("Error", "Failed to resend code.");
     } finally {
+      isSubmitting.current = false;
       setIsLoading(false);
     }
   };
 
   const handleVerify = async () => {
-    if (isLoading) return;
+    if (isSubmitting.current) return;
     if (code.length !== 6) {
       Alert.alert("Error", "Please enter the 6-digit code.");
       return;
@@ -63,6 +66,7 @@ export default function VerifyEmailScreen() {
       return;
     }
 
+    isSubmitting.current = true;
     setIsLoading(true);
     try {
       if (name && password) {
@@ -88,6 +92,7 @@ export default function VerifyEmailScreen() {
       const msg = error.response?.data?.detail || "Invalid code. Please try again.";
       Alert.alert("Error", msg);
     } finally {
+      isSubmitting.current = false;
       setIsLoading(false);
     }
   };

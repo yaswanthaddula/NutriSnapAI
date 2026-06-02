@@ -22,13 +22,14 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { setUserProfile, saveStoredData } = useAppStore();
+  const isSubmitting = React.useRef(false);
   
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
   const handleSignUp = async () => {
-    if (isLoading) return;
+    if (isSubmitting.current) return;
     if (!name || !email || !password || !confirmPassword) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
@@ -46,6 +47,7 @@ export default function SignUpScreen() {
       return;
     }
 
+    isSubmitting.current = true;
     setIsLoading(true);
     try {
       const response = await apiService.registerStart(name, email, password);
@@ -94,6 +96,7 @@ export default function SignUpScreen() {
       }
       Alert.alert("Error", errorMsg);
     } finally {
+      isSubmitting.current = false;
       setIsLoading(false);
     }
   };

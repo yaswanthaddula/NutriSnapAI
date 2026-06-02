@@ -147,6 +147,19 @@ def register_verify(request: schemas.RegisterVerifyRequest, req: Request, db: Se
     
     # 1. Verify code
     pending = db.query(models.PendingVerification).filter(models.PendingVerification.email == request.email).first()
+    
+    # Check if user already exists (idempotency fallback for double clicks)
+    existing = db.query(models.User).filter(models.User.email == request.email).first()
+    if existing:
+        print(f"[AUTH ROUTE LOG] POST /register-verify: User already exists, returning existing user")
+        if pending:
+            try:
+                db.delete(pending)
+                db.commit()
+            except Exception:
+                db.rollback()
+        return existing
+
     if not pending or pending.code != request.code:
         print(f"[AUTH ROUTE LOG] POST /register-verify failed: Invalid code")
         raise HTTPException(status_code=400, detail="Invalid verification code")

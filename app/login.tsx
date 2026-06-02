@@ -27,13 +27,14 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [showGoogleAccounts, setShowGoogleAccounts] = useState(false);
   const { setUserProfile, saveStoredData } = useAppStore();
+  const isSubmitting = React.useRef(false);
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
   const handleNext = async () => {
-    if (isLoading) return;
+    if (isSubmitting.current) return;
     if (!email) {
       Alert.alert("Error", "Please enter your email.");
       return;
@@ -43,6 +44,7 @@ export default function LoginScreen() {
       return;
     }
 
+    isSubmitting.current = true;
     setIsLoading(true);
     setEmailError('');
     try {
@@ -56,17 +58,19 @@ export default function LoginScreen() {
       console.error("Check email error details:", error);
       setEmailError("Unable to connect. Please try again.");
     } finally {
+      isSubmitting.current = false;
       setIsLoading(false);
     }
   };
 
   const handleLogin = async () => {
-    if (isLoading) return;
+    if (isSubmitting.current) return;
     if (!password) {
       Alert.alert("Error", "Please enter your password.");
       return;
     }
 
+    isSubmitting.current = true;
     setIsLoading(true);
     try {
       // 1. Call Backend Login
@@ -147,6 +151,7 @@ export default function LoginScreen() {
         Alert.alert(`Error (${status || 'Unknown'})`, msg);
       }
     } finally {
+      isSubmitting.current = false;
       setIsLoading(false);
     }
   };
