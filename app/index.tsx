@@ -10,13 +10,42 @@ import {
   ActivityIndicator 
 } from 'react-native';
 import { router } from 'expo-router';
+import useAppStore from '../src/store/useAppStore';
 
 export default function WelcomeScreen() {
   const [loading, setLoading] = useState(true);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const { loadStoredData } = useAppStore();
   const logoPop = useRef(new Animated.Value(0)).current;
   const fadeContent = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    const checkUserSession = async () => {
+      try {
+        await loadStoredData();
+        const profile = useAppStore.getState().userProfile;
+        if (profile && profile.email) {
+          if (profile.selected_mode) {
+            const mode = profile.selected_mode.toLowerCase();
+            if (mode === 'gym') {
+              router.replace('/(tabs)/gym-home');
+            } else {
+              router.replace('/(health-tabs)/health-home');
+            }
+            return;
+          } else {
+            router.replace('/profile-setup');
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Session check failed", e);
+      } finally {
+        setIsCheckingSession(false);
+      }
+    };
+    checkUserSession();
+
     // Start animations once the component mounts
     Animated.sequence([
       Animated.spring(logoPop, {
@@ -31,6 +60,14 @@ export default function WelcomeScreen() {
       }),
     ]).start();
   }, []);
+
+  if (isCheckingSession) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <ActivityIndicator size="large" color="#00C853" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
