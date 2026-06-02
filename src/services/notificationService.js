@@ -375,9 +375,28 @@ const NOTIFICATION_RULES = [
       }
       return false;
     },
-    mode: 'health'
   }
 ];
+
+const showWebNotification = (title, message) => {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && 'Notification' in window) {
+    const trigger = () => {
+      new window.Notification(`NutriSnap AI: ${title}`, {
+        body: message,
+      });
+    };
+
+    if (window.Notification.permission === 'granted') {
+      trigger();
+    } else if (window.Notification.permission !== 'denied') {
+      window.Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          trigger();
+        }
+      });
+    }
+  }
+};
 
 export const notificationService = {
   triggerEventNotification: async (type) => {
@@ -416,6 +435,7 @@ export const notificationService = {
       });
 
       if (newNotif) {
+        showWebNotification(rule.title, message);
         try {
           await Notifications.scheduleNotificationAsync({
             content: {
@@ -476,6 +496,7 @@ export const notificationService = {
         });
 
         if (newNotif) {
+          showWebNotification(rule.title, message);
           try {
             await Notifications.scheduleNotificationAsync({
               content: {
