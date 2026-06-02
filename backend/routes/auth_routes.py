@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from datetime import timedelta, datetime, timezone
 import random
@@ -142,7 +142,7 @@ def register_start(request: schemas.RegisterStartRequest, db: Session = Depends(
         return res
 
 @router.post("/register-verify", response_model=schemas.UserResponse)
-def register_verify(request: schemas.RegisterVerifyRequest, db: Session = Depends(database.get_db)):
+def register_verify(request: schemas.RegisterVerifyRequest, req: Request, db: Session = Depends(database.get_db)):
     print(f"[AUTH ROUTE LOG] POST /register-verify request: name={request.name}, email={request.email}, code={request.code}")
     
     # 1. Verify code
@@ -155,12 +155,18 @@ def register_verify(request: schemas.RegisterVerifyRequest, db: Session = Depend
         print(f"[AUTH ROUTE LOG] POST /register-verify failed: Expired code")
         raise HTTPException(status_code=400, detail="Verification code expired")
     
+    # Detect platform
+    user_agent = req.headers.get("user-agent", "").lower()
+    is_mobile = "expo" in user_agent or "okhttp" in user_agent or "darwin" in user_agent or "android" in user_agent
+    platform = "app" if is_mobile else "web"
+
     # 2. Create User
     new_user = models.User(
         name=request.name,
         email=request.email,
         password_hash=auth.get_password_hash(request.password),
-        is_verified=1 # verified immediately
+        is_verified=1, # verified immediately
+        last_active_platform=platform
     )
     db.add(new_user)
     
@@ -178,15 +184,19 @@ def register_verify(request: schemas.RegisterVerifyRequest, db: Session = Depend
         raise HTTPException(status_code=400, detail="Registration failed. Email might have been registered in the meantime.")
 
 @router.post("/register-complete", response_model=schemas.UserResponse)
-def register_complete(request: schemas.RegisterVerifyRequest, db: Session = Depends(database.get_db)):
+def register_complete(request: schemas.RegisterVerifyRequest, req: Request, db: Session = Depends(database.get_db)):
     print(f"[AUTH ROUTE LOG] POST /register-complete request: name={request.name}, email={request.email}, code={request.code}")
-    return register_verify(request, db)
+    return register_verify(request, req, db)
 
 
 @router.post("/register", response_model=schemas.UserResponse)
-def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
+def register(user: schemas.UserCreate, req: Request, db: Session = Depends(database.get_db)):
     print(f"[AUTH ROUTE LOG] POST /register request: name={user.name}, email={user.email}")
     try:
+        user_agent = req.headers.get("user-agent", "").lower()
+        is_mobile = "expo" in user_agent or "okhttp" in user_agent or "darwin" in user_agent or "android" in user_agent
+        platform = "app" if is_mobile else "web"
+
         existing_user = db.query(models.User).filter(models.User.email == user.email).first()
         if existing_user:
             if existing_user.is_verified:
@@ -199,6 +209,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
                 existing_user.password_hash = auth.get_password_hash(user.password)
                 existing_user.verification_code = v_code
                 existing_user.verification_code_expires = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=10)
+                existing_user.last_active_platform = platform
                 db.commit()
                 db.refresh(existing_user)
                 
@@ -220,7 +231,8 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
             password_hash=auth.get_password_hash(user.password),
             verification_code=v_code,
             verification_code_expires=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=10),
-            is_verified=0
+            is_verified=0,
+            last_active_platform=platform
         )
         db.add(new_user)
         db.commit()
@@ -252,7 +264,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/verify-email")
-def verify_email(request: schemas.EmailVerificationRequest, db: Session = Depends(database.get_db)):
+def verify_email(request: schemas.EmailVerificationRequest, req: Request, db: Session = Depends(database.get_db)):
     print(f"[AUTH ROUTE LOG] POST /verify-email request: email={request.email}, code={request.code}")
     user = db.query(models.User).filter(models.User.email == request.email).first()
     if not user:
@@ -272,15 +284,18 @@ def verify_email(request: schemas.EmailVerificationRequest, db: Session = Depend
         print(f"[AUTH ROUTE LOG] POST /verify-email failed: Verification code expired")
         raise HTTPException(status_code=400, detail="Verification code expired. Please register again.")
     
+    user_agent = req.headers.get("user-agent", "").lower()
+    is_mobile = "expo" in user_agent or "okhttp" in user_agent or "darwin" in user_agent or "android" in user_agent
+    platform = "app" if is_mobile else "web"
+
     user.is_verified = 1
     user.verification_code = None
     user.verification_code_expires = None
+    user.last_active_platform = platform
     db.commit()
     res = {"detail": "Email verified successfully"}
     print(f"[AUTH ROUTE LOG] POST /verify-email response: {res}")
     return res
-
-from fastapi import Request
 
 @router.post("/login", response_model=schemas.Token)
 def login(request: Request, user_credentials: schemas.UserLogin, db: Session = Depends(database.get_db)):
