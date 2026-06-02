@@ -31,7 +31,7 @@ export default function VerifyEmailScreen() {
   }, [timer]);
 
   const handleResend = async () => {
-    if (timer > 0) return;
+    if (isLoading || timer > 0) return;
     
     setIsLoading(true);
     try {
@@ -52,6 +52,7 @@ export default function VerifyEmailScreen() {
   };
 
   const handleVerify = async () => {
+    if (isLoading) return;
     if (code.length !== 6) {
       Alert.alert("Error", "Please enter the 6-digit code.");
       return;
@@ -108,7 +109,7 @@ export default function VerifyEmailScreen() {
           <View style={styles.inputSection}>
             <Text style={styles.label}>Verification Code</Text>
             <TextInput 
-              style={styles.input} 
+              style={[styles.input, !code && styles.placeholderInput]} 
               placeholder="123456" 
               keyboardType="number-pad"
               maxLength={6}
@@ -161,6 +162,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 10,
     fontWeight: 'bold'
+  },
+  placeholderInput: {
+    fontWeight: 'normal',
+    letterSpacing: 0,
+    fontSize: 16
   },
   timerContainer: {
     alignItems: 'center',

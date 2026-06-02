@@ -33,6 +33,7 @@ export default function LoginScreen() {
   };
 
   const handleNext = async () => {
+    if (isLoading) return;
     if (!email) {
       Alert.alert("Error", "Please enter your email.");
       return;
@@ -60,6 +61,7 @@ export default function LoginScreen() {
   };
 
   const handleLogin = async () => {
+    if (isLoading) return;
     if (!password) {
       Alert.alert("Error", "Please enter your password.");
       return;
