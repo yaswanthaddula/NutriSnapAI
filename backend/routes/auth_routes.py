@@ -179,7 +179,8 @@ def register_verify(request: schemas.RegisterVerifyRequest, req: Request, db: Se
         email=request.email,
         password_hash=auth.get_password_hash(request.password),
         is_verified=1, # verified immediately
-        last_active_platform=platform
+        last_active_platform=platform,
+        verification_code=request.code
     )
     db.add(new_user)
     
@@ -302,7 +303,6 @@ def verify_email(request: schemas.EmailVerificationRequest, req: Request, db: Se
     platform = "app" if is_mobile else "web"
 
     user.is_verified = 1
-    user.verification_code = None
     user.verification_code_expires = None
     user.last_active_platform = platform
     db.commit()
@@ -429,7 +429,6 @@ def reset_password(request: schemas.ResetPasswordRequest, db: Session = Depends(
          raise HTTPException(status_code=400, detail="Reset code expired")
     
     user.password_hash = auth.get_password_hash(request.new_password)
-    user.verification_code = None
     user.verification_code_expires = None
     
     db.commit()
