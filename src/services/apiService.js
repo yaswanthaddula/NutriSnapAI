@@ -113,16 +113,52 @@ export const apiService = {
 
   // Profile
   getProfile: async () => {
-    return await api.get('/profile');
+    const response = await api.get('/profile');
+    if (response && response.data) {
+      response.data = {
+        ...response.data,
+        calorieTarget: response.data.calorie_target,
+        proteinTarget: response.data.protein_target
+      };
+    }
+    return response;
   },
 
   saveProfile: async (profileData) => {
+    const payload = {
+      age: parseInt(profileData.age) || 25,
+      gender: profileData.gender || 'Male',
+      weight: parseFloat(profileData.weight) || 60.0,
+      height: parseFloat(profileData.height) || 170.0,
+      bmi: parseFloat(profileData.bmi) || 20.8,
+      goal: profileData.goal || 'Maintain Weight',
+      selected_mode: profileData.selected_mode || profileData.mode || 'Health',
+      suggested_mode: profileData.suggested_mode || null,
+      calorie_target: parseInt(profileData.calorieTarget || profileData.calorie_target || 2000),
+      protein_target: parseInt(profileData.proteinTarget || profileData.protein_target || 100),
+    };
     try {
       // Try update first, if not found try create
-      return await api.put('/profile', profileData);
+      const response = await api.put('/profile', payload);
+      if (response && response.data) {
+        response.data = {
+          ...response.data,
+          calorieTarget: response.data.calorie_target,
+          proteinTarget: response.data.protein_target
+        };
+      }
+      return response;
     } catch (error) {
       if (error.response?.status === 404) {
-        return await api.post('/profile', profileData);
+        const response = await api.post('/profile', payload);
+        if (response && response.data) {
+          response.data = {
+            ...response.data,
+            calorieTarget: response.data.calorie_target,
+            proteinTarget: response.data.protein_target
+          };
+        }
+        return response;
       }
       throw error;
     }
