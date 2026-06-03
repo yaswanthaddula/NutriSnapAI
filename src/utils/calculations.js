@@ -145,28 +145,45 @@ export const calculateCaloriesBurned = (steps) => {
  * @returns {string} 'Health' or 'Gym'
  */
 export const calculateSuggestedMode = (profileData) => {
-  const { goal, selected_mode, mode } = profileData;
-  const goalStr = (goal || '').toLowerCase();
-  
-  // Gym triggers
+  if (!profileData) return 'Health';
+
+  const age = parseInt(profileData.age) || 25;
+  const height = parseFloat(profileData.height) || 170.0;
+  const weight = parseFloat(profileData.weight) || 60.0;
+  const goalStr = (profileData.goal || '').toLowerCase();
+  const activityStr = (profileData.activityLevel || profileData.activity || '').toLowerCase();
+
+  // Determine BMI
+  let bmi = parseFloat(profileData.bmi);
+  if (!bmi && height && weight) {
+    const heightInMeters = height / 100;
+    bmi = parseFloat((weight / (heightInMeters * heightInMeters)).toFixed(1));
+  }
+
+  // Determine if activity is moderate or high
+  const isActivityHigh = 
+    activityStr === 'active' || 
+    activityStr === 'very active' || 
+    activityStr.includes('moderate') || 
+    activityStr.includes('high') || 
+    activityStr.includes('heavy') ||
+    (activityStr.includes('active') && !activityStr.includes('light'));
+
+  // Gym triggers:
+  // - Goal includes: muscle gain, weight gain, strength building
+  // - Or underweight BMI (e.g. < 18.5)
   const isGymGoal = 
-    goalStr.includes('muscle gain') || 
+    goalStr.includes('muscle') || 
+    goalStr.includes('gain') || 
     goalStr.includes('strength') || 
-    goalStr.includes('gym training') || 
-    goalStr.includes('high protein');
+    goalStr.includes('build') ||
+    (bmi && bmi < 18.5);
 
-  // Health triggers
-  const isHealthGoal = 
-    goalStr.includes('general health') || 
-    goalStr.includes('weight loss') || 
-    goalStr.includes('bmi improvement') || 
-    goalStr.includes('hydration') || 
-    goalStr.includes('walking') || 
-    goalStr.includes('balanced diet');
+  // Gym Mode: Age 18-50 AND (Gym Goal OR High Activity)
+  if (age >= 18 && age <= 50 && (isGymGoal || isActivityHigh)) {
+    return 'Gym';
+  }
 
-  if (isGymGoal) return 'Gym';
-  if (isHealthGoal) return 'Health';
-
-  // If unclear: keep suggested_mode same as selected_mode
-  return selected_mode || 'Health';
+  // Health Mode default otherwise (age > 50, maintain/loss goals, sedentary/light activity)
+  return 'Health';
 };

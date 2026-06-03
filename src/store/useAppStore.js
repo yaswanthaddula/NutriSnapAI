@@ -56,6 +56,7 @@ const useAppStore = create((set, get) => ({
     
     // Ensure capitalization consistency
     if (updated.selected_mode) updated.selected_mode = updated.selected_mode.charAt(0).toUpperCase() + updated.selected_mode.slice(1).toLowerCase();
+    if (updated.suggested_mode) updated.suggested_mode = updated.suggested_mode.charAt(0).toUpperCase() + updated.suggested_mode.slice(1).toLowerCase();
     
     // Recalculate if physical stats changed
     if (profile.weight || profile.height || profile.age || profile.gender || profile.activityLevel || profile.goal) {
@@ -64,7 +65,9 @@ const useAppStore = create((set, get) => ({
       const bmr = calculateBMR(updated.weight, updated.height, updated.age, updated.gender);
       const targets = calculateTargets(bmr, updated.activityLevel, updated.goal, updated.weight);
       
-      const suggested_mode = calculateSuggestedMode(updated);
+      // Preserve suggested_mode if it was passed explicitly (e.g. from backend response), otherwise recalculate
+      let suggested_mode = profile.suggested_mode || calculateSuggestedMode(updated);
+      if (suggested_mode) suggested_mode = suggested_mode.charAt(0).toUpperCase() + suggested_mode.slice(1).toLowerCase();
       
       Object.assign(updated, {
         bmi,
@@ -74,7 +77,11 @@ const useAppStore = create((set, get) => ({
       });
     } else {
       // Even if physical stats didn't change, goal might have changed which affects suggested_mode
-      updated.suggested_mode = calculateSuggestedMode(updated);
+      // But only compute if it was not explicitly provided in the profile argument
+      if (profile.suggested_mode === undefined) {
+        const suggested = calculateSuggestedMode(updated);
+        updated.suggested_mode = suggested.charAt(0).toUpperCase() + suggested.slice(1).toLowerCase();
+      }
     }
 
     if (profile.weight && profile.weight !== current.weight) {
@@ -101,7 +108,15 @@ const useAppStore = create((set, get) => ({
     const bmr = calculateBMR(updated.weight, updated.height, updated.age, updated.gender);
     const targets = calculateTargets(bmr, updated.activityLevel, updated.goal, updated.weight);
     
-    const suggested_mode = calculateSuggestedMode(updated);
+    // Capitalize selected/suggested modes
+    if (updated.selected_mode) updated.selected_mode = updated.selected_mode.charAt(0).toUpperCase() + updated.selected_mode.slice(1).toLowerCase();
+    if (updated.suggested_mode) updated.suggested_mode = updated.suggested_mode.charAt(0).toUpperCase() + updated.suggested_mode.slice(1).toLowerCase();
+
+    let suggested_mode = updated.suggested_mode;
+    if (key === 'age' || key === 'weight' || key === 'height' || key === 'gender' || key === 'activityLevel' || key === 'goal') {
+      const suggested = calculateSuggestedMode(updated);
+      suggested_mode = suggested.charAt(0).toUpperCase() + suggested.slice(1).toLowerCase();
+    }
     
     const finalProfile = {
       ...updated,

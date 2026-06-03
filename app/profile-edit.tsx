@@ -59,7 +59,15 @@ export default function EditProfile() {
     const nWeight = parseFloat(weight) || 60;
 
     // Recalculate suggested mode based on new inputs
-    const nSuggestedMode = calculateSuggestedMode({ goal, selected_mode: userProfile.selected_mode });
+    const nSuggestedMode = calculateSuggestedMode({
+      age: nAge,
+      height: nHeight,
+      weight: nWeight,
+      gender,
+      activityLevel: activity,
+      goal,
+      selected_mode: userProfile.selected_mode
+    });
 
     const updatedProfile = {
       ...userProfile,

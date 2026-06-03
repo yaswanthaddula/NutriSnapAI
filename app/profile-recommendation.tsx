@@ -21,28 +21,34 @@ export default function AIRecommendation() {
   }, []);
 
   // --- NEW AI PREDICTION LOGIC ---
+  const age = parseInt(params.userAge as string) || 25;
+  const bmi = parseFloat(params.bmi as string) || 20.8;
   const goalStr = (params.goal as string || '').toLowerCase();
-  
-  // Gym triggers
-  const isGymGoal = 
-    goalStr.includes('muscle gain') || 
-    goalStr.includes('strength') || 
-    goalStr.includes('gym training') || 
-    goalStr.includes('high protein');
+  const activityStr = (params.activityLevel as string || '').toLowerCase();
 
-  // Health triggers
-  const isHealthGoal = 
-    goalStr.includes('general health') || 
-    goalStr.includes('weight loss') || 
-    goalStr.includes('bmi improvement') || 
-    goalStr.includes('hydration') || 
-    goalStr.includes('walking') || 
-    goalStr.includes('balanced diet');
+  // Determine if activity is moderate or high
+  const isActivityHigh = 
+    activityStr === 'active' || 
+    activityStr === 'very active' || 
+    activityStr.includes('moderate') || 
+    activityStr.includes('high') || 
+    activityStr.includes('heavy') ||
+    (activityStr.includes('active') && !activityStr.includes('light'));
+
+  // Gym triggers: muscle gain, weight gain, strength building, or underweight BMI
+  const isGymGoal = 
+    goalStr.includes('muscle') || 
+    goalStr.includes('gain') || 
+    goalStr.includes('strength') || 
+    goalStr.includes('build') ||
+    (bmi && bmi < 18.5);
 
   let modeKey = 'Health';
-  if (isGymGoal) modeKey = 'Gym';
-  else if (isHealthGoal) modeKey = 'Health';
-  else modeKey = (params.selectedMode as string) || 'Health';
+  if (age >= 18 && age <= 50 && (isGymGoal || isActivityHigh)) {
+    modeKey = 'Gym';
+  } else {
+    modeKey = 'Health';
+  }
 
   const recommendedMode = modeKey + ' Mode';
 

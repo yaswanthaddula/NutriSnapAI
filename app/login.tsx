@@ -88,7 +88,9 @@ export default function LoginScreen() {
         const profileResp = await apiService.getProfile();
         const profileData = profileResp.data;
         
-        console.log("Profile found:", profileData);
+        console.log("Backend profile:", profileData);
+        console.log("Selected mode:", profileData.selected_mode);
+        console.log("Suggested mode:", profileData.suggested_mode);
 
         // Save profile to store with recalculated fields
         setUserProfile({
