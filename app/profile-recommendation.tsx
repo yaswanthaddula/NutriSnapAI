@@ -22,32 +22,78 @@ export default function AIRecommendation() {
 
   // --- NEW AI PREDICTION LOGIC ---
   const age = parseInt(params.userAge as string) || 25;
+  const gender = (params.userGender as string || 'Male').toLowerCase();
   const bmi = parseFloat(params.bmi as string) || 20.8;
   const goalStr = (params.goal as string || '').toLowerCase();
   const activityStr = (params.activityLevel as string || '').toLowerCase();
 
-  // Determine if activity is moderate or high
-  const isActivityHigh = 
-    activityStr === 'active' || 
-    activityStr === 'very active' || 
-    activityStr.includes('moderate') || 
-    activityStr.includes('high') || 
-    activityStr.includes('heavy') ||
-    (activityStr.includes('active') && !activityStr.includes('light'));
-
-  // Gym triggers: muscle gain, weight gain, strength building, or underweight BMI
+  // Gym Goal triggers
   const isGymGoal = 
     goalStr.includes('muscle') || 
-    goalStr.includes('gain') || 
     goalStr.includes('strength') || 
+    goalStr.includes('gain') || 
     goalStr.includes('build') ||
-    (bmi && bmi < 18.5);
+    goalStr.includes('workout') ||
+    goalStr.includes('transform');
+
+  // Health Goal triggers
+  const isHealthGoal = 
+    goalStr.includes('maintain') || 
+    goalStr.includes('lose') || 
+    goalStr.includes('loss') || 
+    goalStr.includes('general health') || 
+    goalStr.includes('wellness') || 
+    goalStr.includes('hydration') || 
+    goalStr.includes('sleep') || 
+    goalStr.includes('improvement') ||
+    goalStr.includes('health');
 
   let modeKey = 'Health';
-  if (age >= 18 && age <= 50 && (isGymGoal || isActivityHigh)) {
+
+  // Priority 1: Goal (Highest Priority)
+  if (isGymGoal && !isHealthGoal) {
     modeKey = 'Gym';
-  } else {
+  } else if (isHealthGoal && !isGymGoal) {
     modeKey = 'Health';
+  } else {
+    // Priority 2: Activity Level
+    const isActivityHigh = 
+      activityStr === 'active' || 
+      activityStr === 'very active' || 
+      activityStr.includes('moderate') || 
+      activityStr.includes('high') || 
+      activityStr.includes('heavy') ||
+      (activityStr.includes('active') && !activityStr.includes('light'));
+
+    const isActivityLow = 
+      activityStr.includes('sedentary') || 
+      activityStr.includes('light') || 
+      activityStr.includes('low');
+
+    if (isActivityHigh) {
+      modeKey = 'Gym';
+    } else if (isActivityLow) {
+      modeKey = 'Health';
+    } else {
+      // Priority 3: BMI
+      if (bmi < 18.5) {
+        modeKey = 'Gym';
+      } else if (bmi >= 25.0) {
+        modeKey = 'Health';
+      } else {
+        // Priority 4: Age
+        if (age > 50) {
+          modeKey = 'Health';
+        } else {
+          // Priority 5: Gender / Fallback
+          if (isGymGoal && isHealthGoal && gender === 'male') {
+            modeKey = 'Gym';
+          } else {
+            modeKey = 'Health';
+          }
+        }
+      }
+    }
   }
 
   const recommendedMode = modeKey + ' Mode';

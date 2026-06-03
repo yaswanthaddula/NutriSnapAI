@@ -148,6 +148,7 @@ export const calculateSuggestedMode = (profileData) => {
   if (!profileData) return 'Health';
 
   const age = parseInt(profileData.age) || 25;
+  const gender = (profileData.gender || 'Male').toLowerCase();
   const height = parseFloat(profileData.height) || 170.0;
   const weight = parseFloat(profileData.weight) || 60.0;
   const goalStr = (profileData.goal || '').toLowerCase();
@@ -159,8 +160,40 @@ export const calculateSuggestedMode = (profileData) => {
     const heightInMeters = height / 100;
     bmi = parseFloat((weight / (heightInMeters * heightInMeters)).toFixed(1));
   }
+  if (!bmi) bmi = 21.2;
 
-  // Determine if activity is moderate or high
+  // Gym Goal triggers
+  const isGymGoal = 
+    goalStr.includes('muscle') || 
+    goalStr.includes('strength') || 
+    goalStr.includes('gain') || 
+    goalStr.includes('build') ||
+    goalStr.includes('workout') ||
+    goalStr.includes('transform');
+
+  // Health Goal triggers
+  const isHealthGoal = 
+    goalStr.includes('maintain') || 
+    goalStr.includes('lose') || 
+    goalStr.includes('loss') || 
+    goalStr.includes('general health') || 
+    goalStr.includes('wellness') || 
+    goalStr.includes('hydration') || 
+    goalStr.includes('sleep') || 
+    goalStr.includes('improvement') ||
+    goalStr.includes('health');
+
+  // Priority 1: Goal (Highest Priority)
+  // If user explicitly has a Gym-focused goal, suggest Gym
+  if (isGymGoal && !isHealthGoal) {
+    return 'Gym';
+  }
+  // If user explicitly has a Health-focused goal, suggest Health
+  if (isHealthGoal && !isGymGoal) {
+    return 'Health';
+  }
+
+  // Priority 2: Activity Level
   const isActivityHigh = 
     activityStr === 'active' || 
     activityStr === 'very active' || 
@@ -169,21 +202,36 @@ export const calculateSuggestedMode = (profileData) => {
     activityStr.includes('heavy') ||
     (activityStr.includes('active') && !activityStr.includes('light'));
 
-  // Gym triggers:
-  // - Goal includes: muscle gain, weight gain, strength building
-  // - Or underweight BMI (e.g. < 18.5)
-  const isGymGoal = 
-    goalStr.includes('muscle') || 
-    goalStr.includes('gain') || 
-    goalStr.includes('strength') || 
-    goalStr.includes('build') ||
-    (bmi && bmi < 18.5);
+  const isActivityLow = 
+    activityStr.includes('sedentary') || 
+    activityStr.includes('light') || 
+    activityStr.includes('low');
 
-  // Gym Mode: Age 18-50 AND (Gym Goal OR High Activity)
-  if (age >= 18 && age <= 50 && (isGymGoal || isActivityHigh)) {
+  if (isActivityHigh) {
     return 'Gym';
   }
+  if (isActivityLow) {
+    return 'Health';
+  }
 
-  // Health Mode default otherwise (age > 50, maintain/loss goals, sedentary/light activity)
+  // Priority 3: BMI
+  if (bmi < 18.5) {
+    return 'Gym'; // Underweight suggests Gym Mode for weight/muscle gain
+  }
+  if (bmi >= 25.0) {
+    return 'Health'; // Overweight/Obese suggests Health Mode for weight management
+  }
+
+  // Priority 4: Age
+  if (age > 50) {
+    return 'Health';
+  }
+
+  // Priority 5: Gender / Fallback
+  if (isGymGoal && isHealthGoal) {
+    if (gender === 'male') return 'Gym';
+    return 'Health';
+  }
+
   return 'Health';
 };
