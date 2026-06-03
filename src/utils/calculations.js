@@ -40,8 +40,8 @@ export const getHealthyWeightRange = (height) => {
  * @returns {string}
  */
 export const detectGoal = (bmi) => {
-  if (bmi < 18.5) return 'Gain Weight';
-  if (bmi > 24.9) return 'Lose Weight';
+  if (bmi < 18.5) return 'Weight Gain';
+  if (bmi > 24.9) return 'Weight Loss';
   return 'Maintain Weight';
 };
 
@@ -75,15 +75,16 @@ export const calculateTargets = (bmr, activityLevel, goal, weight) => {
 
   let calorieTarget = bmr * multiplier;
 
-  if (goal === 'Lose Weight') calorieTarget -= 500;
-  if (goal === 'Gain Weight') calorieTarget += 500;
+  const goalLower = (goal || '').toLowerCase();
+  if (goalLower.includes('loss') || goalLower.includes('lose')) calorieTarget -= 500;
+  if (goalLower.includes('gain')) calorieTarget += 500;
 
   calorieTarget = Math.round(calorieTarget);
 
   // Protein calculation: typically 1.6-2.2g per kg depending on goal
   let proteinMultiplier = 1.8;
-  if (goal === 'Lose Weight') proteinMultiplier = 2.0; 
-  if (goal === 'Gain Weight') proteinMultiplier = 1.6; 
+  if (goalLower.includes('loss') || goalLower.includes('lose')) proteinMultiplier = 2.0; 
+  if (goalLower.includes('gain')) proteinMultiplier = 1.6; 
 
   const proteinTarget = Math.round(weight * proteinMultiplier);
   
@@ -164,23 +165,26 @@ export const calculateSuggestedMode = (profileData) => {
 
   // Gym Goal triggers
   const isGymGoal = 
-    goalStr.includes('muscle') || 
+    goalStr.includes('weight gain') || 
+    goalStr.includes('muscle gain') || 
+    goalStr.includes('fitness improvement') ||
     goalStr.includes('strength') || 
-    goalStr.includes('gain') || 
     goalStr.includes('build') ||
     goalStr.includes('workout') ||
-    goalStr.includes('transform');
+    goalStr.includes('transform') ||
+    (goalStr.includes('gain') && !goalStr.includes('loss') && !goalStr.includes('lose'));
 
   // Health Goal triggers
   const isHealthGoal = 
-    goalStr.includes('maintain') || 
+    goalStr.includes('weight loss') || 
+    goalStr.includes('maintain weight') || 
+    goalStr.includes('general health') ||
     goalStr.includes('lose') || 
     goalStr.includes('loss') || 
-    goalStr.includes('general health') || 
+    goalStr.includes('maintain') || 
     goalStr.includes('wellness') || 
     goalStr.includes('hydration') || 
     goalStr.includes('sleep') || 
-    goalStr.includes('improvement') ||
     goalStr.includes('health');
 
   // Priority 1: Goal (Highest Priority)

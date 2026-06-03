@@ -31,16 +31,16 @@ export default function SmartAnalysis() {
 
     if (finalBmi < 18.5) {
       status = 'Underweight';
-      goal = 'Gain Weight';
+      goal = 'Weight Gain';
     } else if (finalBmi >= 18.5 && finalBmi <= 24.9) {
       status = 'Normal';
-      goal = 'Maintain';
+      goal = 'Maintain Weight';
     } else if (finalBmi >= 25 && finalBmi <= 29.9) {
       status = 'Overweight';
-      goal = 'Lose Weight';
+      goal = 'Weight Loss';
     } else {
       status = 'Obese';
-      goal = 'Lose Weight';
+      goal = 'Weight Loss';
     }
 
     // 3. Mifflin-St Jeor (Calories)
@@ -49,8 +49,9 @@ export default function SmartAnalysis() {
     const maintenance = bmr * multiplier;
 
     let targetCals = maintenance;
-    if (goal === 'Gain Weight') targetCals += 400;
-    if (goal === 'Lose Weight') targetCals -= 400;
+    const goalLower = goal.toLowerCase();
+    if (goalLower.includes('gain')) targetCals += 400;
+    if (goalLower.includes('loss') || goalLower.includes('lose')) targetCals -= 400;
 
     // 4. Protein (Gym vs Health mode)
     const proteinFactor = params.selectedMode === 'Gym' ? 1.8 : 1.3;

@@ -185,8 +185,28 @@ export default function EditProfile() {
             <TextInput 
                 style={[styles.input, { backgroundColor: theme.input, color: theme.text, borderColor: theme.border }]} 
                 value={goal} onChangeText={setGoal} 
-                placeholder="e.g. Maintain Weight, Lose Weight, Gain Weight"
+                placeholder="e.g. Maintain Weight, Weight Loss, Weight Gain, General Health, Muscle Gain, Fitness Improvement"
             />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 10 }}>
+              {["Weight Gain", "Weight Loss", "Maintain Weight", "General Health", "Muscle Gain", "Fitness Improvement"].map((g) => (
+                <TouchableOpacity 
+                  key={g} 
+                  onPress={() => setGoal(g)}
+                  style={{
+                    backgroundColor: goal === g ? '#00C853' : (isDark ? '#2D2D2D' : '#F0F2F5'),
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 20,
+                    marginRight: 8,
+                    marginBottom: 8,
+                    borderWidth: 1,
+                    borderColor: goal === g ? '#00C853' : (isDark ? '#444' : '#E4E6EB'),
+                  }}
+                >
+                  <Text style={{ color: goal === g ? '#FFF' : theme.text, fontSize: 12, fontWeight: 'bold' }}>{g}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
             <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
               <Text style={styles.saveBtnText}>Save Changes</Text>

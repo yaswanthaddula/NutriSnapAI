@@ -103,10 +103,11 @@ export const foodSuggestionService = {
       let tweakedMeal = { ...meal };
       
       // Goal logic
-      if (userProfile.goal === 'Lose Weight') {
+      const goalLower = (userProfile.goal || '').toLowerCase();
+      if (goalLower.includes('loss') || goalLower.includes('lose')) {
         tweakedMeal.name = `Light ${tweakedMeal.name}`;
         tweakedMeal.kcal = Math.round(tweakedMeal.kcal * 0.85);
-      } else if (userProfile.goal === 'Gain Muscle') {
+      } else if (goalLower.includes('gain') || goalLower.includes('muscle')) {
         tweakedMeal.name = `Strong ${tweakedMeal.name}`;
         tweakedMeal.kcal = Math.round(tweakedMeal.kcal * 1.2);
         tweakedMeal.protein = `${parseInt(tweakedMeal.protein) + 5}g`;

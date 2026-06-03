@@ -175,7 +175,8 @@ const NOTIFICATION_RULES = [
       const target = state.userProfile.calorieTarget || 2000;
       const remaining = target - consumed;
 
-      if (now.getHours() >= 20 && remaining > 200 && state.userProfile.goal !== 'Lose Weight') {
+      const goalLower = (state.userProfile.goal || '').toLowerCase();
+      if (now.getHours() >= 20 && remaining > 200 && !goalLower.includes('loss') && !goalLower.includes('lose')) {
         return { message: `You are ${Math.round(remaining)} kcal below today's target. Fuel your gains!` };
       }
       return false;

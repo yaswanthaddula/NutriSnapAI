@@ -29,23 +29,26 @@ export default function AIRecommendation() {
 
   // Gym Goal triggers
   const isGymGoal = 
-    goalStr.includes('muscle') || 
+    goalStr.includes('weight gain') || 
+    goalStr.includes('muscle gain') || 
+    goalStr.includes('fitness improvement') ||
     goalStr.includes('strength') || 
-    goalStr.includes('gain') || 
     goalStr.includes('build') ||
     goalStr.includes('workout') ||
-    goalStr.includes('transform');
+    goalStr.includes('transform') ||
+    (goalStr.includes('gain') && !goalStr.includes('loss') && !goalStr.includes('lose'));
 
   // Health Goal triggers
   const isHealthGoal = 
-    goalStr.includes('maintain') || 
+    goalStr.includes('weight loss') || 
+    goalStr.includes('maintain weight') || 
+    goalStr.includes('general health') ||
     goalStr.includes('lose') || 
     goalStr.includes('loss') || 
-    goalStr.includes('general health') || 
+    goalStr.includes('maintain') || 
     goalStr.includes('wellness') || 
     goalStr.includes('hydration') || 
     goalStr.includes('sleep') || 
-    goalStr.includes('improvement') ||
     goalStr.includes('health');
 
   let modeKey = 'Health';
