@@ -14,7 +14,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 
-import { isScannerReady } from '../../src/services/scannerGeminiService';
+import { isScannerReady, setTempCapturedImageWeb } from '../../src/services/scannerGeminiService';
 
 export default function TabCameraScreen() {
   const params = useLocalSearchParams(); // Catch the 'fromMode' from Health Home
@@ -79,13 +79,22 @@ export default function TabCameraScreen() {
           throw new Error('Camera captured an invalid photo object');
         }
 
+        console.log("Photo Captured");
+        console.log("Image URI Generated");
+
         setCooldownTime(4); // Start 4s countdown
+
+        let finalUri = photo.uri;
+        if (Platform.OS === 'web') {
+          setTempCapturedImageWeb(photo.uri);
+          finalUri = 'captured-web';
+        }
 
         // Pass the photo URI to analysis screen
         router.push({
           pathname: '/food-analysis',
           params: { 
-            imageUri: photo.uri,
+            imageUri: finalUri,
             fromMode: params.fromMode || 'health'
           }
         });
@@ -133,7 +142,10 @@ export default function TabCameraScreen() {
         facing="back" 
         enableTorch={torch}
         ref={cameraRef}
-        onCameraReady={() => setIsCameraReady(true)}
+        onCameraReady={() => {
+          setIsCameraReady(true);
+          console.log("Camera Opened");
+        }}
       >
         <SafeAreaView style={styles.overlay}>
           

@@ -5,6 +5,21 @@ import { SCANNER_GEMINI_API_KEY, SCANNER_GEMINI_API_KEY_ALT } from '../config/ap
 let isScanning = false;
 let cooldownActive = false;
 
+// Web-only captured image cache to prevent routing crash with large base64 strings
+let tempCapturedImageWeb = null;
+
+export const setTempCapturedImageWeb = (uri) => {
+  tempCapturedImageWeb = uri;
+};
+
+export const getTempCapturedImageWeb = () => {
+  return tempCapturedImageWeb;
+};
+
+export const clearTempCapturedImageWeb = () => {
+  tempCapturedImageWeb = null;
+};
+
 const SCANNER_PROMPT = `Analyze this food image and identify the primary food item.
 Return ONLY valid JSON in this exact format:
 {
@@ -22,7 +37,12 @@ Do NOT include any other text or markdown formatting.`;
  */
 const getBase64FromUri = async (imageUri) => {
   if (Platform.OS === 'web') {
+    if (imageUri.startsWith('data:')) {
+      console.log("Blob Created");
+      return imageUri.split(',')[1];
+    }
     // Browser: fetch the blob and convert to base64 via FileReader
+    console.log("Blob Created: fetching image blob for conversion");
     const response = await fetch(imageUri);
     const blob = await response.blob();
     return new Promise((resolve, reject) => {
@@ -56,6 +76,12 @@ export const analyzeImage = async (imageUri) => {
 
   isScanning = true;
 
+  // Resolve cached web camera image
+  let resolvedUri = imageUri;
+  if (Platform.OS === 'web' && imageUri === 'captured-web') {
+    resolvedUri = getTempCapturedImageWeb() || '';
+  }
+
   const callApi = async (modelName, base64Image, apiKey) => {
     const body = {
       contents: [{
@@ -70,6 +96,7 @@ export const analyzeImage = async (imageUri) => {
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
+      console.log("AI Request Started");
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
         {
@@ -90,7 +117,7 @@ export const analyzeImage = async (imageUri) => {
 
   try {
     // Get base64 image — works on both web and native
-    const base64Image = await getBase64FromUri(imageUri);
+    const base64Image = await getBase64FromUri(resolvedUri);
 
     if (!base64Image) {
       throw new Error('Could not read image. Please try a different photo.');
@@ -120,6 +147,7 @@ export const analyzeImage = async (imageUri) => {
               }
               const parsed = JSON.parse(cleanedText);
               if (parsed.food_name) {
+                console.log("AI Response Received");
                 startCooldown();
                 isScanning = false;
                 return {

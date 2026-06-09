@@ -15,7 +15,15 @@ import {
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { foodDatabase } from '../src/data/foodDatabase';
-import { categorizeFood, getUnitsByCategory, getPresetsByUnit, getNutritionMultiplier } from '../src/utils/foodCategorizer';
+import { 
+  categorizeFood, 
+  getUnitsByCategory, 
+  getPresetsByUnit, 
+  getNutritionMultiplier,
+  getSmartQuantityOptions,
+  pluralizeFood
+} from '../src/utils/foodCategorizer';
+import { getTempCapturedImageWeb } from '../src/services/scannerGeminiService';
 
 export default function FoodQuantityScreen() {
   const params = useLocalSearchParams();
@@ -23,7 +31,8 @@ export default function FoodQuantityScreen() {
   const foodName = (params.food_name as string) || (params.foodName as string) || 'Food Item';
   const emoji = (params.emoji as string) || '🍽️';
   const fromMode = params.fromMode; 
-  const foodImage = params.imageUri as string || params.foodImage as string;
+  const rawImageUri = params.imageUri as string || params.foodImage as string;
+  const foodImage = (Platform.OS === 'web' && rawImageUri === 'captured-web') ? getTempCapturedImageWeb() : rawImageUri;
 
   // 1. SMART CATEGORY DETECTION
   const category = useMemo(() => categorizeFood(foodName), [foodName]);
@@ -32,26 +41,45 @@ export default function FoodQuantityScreen() {
   const foodInfo = useMemo(() => foodDatabase.find(f => f.name.toLowerCase() === foodName.toLowerCase()), [foodName]);
 
   const availableUnits = useMemo(() => {
-    let units = getUnitsByCategory(category);
-    const isCountItem = foodInfo?.unit?.toLowerCase().includes('medium') || 
-                        foodInfo?.unit?.toLowerCase().includes('large') || 
-                        foodInfo?.unit?.toLowerCase().includes('plain') ||
-                        foodInfo?.unit?.toLowerCase().includes('piece') ||
-                        foodName.toLowerCase().match(/(egg|banana|apple|chapati|roti|idli|dosa|burger|pizza|sandwich|taco|donut|cookie|fruit|pieces)/);
-    
-    if (isCountItem) {
-      // Put 'pieces' at the beginning of the available units
-      units = ['pieces', ...units.filter(u => u !== 'pieces')];
+    return getUnitsByCategory(category);
+  }, [category]);
+
+  const smartOptions = useMemo(() => getSmartQuantityOptions(foodName, category), [foodName, category]);
+
+  // Determine initial unit and quantity
+  const initialConfig = useMemo(() => {
+    switch (category) {
+      case 'Whole Foods':
+        return { unit: 'pieces', quantity: 1 };
+      case 'Sliced / Cut Foods':
+        return { unit: 'grams', quantity: 100 };
+      case 'Cooked Meals':
+        return { unit: 'grams', quantity: 150 };
+      case 'Liquids':
+        return { unit: 'ml', quantity: 250 };
+      case 'Packaged Foods':
+        return { unit: 'packet', quantity: 1 };
+      default:
+        return { unit: 'grams', quantity: 100 };
     }
-    return units;
-  }, [category, foodName, foodInfo]);
+  }, [category]);
+
+  const [selectedUnit, setSelectedUnit] = useState(initialConfig.unit);
+  const [quantity, setQuantity] = useState(initialConfig.quantity);
+  const [isCustomActive, setIsCustomActive] = useState(false);
+
+  React.useEffect(() => {
+    setSelectedUnit(initialConfig.unit);
+    setQuantity(initialConfig.quantity);
+    setIsCustomActive(false);
+  }, [foodName, initialConfig]);
   
-  const [selectedUnit, setSelectedUnit] = useState(availableUnits[0]);
-  const presets = useMemo(() => getPresetsByUnit(selectedUnit), [selectedUnit]);
-  
-  const [quantity, setQuantity] = useState(presets[2] || presets[0] || 1);
-  
-  const baseUnitType = foodInfo?.unit?.toLowerCase().includes('g') ? 'grams' : (foodInfo?.unit?.toLowerCase().includes('ml') ? 'ml' : 'count');
+  const baseUnitType = useMemo(() => {
+    if (foodInfo?.unit) {
+      return foodInfo.unit.toLowerCase().includes('g') ? 'grams' : (foodInfo.unit.toLowerCase().includes('ml') ? 'ml' : 'count');
+    }
+    return category === 'Liquids' ? 'ml' : (category === 'Whole Foods' ? 'count' : 'grams');
+  }, [foodInfo, category]);
 
   const baseCalories = foodInfo?.calories || parseFloat(String(params.calories || '100'));
   const baseProtein = foodInfo?.protein || parseFloat(String(params.protein || '5'));
@@ -59,7 +87,7 @@ export default function FoodQuantityScreen() {
   const baseFat = foodInfo?.fat || parseFloat(String(params.fat || '2'));
   
   // 3. SMART MULTIPLIER
-  const multiplier = getNutritionMultiplier(quantity, selectedUnit, baseUnitType);
+  const multiplier = getNutritionMultiplier(quantity, selectedUnit, baseUnitType, foodName);
 
   const liveCalories = Math.round(baseCalories * multiplier);
   const liveProtein = (baseProtein * multiplier).toFixed(1);
@@ -75,8 +103,22 @@ export default function FoodQuantityScreen() {
   const handleUnitChange = (unit: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setSelectedUnit(unit);
-    const newPresets = getPresetsByUnit(unit);
-    setQuantity(newPresets[2] || newPresets[0] || 1);
+    const presets = getPresetsByUnit(unit);
+    setQuantity(presets[2] || presets[0] || 1);
+  };
+
+  const getSelectedQuantityText = () => {
+    if (selectedUnit === 'pieces' || selectedUnit === 'piece') {
+      if (quantity === 0.5) return `1/2 ${foodName}`;
+      return `${quantity} ${quantity > 1 ? pluralizeFood(foodName) : foodName}`;
+    }
+    if (selectedUnit === 'litre') {
+      return `${quantity} ${quantity > 1 ? 'litres' : 'litre'}`;
+    }
+    if (selectedUnit === 'packet') {
+      return `${quantity} ${quantity > 1 ? 'packets' : 'packet'}`;
+    }
+    return `${quantity}${selectedUnit}`;
   };
 
   return (
@@ -102,8 +144,11 @@ export default function FoodQuantityScreen() {
             </View>
             <Text style={styles.foodName}>{foodName}</Text>
             <View style={styles.categoryBadge}>
-              <Text style={styles.categoryText}>{category.replace('_', ' ').toUpperCase()}</Text>
+              <Text style={styles.categoryText}>{category.toUpperCase()}</Text>
             </View>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: '#011627', marginTop: 14 }}>
+              Selected: {getSelectedQuantityText()}
+            </Text>
           </View>
 
           {/* LIVE NUTRITION PREVIEW */}
@@ -135,69 +180,95 @@ export default function FoodQuantityScreen() {
             </View>
           </View>
 
-          {/* UNIT SELECTOR */}
-          <Text style={styles.sectionLabel}>Measurement Unit</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.unitScroll}>
-            {availableUnits.map((unit) => (
-              <TouchableOpacity 
-                key={unit}
-                style={[styles.unitChip, selectedUnit === unit && styles.unitChipActive]}
-                onPress={() => handleUnitChange(unit)}
-              >
-                <Text style={[styles.unitChipText, selectedUnit === unit && styles.unitChipTextActive]}>
-                  {unit.charAt(0).toUpperCase() + unit.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          {/* PRESETS */}
-          <Text style={styles.sectionLabel}>Quick Select</Text>
+          {/* SMART OPTIONS */}
+          <Text style={styles.sectionLabel}>Quantity Options</Text>
           <View style={styles.presetRow}>
-            {presets.map((val) => (
-              <TouchableOpacity 
-                key={val}
-                style={[styles.presetBtn, quantity === val && styles.presetBtnActive]} 
-                onPress={() => handleQuantityChange(val)}
-              >
-                <Text style={[styles.presetText, quantity === val && styles.presetTextActive]}>
-                  {val}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {smartOptions.map((opt, index) => {
+              const isActive = opt.value === 'custom' 
+                ? isCustomActive 
+                : (!isCustomActive && quantity === opt.value && selectedUnit === opt.unit);
+
+              return (
+                <TouchableOpacity 
+                  key={index}
+                  style={[
+                    styles.presetBtn, 
+                    isActive && styles.presetBtnActive,
+                    opt.value === 'custom' && { borderColor: '#E5E7EB' },
+                    smartOptions.length > 5 && { width: '31%', marginRight: '2%', marginBottom: 10 }
+                  ]} 
+                  onPress={() => {
+                    if (opt.value === 'custom') {
+                      setIsCustomActive(true);
+                    } else if (opt.value === 'custom_grams') {
+                      setIsCustomActive(true);
+                      setSelectedUnit('grams');
+                      setQuantity(50);
+                    } else {
+                      setIsCustomActive(false);
+                      setSelectedUnit(opt.unit);
+                      setQuantity(opt.value as number);
+                    }
+                  }}
+                >
+                  <Text style={[styles.presetText, isActive && styles.presetTextActive, { fontSize: 13, textAlign: 'center' }]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           {/* CUSTOM ADJUSTMENT */}
-          <Text style={styles.sectionLabel}>Custom Amount</Text>
-          <View style={styles.adjustContainer}>
-            <TouchableOpacity 
-              style={styles.adjustBtn} 
-              onPress={() => handleQuantityChange(Math.max(0, quantity - (['grams', 'ml'].includes(selectedUnit) ? 10 : 0.5)))}
-            >
-              <Ionicons name="remove" size={24} color="#00C853" />
-            </TouchableOpacity>
-            
-            <View style={styles.qtyDisplay}>
-              <TextInput 
-                style={styles.qtyInput}
-                keyboardType="numeric"
-                value={String(quantity)}
-                onChangeText={(text) => {
-                  const val = parseFloat(text);
-                  if (!isNaN(val)) setQuantity(val);
-                  else if (text === '') setQuantity(0);
-                }}
-              />
-              <Text style={styles.unitSuffix}>{selectedUnit}</Text>
+          {isCustomActive && (
+            <View>
+              <Text style={styles.sectionLabel}>Measurement Unit</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.unitScroll}>
+                {availableUnits.map((unit) => (
+                  <TouchableOpacity 
+                    key={unit}
+                    style={[styles.unitChip, selectedUnit === unit && styles.unitChipActive]}
+                    onPress={() => handleUnitChange(unit)}
+                  >
+                    <Text style={[styles.unitChipText, selectedUnit === unit && styles.unitChipTextActive]}>
+                      {unit.charAt(0).toUpperCase() + unit.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              <Text style={styles.sectionLabel}>Custom Amount</Text>
+              <View style={styles.adjustContainer}>
+                <TouchableOpacity 
+                  style={styles.adjustBtn} 
+                  onPress={() => handleQuantityChange(Math.max(0, quantity - (['grams', 'ml'].includes(selectedUnit) ? 10 : 0.5)))}
+                >
+                  <Ionicons name="remove" size={24} color="#00C853" />
+                </TouchableOpacity>
+                
+                <View style={styles.qtyDisplay}>
+                  <TextInput 
+                    style={styles.qtyInput}
+                    keyboardType="numeric"
+                    value={String(quantity)}
+                    onChangeText={(text) => {
+                      const val = parseFloat(text);
+                      if (!isNaN(val)) setQuantity(val);
+                      else if (text === '') setQuantity(0);
+                    }}
+                  />
+                  <Text style={styles.unitSuffix}>{selectedUnit}</Text>
+                </View>
+                
+                <TouchableOpacity 
+                  style={styles.adjustBtn} 
+                  onPress={() => handleQuantityChange(quantity + (['grams', 'ml'].includes(selectedUnit) ? 10 : 0.5))}
+                >
+                  <Ionicons name="add" size={24} color="#00C853" />
+                </TouchableOpacity>
+              </View>
             </View>
-            
-            <TouchableOpacity 
-              style={styles.adjustBtn} 
-              onPress={() => handleQuantityChange(quantity + (['grams', 'ml'].includes(selectedUnit) ? 10 : 0.5))}
-            >
-              <Ionicons name="add" size={24} color="#00C853" />
-            </TouchableOpacity>
-          </View>
+          )}
 
           <TouchableOpacity 
             style={[styles.continueBtn, quantity <= 0 && styles.btnDisabled]} 

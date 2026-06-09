@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import apiService from '../src/services/apiService';
+import { getNutritionMultiplier, categorizeFood } from '../src/utils/foodCategorizer';
 
 export default function HealthNutritionScreen() {
   const params = useLocalSearchParams();
@@ -32,12 +33,14 @@ export default function HealthNutritionScreen() {
   const baseCarbs = parseFloat(String(params.carbs || '25')) || 25;
   const baseFat = parseFloat(String(params.fat || '0.3')) || 0.3;
   
-  // Since FatSecret base values are per the selected serving description,
-  // we just multiply by the quantity selected.
-  const finalCalories = Math.round(baseCalories * quantity);
-  const finalProtein = (baseProtein * quantity).toFixed(1);
-  const finalCarbs = (baseCarbs * quantity).toFixed(1);
-  const finalFat = (baseFat * quantity).toFixed(1);
+  const category = categorizeFood(foodName);
+  const baseUnitType = category === 'Liquids' ? 'ml' : (category === 'Whole Foods' ? 'count' : 'grams');
+  const multiplier = getNutritionMultiplier(quantity, unit, baseUnitType, foodName);
+  
+  const finalCalories = Math.round(baseCalories * multiplier);
+  const finalProtein = (baseProtein * multiplier).toFixed(1);
+  const finalCarbs = (baseCarbs * multiplier).toFixed(1);
+  const finalFat = (baseFat * multiplier).toFixed(1);
 
   const handleSaveMeal = async () => {
     import('../src/store/useAppStore').then(async ({ default: useAppStore }) => {

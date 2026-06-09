@@ -12,12 +12,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { analyzeImage } from '../src/services/scannerGeminiService';
+import { analyzeImage, getTempCapturedImageWeb } from '../src/services/scannerGeminiService';
 import { searchFoods, getFoodDetail } from '../src/services/fatSecretService';
 
 export default function FoodAnalysisScreen() {
   const params = useLocalSearchParams();
-  const imageUri = params.imageUri as string;
+  const rawImageUri = params.imageUri as string;
+  const resolvedImageUri = (Platform.OS === 'web' && rawImageUri === 'captured-web') ? getTempCapturedImageWeb() : rawImageUri;
+
   const [currentStep, setCurrentStep] = useState(1); // 1: Analyzing, 2: Getting Data, 3: Ready
   const [detectionResult, setDetectionResult] = useState<any>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -29,13 +31,13 @@ export default function FoodAnalysisScreen() {
       useNativeDriver: true,
     }).start();
 
-    if (!imageUri) return;
+    if (!rawImageUri) return;
 
     const performAnalysis = async () => {
       try {
         // STEP 1: Analyzing
         setCurrentStep(1);
-        const result = await analyzeImage(imageUri);
+        const result = await analyzeImage(rawImageUri);
         
         // STEP 2: Getting Data
         setCurrentStep(2);
@@ -54,7 +56,7 @@ export default function FoodAnalysisScreen() {
     };
 
     performAnalysis();
-  }, [imageUri]);
+  }, [rawImageUri]);
 
   const renderCheckItem = (stepNumber: number, label: string) => {
     const isCompleted = currentStep > stepNumber || currentStep === 3;
@@ -98,9 +100,9 @@ export default function FoodAnalysisScreen() {
         <View style={styles.photoContainer}>
           <View style={styles.photoShadow}>
             <View style={styles.photoFrame}>
-              {imageUri ? (
+              {resolvedImageUri ? (
                 <Image 
-                  source={{ uri: imageUri }} 
+                  source={{ uri: resolvedImageUri }} 
                   style={styles.photo} 
                   resizeMode="cover"
                 />
@@ -138,7 +140,7 @@ export default function FoodAnalysisScreen() {
                     ...params, 
                     food_name: detectionResult?.food_name, 
                     unit_type: detectionResult?.unit_type,
-                    imageUri: imageUri,
+                    imageUri: rawImageUri,
                   }
                 });
               }

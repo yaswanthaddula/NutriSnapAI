@@ -13,13 +13,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { analyzeImage } from '../src/services/scannerGeminiService';
+import { analyzeImage, getTempCapturedImageWeb } from '../src/services/scannerGeminiService';
 import { searchFoods, getFoodDetail } from '../src/services/fatSecretService';
 
 export default function HealthAnalysisScreen() {
   const params = useLocalSearchParams();
   const rawImageUri = params.imageUri;
   const imageUri = Array.isArray(rawImageUri) ? rawImageUri[0] : (rawImageUri as string);
+  const resolvedImageUri = (Platform.OS === 'web' && imageUri === 'captured-web') ? getTempCapturedImageWeb() : imageUri;
   
   const [currentStep, setCurrentStep] = useState(1); // 1: Analyzing, 2: Finding Match, 3: Select/Confirm
   const [detectionResult, setDetectionResult] = useState<any>(null);
@@ -179,9 +180,9 @@ export default function HealthAnalysisScreen() {
         <Text style={styles.headerTitle}>AI Scanner Analysis</Text>
 
         <View style={styles.photoFrame}>
-          {imageUri ? (
+          {resolvedImageUri ? (
             <Animated.Image 
-              source={{ uri: imageUri }} 
+              source={{ uri: resolvedImageUri }} 
               style={[styles.photo, { opacity: isLoading ? 0.6 : 1 }]} 
             />
           ) : (

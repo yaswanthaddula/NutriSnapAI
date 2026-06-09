@@ -15,6 +15,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useTheme } from './_layout'; 
 import useAppStore from '../src/store/useAppStore';
 import apiService from '../src/services/apiService';
+import { getNutritionMultiplier } from '../src/utils/foodCategorizer';
 import { foodDatabase } from '../src/data/foodDatabase';
 
 export default function FinalNutritionScreen() {
@@ -39,10 +40,13 @@ export default function FinalNutritionScreen() {
   const baseCarbs = foodInfo?.carbs || parseFloat(String(params.carbs || '10'));
   const baseFat = foodInfo?.fat || parseFloat(String(params.fat || '2'));
   
-  const finalCalories = Math.round(baseCalories * quantity);
-  const finalProtein = (baseProtein * quantity).toFixed(1);
-  const finalCarbs = (baseCarbs * quantity).toFixed(1);
-  const finalFat = (baseFat * quantity).toFixed(1);
+  const baseUnitType = foodInfo?.unit?.toLowerCase().includes('g') ? 'grams' : (foodInfo?.unit?.toLowerCase().includes('ml') ? 'ml' : 'count');
+  const multiplier = getNutritionMultiplier(quantity, unit_type, baseUnitType, food_name);
+  
+  const finalCalories = Math.round(baseCalories * multiplier);
+  const finalProtein = (baseProtein * multiplier).toFixed(1);
+  const finalCarbs = (baseCarbs * multiplier).toFixed(1);
+  const finalFat = (baseFat * multiplier).toFixed(1);
 
   const theme = {
     background: isDark ? '#121212' : '#FFFFFF',

@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 
-import { isScannerReady } from '../../src/services/scannerGeminiService';
+import { isScannerReady, setTempCapturedImageWeb } from '../../src/services/scannerGeminiService';
 
 export default function TabCameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -76,11 +76,20 @@ export default function TabCameraScreen() {
           throw new Error('Camera captured an invalid photo object');
         }
 
+        console.log("Photo Captured");
+        console.log("Image URI Generated");
+
         setCooldownTime(4); // Start 4s countdown
+
+        let finalUri = photo.uri;
+        if (Platform.OS === 'web') {
+          setTempCapturedImageWeb(photo.uri);
+          finalUri = 'captured-web';
+        }
 
         router.push({
           pathname: '/food-analysis',
-          params: { imageUri: photo.uri, fromMode: 'gym' }
+          params: { imageUri: finalUri, fromMode: 'gym' }
         });
       } catch (error) {
         Alert.alert('Capture Error', 'Failed to take photo. Please try again.');
@@ -126,7 +135,10 @@ export default function TabCameraScreen() {
         facing="back" 
         enableTorch={torch}
         ref={cameraRef}
-        onCameraReady={() => setIsCameraReady(true)}
+        onCameraReady={() => {
+          setIsCameraReady(true);
+          console.log("Camera Opened");
+        }}
       >
         <SafeAreaView style={styles.overlay}>
           <View style={styles.topBar}>
