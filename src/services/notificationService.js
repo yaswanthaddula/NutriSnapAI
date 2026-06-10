@@ -6,7 +6,7 @@ import useAppStore from '../store/useAppStore';
 // Helper to parse AM/PM or 24h times
 const parseTime = (timeStr) => {
   if (!timeStr) return null;
-  const ampmMatch = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  const ampmMatch = timeStr.match(/^(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?\s*(AM|PM)$/i);
   if (ampmMatch) {
     let hour = parseInt(ampmMatch[1], 10);
     const minute = parseInt(ampmMatch[2], 10);
@@ -15,7 +15,7 @@ const parseTime = (timeStr) => {
     if (ampm === 'AM' && hour === 12) hour = 0;
     return { hour, minute };
   }
-  const match24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+  const match24 = timeStr.match(/^(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?$/);
   if (match24) {
     const hour = parseInt(match24[1], 10);
     const minute = parseInt(match24[2], 10);

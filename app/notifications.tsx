@@ -16,60 +16,54 @@ import { useTheme } from './_layout';
 import useAppStore from '../src/store/useAppStore';
 import apiService from '../src/services/apiService';
 import notificationService from '../src/services/notificationService';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 // Custom Time Picker Component
 const CustomTimePicker = ({ label, value, onChange, theme }: any) => {
-  const parseTo12h = (timeStr: string) => {
-    // Get current system time as fallback defaults
+  const parseToDate = (timeStr: string) => {
     const now = new Date();
-    let defaultHourRaw = now.getHours();
-    const defaultAmPm = defaultHourRaw >= 12 ? 'PM' : 'AM';
-    defaultHourRaw = defaultHourRaw % 12;
-    if (defaultHourRaw === 0) defaultHourRaw = 12;
-    const defaultHour = String(defaultHourRaw).padStart(2, '0');
-    // Round to nearest 5 minutes
-    const defaultMinute = String(Math.floor(now.getMinutes() / 5) * 5).padStart(2, '0');
-
-    if (!timeStr) return { hour: defaultHour, minute: defaultMinute, ampm: defaultAmPm };
+    if (!timeStr) return now;
 
     // Try matching 12h format: "08:00 AM" or "8.00 PM"
-    const ampmMatch = timeStr.match(/^(\d{1,2})[:.](\d{2})\s*(AM|PM)$/i);
+    const ampmMatch = timeStr.match(/^(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?\s*(AM|PM)$/i);
     if (ampmMatch) {
-      return {
-        hour: String(parseInt(ampmMatch[1], 10)).padStart(2, '0'),
-        minute: ampmMatch[2],
-        ampm: ampmMatch[3].toUpperCase()
-      };
+      let h = parseInt(ampmMatch[1], 10);
+      if (ampmMatch[3].toUpperCase() === 'PM' && h < 12) h += 12;
+      if (ampmMatch[3].toUpperCase() === 'AM' && h === 12) h = 0;
+      now.setHours(h, parseInt(ampmMatch[2], 10), 0, 0);
+      return now;
     }
 
     // Try matching 24h format: "18.30" or "08:30"
-    const match24 = timeStr.match(/^(\d{1,2})[:.](\d{2})$/);
+    const match24 = timeStr.match(/^(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?$/);
     if (match24) {
-      let hour = parseInt(match24[1], 10);
-      const minute = match24[2];
-      const ampm = hour >= 12 ? "PM" : "AM";
-      hour = hour % 12;
-      if (hour === 0) hour = 12;
-      return {
-        hour: String(hour).padStart(2, '0'),
-        minute: minute,
-        ampm: ampm
-      };
+      now.setHours(parseInt(match24[1], 10), parseInt(match24[2], 10), 0, 0);
+      return now;
     }
 
-    return { hour: defaultHour, minute: defaultMinute, ampm: defaultAmPm };
+    return now;
   };
 
-  const { hour: currentHour, minute: currentMinute, ampm: currentAmPm } = parseTo12h(value);
+  const currentDate = parseToDate(value);
+  const [showPicker, setShowPicker] = useState(false);
 
-  const [showDropdowns, setShowDropdowns] = useState(false);
-
-  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
-  const minutes = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
-  const ampms = ["AM", "PM"];
-
-  const handleSelect = (h: string, m: string, ap: string) => {
-    onChange(`${h}:${m} ${ap}`);
+  const onChangePicker = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowPicker(false);
+    }
+    if (selectedDate && event.type !== 'dismissed') {
+      let h = selectedDate.getHours();
+      const m = String(selectedDate.getMinutes()).padStart(2, '0');
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12;
+      if (h === 0) h = 12;
+      onChange(`${String(h).padStart(2, '0')}:${m} ${ampm}`);
+      if (Platform.OS === 'ios') {
+        setShowPicker(false);
+      }
+    } else if (event.type === 'dismissed') {
+      setShowPicker(false);
+    }
   };
 
   return (
@@ -77,63 +71,21 @@ const CustomTimePicker = ({ label, value, onChange, theme }: any) => {
       <Text style={[styles.timePickerLabel, { color: theme.subText }]}>{label}</Text>
       <TouchableOpacity 
         style={[styles.timePickerValueBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-        onPress={() => setShowDropdowns(!showDropdowns)}
+        onPress={() => setShowPicker(!showPicker)}
       >
         <Text style={[styles.timePickerValueText, { color: theme.text }]}>
-          {currentHour}:{currentMinute} {currentAmPm}
+          {value || "Select Time"}
         </Text>
-        <Ionicons name={showDropdowns ? "chevron-up" : "chevron-down"} size={18} color={theme.text} />
+        <Ionicons name={showPicker ? "time" : "time-outline"} size={18} color={theme.text} />
       </TouchableOpacity>
 
-      {showDropdowns && (
-        <View style={[styles.dropdownsWrapper, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <View style={{ flexDirection: 'row', height: 160 }}>
-            {/* Hours Column */}
-            <ScrollView style={styles.pickerScroll} nestedScrollEnabled showsVerticalScrollIndicator={false}>
-              {hours.map(h => (
-                <TouchableOpacity 
-                  key={h} 
-                  style={[styles.pickerItem, h === currentHour && { backgroundColor: '#00C853' }]}
-                  onPress={() => handleSelect(h, currentMinute, currentAmPm)}
-                >
-                  <Text style={[styles.pickerItemText, { color: h === currentHour ? '#FFF' : theme.text }]}>{h}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            {/* Minutes Column */}
-            <ScrollView style={styles.pickerScroll} nestedScrollEnabled showsVerticalScrollIndicator={false}>
-              {minutes.map(m => (
-                <TouchableOpacity 
-                  key={m} 
-                  style={[styles.pickerItem, m === currentMinute && { backgroundColor: '#00C853' }]}
-                  onPress={() => handleSelect(currentHour, m, currentAmPm)}
-                >
-                  <Text style={[styles.pickerItemText, { color: m === currentMinute ? '#FFF' : theme.text }]}>{m}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            {/* AM/PM Column */}
-            <View style={styles.pickerScroll}>
-              {ampms.map(ap => (
-                <TouchableOpacity 
-                  key={ap} 
-                  style={[styles.pickerItem, ap === currentAmPm && { backgroundColor: '#00C853' }]}
-                  onPress={() => handleSelect(currentHour, currentMinute, ap)}
-                >
-                  <Text style={[styles.pickerItemText, { color: ap === currentAmPm ? '#FFF' : theme.text }]}>{ap}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          <TouchableOpacity 
-            style={[styles.closeDropdownBtn, { borderTopColor: theme.border }]} 
-            onPress={() => setShowDropdowns(false)}
-          >
-            <Text style={{ color: '#00C853', fontWeight: 'bold' }}>Done</Text>
-          </TouchableOpacity>
-        </View>
+      {showPicker && (
+        <DateTimePicker
+          value={currentDate}
+          mode="time"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={onChangePicker}
+        />
       )}
     </View>
   );
@@ -468,21 +420,51 @@ const styles = StyleSheet.create({
     marginTop: 8,
     overflow: 'hidden',
   },
-  pickerScroll: {
-    flex: 1,
+  gridPickerWrapper: {
+    borderRadius: 16,
+    borderWidth: 1,
+    marginTop: 8,
+    padding: 15,
   },
-  pickerItem: {
+  gridSectionHeader: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  gridRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 8,
+    marginBottom: 12,
+  },
+  gridItem: {
+    width: '23%',
     paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pickerItemText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  closeDropdownBtn: {
-    alignItems: 'center',
+  ampmItem: {
+    width: '47%',
     paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gridItemText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  closeGridBtn: {
+    alignItems: 'center',
+    paddingTop: 12,
+    marginTop: 8,
     borderTopWidth: 1,
   },
   intervalItem: {
