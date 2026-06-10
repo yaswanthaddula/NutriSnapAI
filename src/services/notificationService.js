@@ -418,13 +418,62 @@ const NOTIFICATION_RULES = [
   }
 ];
 
+// Web Audio API Beep System for Mobile Browsers
+let audioCtx = null;
+
+const initAudioContext = () => {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC && !audioCtx) {
+      audioCtx = new AC();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+};
+
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  // Unlock audio on first user interaction
+  const unlock = () => {
+    initAudioContext();
+    document.removeEventListener('touchstart', unlock);
+    document.removeEventListener('click', unlock);
+  };
+  document.addEventListener('touchstart', unlock, { once: true });
+  document.addEventListener('click', unlock, { once: true });
+}
+
+const playBeep = () => {
+  if (!audioCtx) initAudioContext();
+  if (!audioCtx) return;
+  
+  try {
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+    osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); 
+    
+    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 0.05);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+    
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.5);
+  } catch (e) {
+    console.log("Beep failed:", e);
+  }
+};
+
 const showWebNotification = (title, message) => {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    // 1. Play Sound (Clear notification chime)
-    try {
-      const audio = new window.Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-      audio.play().catch(e => console.log("Audio play failed:", e));
-    } catch(e) {}
+    // 1. Play synthesized beep (guaranteed to not have CORS issues)
+    playBeep();
 
     // 2. Try Native Web Notification
     if ('Notification' in window) {
@@ -446,7 +495,6 @@ const showWebNotification = (title, message) => {
     }
 
     // 3. Always show an in-app alert on Web since mobile browsers often block OS-level pushes
-    // Wrap in setTimeout to ensure audio starts playing first
     setTimeout(() => {
       import('react-native').then(({ Alert }) => {
         Alert.alert(`NutriSnap AI: ${title}`, message);
