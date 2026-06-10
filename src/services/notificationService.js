@@ -489,6 +489,7 @@ export const notificationService = {
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
+              channelId: 'default',
             },
             trigger: null,
           });
@@ -548,6 +549,7 @@ export const notificationService = {
                   screen: rule.mode === 'gym' ? '/gym-home' : '/health-home'
                 },
                 sound: true,
+                channelId: 'default',
               },
               trigger: null,
             });
@@ -593,12 +595,13 @@ export const notificationService = {
                 sound: true,
                 vibrate: [0, 250, 250, 250],
                 priority: Notifications.AndroidNotificationPriority.MAX,
+                channelId: channelId,
                 data: { 
                   screen: currentMode === 'gym' ? '/food-selection' : '/health-food-selection',
                   type: `meal-${item.type}`
                 },
               },
-              trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId },
+              trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true },
             });
             console.log(`Scheduled daily ${item.title} at ${parsed.hour}:${parsed.minute}`);
           }
@@ -616,12 +619,13 @@ export const notificationService = {
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
+              channelId: channelId,
               data: { 
                 screen: currentMode === 'gym' ? '/(tabs)/gym-home' : '/(health-tabs)/health-home',
                 type: 'water-reminder'
               },
             },
-            trigger: { seconds: intervalSeconds, repeats: true, channelId },
+            trigger: { seconds: intervalSeconds, repeats: true },
           });
           console.log(`Scheduled repeating Water Reminder every ${intervalSeconds}s`);
         }
@@ -638,19 +642,20 @@ export const notificationService = {
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
+              channelId: channelId,
               data: { 
                 screen: currentMode === 'gym' ? '/(tabs)/plans' : '/(health-tabs)/plans',
                 type: 'workout-reminder'
               },
             },
-            trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId },
+            trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true },
           });
           console.log(`Scheduled daily Workout Reminder at ${parsed.hour}:${parsed.minute}`);
         }
       }
 
       // 4. Sleep Reminder
-      if (profile.sleepReminderTime) {
+      if (prefs.sleep && profile.sleepReminderTime) {
         const parsed = parseTime(profile.sleepReminderTime);
         if (parsed) {
           await Notifications.scheduleNotificationAsync({
@@ -660,12 +665,13 @@ export const notificationService = {
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
+              channelId: channelId,
               data: { 
                 screen: currentMode === 'gym' ? '/(tabs)/gym-home' : '/(health-tabs)/health-home',
                 type: 'sleep-reminder'
               },
             },
-            trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId },
+            trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true },
           });
           console.log(`Scheduled daily Sleep Reminder at ${parsed.hour}:${parsed.minute}`);
         }
