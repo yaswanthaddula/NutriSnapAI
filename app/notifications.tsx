@@ -79,13 +79,47 @@ const CustomTimePicker = ({ label, value, onChange, theme }: any) => {
         <Ionicons name={showPicker ? "time" : "time-outline"} size={18} color={theme.text} />
       </TouchableOpacity>
 
-      {showPicker && (
+      {showPicker && Platform.OS !== 'web' && (
         <DateTimePicker
           value={currentDate}
           mode="time"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={onChangePicker}
         />
+      )}
+      
+      {showPicker && Platform.OS === 'web' && (
+        <View style={{ marginTop: 10 }}>
+          {React.createElement('input', {
+            type: 'time',
+            value: `${String(currentDate.getHours()).padStart(2, '0')}:${String(currentDate.getMinutes()).padStart(2, '0')}`,
+            style: {
+              fontSize: '16px',
+              padding: '12px',
+              borderRadius: '12px',
+              border: `1px solid ${theme.border}`,
+              backgroundColor: theme.cardBg,
+              color: theme.text,
+              width: '100%',
+              fontFamily: 'inherit',
+              outline: 'none',
+              cursor: 'pointer'
+            },
+            onChange: (e: any) => {
+              const val = e.target.value; // expected "HH:mm"
+              if (val) {
+                const [hStr, mStr] = val.split(':');
+                let h = parseInt(hStr, 10);
+                const m = mStr;
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                h = h % 12;
+                if (h === 0) h = 12;
+                onChange(`${String(h).padStart(2, '0')}:${m} ${ampm}`);
+                setShowPicker(false);
+              }
+            }
+          })}
+        </View>
       )}
     </View>
   );
