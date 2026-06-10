@@ -419,22 +419,39 @@ const NOTIFICATION_RULES = [
 ];
 
 const showWebNotification = (title, message) => {
-  if (Platform.OS === 'web' && typeof window !== 'undefined' && 'Notification' in window) {
-    const trigger = () => {
-      new window.Notification(`NutriSnap AI: ${title}`, {
-        body: message,
-      });
-    };
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    // 1. Play Sound (Clear notification chime)
+    try {
+      const audio = new window.Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+      audio.play().catch(e => console.log("Audio play failed:", e));
+    } catch(e) {}
 
-    if (window.Notification.permission === 'granted') {
-      trigger();
-    } else if (window.Notification.permission !== 'denied') {
-      window.Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          trigger();
-        }
-      });
+    // 2. Try Native Web Notification
+    if ('Notification' in window) {
+      const trigger = () => {
+        new window.Notification(`NutriSnap AI: ${title}`, {
+          body: message,
+        });
+      };
+
+      if (window.Notification.permission === 'granted') {
+        trigger();
+      } else if (window.Notification.permission !== 'denied') {
+        window.Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            trigger();
+          }
+        });
+      }
     }
+
+    // 3. Always show an in-app alert on Web since mobile browsers often block OS-level pushes
+    // Wrap in setTimeout to ensure audio starts playing first
+    setTimeout(() => {
+      import('react-native').then(({ Alert }) => {
+        Alert.alert(`NutriSnap AI: ${title}`, message);
+      });
+    }, 100);
   }
 };
 
@@ -729,23 +746,63 @@ export const notificationService = {
 
   setupListeners: () => {
     // Listener for when a notification is received while the app is foregrounded
-    const foregroundSubscription = Notifications.addNotificationReceivedListener(notification => {
+    const foregroundSubscription = Notifications ? Notifications.addNotificationReceivedListener(notification => {
       console.log("Notification received in foreground:", notification);
-    });
+    }) : { remove: () => {} };
 
     // Listener for when a user interacts with a notification (clicked)
-    const responseSubscription = Notifications.addNotificationResponseReceivedListener(response => {
-      const data = response.notification.request.content.data;
+    const responseSubscription = Notifications ? Notifications.addNotificationResponseReceivedListener(response => {
+      const data = response.notification?.request?.content?.data;
       console.log("Notification clicked with data:", data);
       
       if (data?.screen) {
         router.push(data.screen);
       }
-    });
+    }) : { remove: () => {} };
+
+    let intervalId = null;
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      intervalId = setInterval(() => {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const current24 = `${hh}:${mm}`;
+        
+        const state = useAppStore.getState();
+        const profile = state.userProfile;
+        const prefs = state.notificationPrefs;
+
+        const checkTime = (timeStr, title, body) => {
+           if (!timeStr) return;
+           const parsed = parseTime(timeStr);
+           if (parsed && String(parsed.hour).padStart(2, '0') + ':' + String(parsed.minute).padStart(2, '0') === current24) {
+              const key = `web-notif-${current24}-${title}`;
+              if (!window[key]) {
+                window[key] = true;
+                showWebNotification(title, body);
+              }
+           }
+        };
+
+        if (prefs.meals) {
+           checkTime(profile.breakfastReminderTime, 'Breakfast Reminder', 'Time for your healthy breakfast. 🍎');
+           checkTime(profile.lunchReminderTime, 'Lunch Reminder', "Don't forget to track your lunch. 🥗");
+           checkTime(profile.dinnerReminderTime, 'Dinner Reminder', 'Time for your healthy dinner. 🍲');
+           checkTime(profile.snackReminderTime, 'Snack Reminder', 'Time for a healthy snack check-in. 🍌');
+        }
+        if (prefs.workout) {
+           checkTime(profile.workoutReminderTime, 'Workout Reminder', 'Workout session starts now. 🔥');
+        }
+        if (prefs.sleep) {
+           checkTime(profile.sleepReminderTime, 'Sleep Reminder', 'Time to sleep and recover. 🌙');
+        }
+      }, 30000); // Check every 30 seconds to catch the exact minute
+    }
 
     return () => {
       foregroundSubscription.remove();
       responseSubscription.remove();
+      if (intervalId) clearInterval(intervalId);
     };
   }
 };
