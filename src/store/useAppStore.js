@@ -20,6 +20,13 @@ const useAppStore = create((set, get) => ({
     bmiStatus: 'Normal Weight',
     selected_mode: null,
     suggested_mode: null,
+    breakfastReminderTime: '08:00 AM',
+    lunchReminderTime: '01:00 PM',
+    dinnerReminderTime: '08:00 PM',
+    snackReminderTime: '04:00 PM',
+    waterReminderInterval: 'Every 1 hour',
+    workoutReminderTime: '06:00 PM',
+    sleepReminderTime: '10:00 PM',
   },
   meals: [],
   weightHistory: [], // [{ date: '2023-01-01', weight: 70 }]
@@ -33,6 +40,7 @@ const useAppStore = create((set, get) => ({
     meals: true,
     workout: true,
     water: true,
+    sleep: true,
     goals: true,
     reports: true,
     quotes: true,
@@ -535,6 +543,13 @@ const useAppStore = create((set, get) => ({
       bmiStatus: 'Normal Weight',
       selected_mode: null,
       suggested_mode: null,
+      breakfastReminderTime: '08:00 AM',
+      lunchReminderTime: '01:00 PM',
+      dinnerReminderTime: '08:00 PM',
+      snackReminderTime: '04:00 PM',
+      waterReminderInterval: 'Every 1 hour',
+      workoutReminderTime: '06:00 PM',
+      sleepReminderTime: '10:00 PM',
     };
     
     set({
@@ -551,6 +566,7 @@ const useAppStore = create((set, get) => ({
         meals: true,
         workout: true,
         water: true,
+        sleep: true,
         goals: true,
         reports: true,
         quotes: true,

@@ -1,7 +1,46 @@
-import { Platform, PermissionsAndroid, LogBox } from 'react-native';
+import { Platform, LogBox } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { router } from 'expo-router';
 import useAppStore from '../store/useAppStore';
+
+// Helper to parse AM/PM or 24h times
+const parseTime = (timeStr) => {
+  if (!timeStr) return null;
+  const ampmMatch = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (ampmMatch) {
+    let hour = parseInt(ampmMatch[1], 10);
+    const minute = parseInt(ampmMatch[2], 10);
+    const ampm = ampmMatch[3].toUpperCase();
+    if (ampm === 'PM' && hour < 12) hour += 12;
+    if (ampm === 'AM' && hour === 12) hour = 0;
+    return { hour, minute };
+  }
+  const match24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+  if (match24) {
+    const hour = parseInt(match24[1], 10);
+    const minute = parseInt(match24[2], 10);
+    return { hour, minute };
+  }
+  return null;
+};
+
+// Helper to convert water reminder intervals into seconds
+const getWaterIntervalSeconds = (intervalStr) => {
+  if (!intervalStr) return null;
+  const lower = intervalStr.toLowerCase();
+  if (lower.includes('30 min')) return 30 * 60;
+  if (lower.includes('1 hour') || lower.includes('1hr')) return 60 * 60;
+  if (lower.includes('2 hour') || lower.includes('2hr')) return 120 * 60;
+  const match = lower.match(/(\d+)\s*(min|hour|hr|s)/);
+  if (match) {
+    const val = parseInt(match[1], 10);
+    const unit = match[2];
+    if (unit.startsWith('m')) return val * 60;
+    if (unit.startsWith('h') || unit.startsWith('t')) return val * 3600;
+    return val;
+  }
+  return 3 * 3600; // default 3 hours
+};
 
 // Ignore the SDK 53+ Expo Go notification warning/error since we handle it gracefully
 LogBox.ignoreLogs([
@@ -520,77 +559,124 @@ export const notificationService = {
     }
   },
 
-  scheduleDailyReminders: async () => {
+  scheduleReminderNotifications: async () => {
     try {
+      if (!Notifications) return;
+
       const state = useAppStore.getState();
-      const currentMode = state.userProfile.selected_mode?.toLowerCase() || 'health';
+      const profile = state.userProfile;
+      const currentMode = profile.selected_mode?.toLowerCase() || 'health';
       const prefs = state.notificationPrefs;
-      const todayMeals = state.meals || [];
-      
+
       // Clear existing scheduled notifications to avoid duplicates
       await Notifications.cancelAllScheduledNotificationsAsync();
+      console.log("Cancelled all existing scheduled notifications.");
 
       const channelId = Platform.OS === 'android' ? 'default' : undefined;
 
-      // 1. HEALTH MODE SCHEDULE
-      if (currentMode === 'health') {
-        // Breakfast Reminder (if not logged)
-        const hasBreakfast = todayMeals.some(m => {
-          const hour = new Date(`2000-01-01T${m.time}`).getHours();
-          return hour >= 5 && hour <= 10;
-        });
-        if (!hasBreakfast && prefs.meals) {
-          await Notifications.scheduleNotificationAsync({
-            content: { title: 'NutriSnap AI', body: "Time to log your healthy breakfast! 🍎", data: { screen: '/health-home' }, sound: true },
-            trigger: { hour: 8, minute: 30, repeats: true, channelId },
-          });
-        }
+      // 1. Meals Reminders
+      if (prefs.meals) {
+        const mealReminders = [
+          { time: profile.breakfastReminderTime, title: 'Breakfast Reminder', body: 'Time for your healthy breakfast. 🍎', type: 'breakfast' },
+          { time: profile.lunchReminderTime, title: 'Lunch Reminder', body: "Don't forget to track your lunch. 🥗", type: 'lunch' },
+          { time: profile.dinnerReminderTime, title: 'Dinner Reminder', body: 'Time for your healthy dinner. 🍲', type: 'dinner' },
+          { time: profile.snackReminderTime, title: 'Snack Reminder', body: 'Time for a healthy snack check-in. 🍌', type: 'snack' },
+        ];
 
-        // Lunch Reminder (if not logged)
-        const hasLunch = todayMeals.some(m => {
-          const hour = new Date(`2000-01-01T${m.time}`).getHours();
-          return hour >= 12 && hour <= 15;
-        });
-        if (!hasLunch && prefs.meals) {
-          await Notifications.scheduleNotificationAsync({
-            content: { title: 'NutriSnap AI', body: "Don't forget to track your lunch nutrients. 🥗", data: { screen: '/health-home' }, sound: true },
-            trigger: { hour: 13, minute: 0, repeats: true, channelId },
-          });
-        }
-
-        // Water Reminder (if goal not reached)
-        if (state.waterData.waterIntake < state.waterData.waterGoal && prefs.water) {
-          await Notifications.scheduleNotificationAsync({
-            content: { title: 'NutriSnap AI', body: "Stay hydrated! Have a glass of water now. 💧", data: { screen: '/health-home' }, sound: true },
-            trigger: { hour: 11, minute: 0, repeats: true, channelId },
-          });
-        }
-      } 
-      // 2. GYM MODE SCHEDULE
-      else {
-        // Workout Reminder (if not completed)
-        const workoutDone = state.workouts.some(w => w.status === 'completed' || w.status === 'done');
-        if (!workoutDone && prefs.workout) {
-          await Notifications.scheduleNotificationAsync({
-            content: { title: 'NutriSnap AI', body: "Time for your workout! Let's hit those goals. 🔥", data: { screen: '/gym-home' }, sound: true },
-            trigger: { hour: 18, minute: 0, repeats: true, channelId },
-          });
-        }
-
-        // Protein Reminder (if goal not reached)
-        const totalProtein = todayMeals.reduce((sum, m) => sum + (m.protein || 0), 0);
-        if (totalProtein < (state.userProfile.protein_target || 150) && prefs.goals) {
-          await Notifications.scheduleNotificationAsync({
-            content: { title: 'NutriSnap AI', body: "Did you hit your protein target today? 🍗", data: { screen: '/gym-home' }, sound: true },
-            trigger: { hour: 21, minute: 0, repeats: true, channelId },
-          });
+        for (const item of mealReminders) {
+          const parsed = parseTime(item.time);
+          if (parsed) {
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: 'NutriSnap AI',
+                body: item.body,
+                sound: true,
+                vibrate: [0, 250, 250, 250],
+                priority: Notifications.AndroidNotificationPriority.MAX,
+                data: { 
+                  screen: currentMode === 'gym' ? '/food-selection' : '/health-food-selection',
+                  type: `meal-${item.type}`
+                },
+              },
+              trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId },
+            });
+            console.log(`Scheduled daily ${item.title} at ${parsed.hour}:${parsed.minute}`);
+          }
         }
       }
-      
-      console.log("Smart daily reminders scheduled based on current progress.");
-    } catch (error) {
-      console.log("Error scheduling smart reminders:", error);
+
+      // 2. Water Reminder
+      if (prefs.water && profile.waterReminderInterval) {
+        const intervalSeconds = getWaterIntervalSeconds(profile.waterReminderInterval);
+        if (intervalSeconds) {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: 'NutriSnap AI',
+              body: "Don't forget to drink water. 💧",
+              sound: true,
+              vibrate: [0, 250, 250, 250],
+              priority: Notifications.AndroidNotificationPriority.MAX,
+              data: { 
+                screen: currentMode === 'gym' ? '/(tabs)/gym-home' : '/(health-tabs)/health-home',
+                type: 'water-reminder'
+              },
+            },
+            trigger: { seconds: intervalSeconds, repeats: true, channelId },
+          });
+          console.log(`Scheduled repeating Water Reminder every ${intervalSeconds}s`);
+        }
+      }
+
+      // 3. Workout Reminder
+      if (prefs.workout && profile.workoutReminderTime) {
+        const parsed = parseTime(profile.workoutReminderTime);
+        if (parsed) {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: 'NutriSnap AI',
+              body: 'Workout session starts now. 🔥',
+              sound: true,
+              vibrate: [0, 250, 250, 250],
+              priority: Notifications.AndroidNotificationPriority.MAX,
+              data: { 
+                screen: currentMode === 'gym' ? '/(tabs)/plans' : '/(health-tabs)/plans',
+                type: 'workout-reminder'
+              },
+            },
+            trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId },
+          });
+          console.log(`Scheduled daily Workout Reminder at ${parsed.hour}:${parsed.minute}`);
+        }
+      }
+
+      // 4. Sleep Reminder
+      if (profile.sleepReminderTime) {
+        const parsed = parseTime(profile.sleepReminderTime);
+        if (parsed) {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: 'NutriSnap AI',
+              body: 'Time to sleep and recover. 🌙',
+              sound: true,
+              vibrate: [0, 250, 250, 250],
+              priority: Notifications.AndroidNotificationPriority.MAX,
+              data: { 
+                screen: currentMode === 'gym' ? '/(tabs)/gym-home' : '/(health-tabs)/health-home',
+                type: 'sleep-reminder'
+              },
+            },
+            trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId },
+          });
+          console.log(`Scheduled daily Sleep Reminder at ${parsed.hour}:${parsed.minute}`);
+        }
+      }
+    } catch (e) {
+      console.log("Error scheduling reminder notifications:", e);
     }
+  },
+
+  scheduleDailyReminders: async () => {
+    await notificationService.scheduleReminderNotifications();
   },
 
   registerForPushNotificationsAsync: async () => {

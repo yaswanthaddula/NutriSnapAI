@@ -118,7 +118,14 @@ export const apiService = {
       response.data = {
         ...response.data,
         calorieTarget: response.data.calorie_target,
-        proteinTarget: response.data.protein_target
+        proteinTarget: response.data.protein_target,
+        breakfastReminderTime: response.data.breakfast_reminder_time,
+        lunchReminderTime: response.data.lunch_reminder_time,
+        dinnerReminderTime: response.data.dinner_reminder_time,
+        snackReminderTime: response.data.snack_reminder_time,
+        waterReminderInterval: response.data.water_reminder_interval,
+        workoutReminderTime: response.data.workout_reminder_time,
+        sleepReminderTime: response.data.sleep_reminder_time
       };
     }
     return response;
@@ -136,6 +143,13 @@ export const apiService = {
       suggested_mode: profileData.suggested_mode || null,
       calorie_target: parseInt(profileData.calorieTarget || profileData.calorie_target || 2000),
       protein_target: parseInt(profileData.proteinTarget || profileData.protein_target || 100),
+      breakfast_reminder_time: profileData.breakfastReminderTime !== undefined ? profileData.breakfastReminderTime : (profileData.breakfast_reminder_time || null),
+      lunch_reminder_time: profileData.lunchReminderTime !== undefined ? profileData.lunchReminderTime : (profileData.lunch_reminder_time || null),
+      dinner_reminder_time: profileData.dinnerReminderTime !== undefined ? profileData.dinnerReminderTime : (profileData.dinner_reminder_time || null),
+      snack_reminder_time: profileData.snackReminderTime !== undefined ? profileData.snackReminderTime : (profileData.snack_reminder_time || null),
+      water_reminder_interval: profileData.waterReminderInterval !== undefined ? profileData.waterReminderInterval : (profileData.water_reminder_interval || null),
+      workout_reminder_time: profileData.workoutReminderTime !== undefined ? profileData.workoutReminderTime : (profileData.workout_reminder_time || null),
+      sleep_reminder_time: profileData.sleepReminderTime !== undefined ? profileData.sleepReminderTime : (profileData.sleep_reminder_time || null),
     };
     try {
       // Try update first, if not found try create
@@ -144,7 +158,14 @@ export const apiService = {
         response.data = {
           ...response.data,
           calorieTarget: response.data.calorie_target,
-          proteinTarget: response.data.protein_target
+          proteinTarget: response.data.protein_target,
+          breakfastReminderTime: response.data.breakfast_reminder_time,
+          lunchReminderTime: response.data.lunch_reminder_time,
+          dinnerReminderTime: response.data.dinner_reminder_time,
+          snackReminderTime: response.data.snack_reminder_time,
+          waterReminderInterval: response.data.water_reminder_interval,
+          workoutReminderTime: response.data.workout_reminder_time,
+          sleepReminderTime: response.data.sleep_reminder_time
         };
       }
       return response;
@@ -155,7 +176,14 @@ export const apiService = {
           response.data = {
             ...response.data,
             calorieTarget: response.data.calorie_target,
-            proteinTarget: response.data.protein_target
+            proteinTarget: response.data.protein_target,
+            breakfastReminderTime: response.data.breakfast_reminder_time,
+            lunchReminderTime: response.data.lunch_reminder_time,
+            dinnerReminderTime: response.data.dinner_reminder_time,
+            snackReminderTime: response.data.snack_reminder_time,
+            waterReminderInterval: response.data.water_reminder_interval,
+            workoutReminderTime: response.data.workout_reminder_time,
+            sleepReminderTime: response.data.sleep_reminder_time
           };
         }
         return response;

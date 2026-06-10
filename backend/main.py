@@ -49,6 +49,21 @@ try:
                 print("Adding missing column: suggested_mode")
                 conn.execute(text("ALTER TABLE profiles ADD COLUMN suggested_mode VARCHAR;"))
             
+            # Ensure reminder columns exist in profiles table
+            reminder_cols = [
+                'breakfast_reminder_time',
+                'lunch_reminder_time',
+                'dinner_reminder_time',
+                'snack_reminder_time',
+                'water_reminder_interval',
+                'workout_reminder_time',
+                'sleep_reminder_time'
+            ]
+            for col in reminder_cols:
+                if col not in columns:
+                    print(f"Adding missing column: {col} to profiles table")
+                    conn.execute(text(f"ALTER TABLE profiles ADD COLUMN {col} VARCHAR;"))
+            
             # 5. Ensure last_active_platform exists in users table
             user_columns = [c['name'] for c in inspector.get_columns('users')]
             if 'last_active_platform' not in user_columns:

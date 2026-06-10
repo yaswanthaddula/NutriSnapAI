@@ -42,6 +42,15 @@ class Profile(Base):
     calorie_target: Mapped[int] = mapped_column(Integer)
     protein_target: Mapped[int] = mapped_column(Integer)
 
+    # Reminder settings
+    breakfast_reminder_time: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    lunch_reminder_time: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    dinner_reminder_time: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    snack_reminder_time: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    water_reminder_interval: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    workout_reminder_time: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    sleep_reminder_time: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
     user: Mapped["User"] = relationship("User", back_populates="profile")
 
 class Meal(Base):

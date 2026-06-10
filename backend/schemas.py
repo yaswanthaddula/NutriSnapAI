@@ -65,6 +65,13 @@ class ProfileBase(BaseModel):
     suggested_mode: Optional[str] = None
     calorie_target: int
     protein_target: int
+    breakfast_reminder_time: Optional[str] = None
+    lunch_reminder_time: Optional[str] = None
+    dinner_reminder_time: Optional[str] = None
+    snack_reminder_time: Optional[str] = None
+    water_reminder_interval: Optional[str] = None
+    workout_reminder_time: Optional[str] = None
+    sleep_reminder_time: Optional[str] = None
 
 class ProfileCreate(ProfileBase):
     pass
