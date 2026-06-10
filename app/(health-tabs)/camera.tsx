@@ -62,6 +62,9 @@ export default function TabCameraScreen() {
 
     async function initWebCamera() {
       try {
+        if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error("Camera API is not supported in this browser context (HTTPS required)");
+        }
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: false,
           video: {
@@ -74,12 +77,12 @@ export default function TabCameraScreen() {
         setWebStream(stream);
         setWebPermission(true);
         setIsCameraReady(true);
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
       } catch (err) {
         console.warn("Direct HD rear camera access failed, trying fallback...", err);
         try {
+          if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error("Camera API is not supported in this browser context (HTTPS required)");
+          }
           const fallbackStream = await navigator.mediaDevices.getUserMedia({
             audio: false,
             video: true
@@ -88,9 +91,6 @@ export default function TabCameraScreen() {
           setWebStream(fallbackStream);
           setWebPermission(true);
           setIsCameraReady(true);
-          if (videoRef.current) {
-            videoRef.current.srcObject = fallbackStream;
-          }
         } catch (fallbackErr) {
           console.error("Camera access denied:", fallbackErr);
           setWebPermission(false);
@@ -106,6 +106,15 @@ export default function TabCameraScreen() {
       }
     };
   }, [webFacing]);
+
+  // Sync web stream to video element
+  useEffect(() => {
+    if (Platform.OS === 'web' && videoRef.current && webStream) {
+      if (videoRef.current.srcObject !== webStream) {
+        videoRef.current.srcObject = webStream;
+      }
+    }
+  }, [webStream]);
 
   const handleWebCapture = () => {
     if (!isScannerReady()) {
@@ -161,7 +170,12 @@ export default function TabCameraScreen() {
     return (
       <View style={styles.container}>
         <video
-          ref={videoRef}
+          ref={(el) => {
+            videoRef.current = el;
+            if (el && webStream && el.srcObject !== webStream) {
+              el.srcObject = webStream;
+            }
+          }}
           autoPlay
           playsInline
           muted
