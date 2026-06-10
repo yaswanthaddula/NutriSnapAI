@@ -703,45 +703,53 @@ export const notificationService = {
   },
 
   registerForPushNotificationsAsync: async () => {
-    let token;
+    if (Platform.OS === 'web') return true; // Web handles permissions directly in showWebNotification via HTML5 APIs
     
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FF231F7C',
-      });
-    }
-
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    
-    if (finalStatus !== 'granted') {
-      return false;
-    }
-
-    // Skip push token generation in Expo Go or if projectId is missing to avoid errors
-    const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
-    if (isExpoGo || !Constants.expoConfig?.extra?.eas?.projectId) {
-      console.log("Skipping push token generation (Expo Go or missing projectId)");
-      return true;
-    }
-
     try {
-      token = (await Notifications.getExpoPushTokenAsync({
-        projectId: Constants.expoConfig?.extra?.eas?.projectId,
-      })).data;
-      console.log("Push Token:", token);
-    } catch (e) {
-      console.log("Error getting push token:", e);
-    }
+      if (!Notifications) return false;
+      let token;
+      
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('default', {
+          name: 'default',
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: '#FF231F7C',
+        });
+      }
 
-    return true;
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      
+      if (finalStatus !== 'granted') {
+        return false;
+      }
+
+      // Skip push token generation in Expo Go or if projectId is missing to avoid errors
+      const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+      if (isExpoGo || !Constants.expoConfig?.extra?.eas?.projectId) {
+        console.log("Skipping push token generation (Expo Go or missing projectId)");
+        return true;
+      }
+
+      try {
+        token = (await Notifications.getExpoPushTokenAsync({
+          projectId: Constants.expoConfig?.extra?.eas?.projectId,
+        })).data;
+        console.log("Push Token:", token);
+      } catch (e) {
+        console.log("Error getting push token:", e);
+      }
+
+      return true;
+    } catch (e) {
+      console.log("Error in registerForPushNotificationsAsync:", e);
+      return false; // Fail gracefully if permissions prompt throws on unsupported platforms
+    }
   },
 
   setupListeners: () => {
