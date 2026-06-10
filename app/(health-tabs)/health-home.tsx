@@ -544,7 +544,7 @@ export default function HealthHomeScreen() {
         <View style={[styles.gaugeCard, { backgroundColor: themeColors.card }]}>
           <View style={styles.gaugeHeader}>
             <Text style={[styles.gaugeTitle, { color: themeColors.text }]}>Calories</Text>
-            <TouchableOpacity onPress={() => router.push({ pathname: '/health-camera', params: { fromMode: 'health' } })}>
+            <TouchableOpacity onPress={() => router.push({ pathname: '/(health-tabs)/camera', params: { fromMode: 'health' } })}>
               <MaterialCommunityIcons name="pencil-outline" size={20} color="#00C853" />
             </TouchableOpacity>
           </View>
@@ -665,7 +665,7 @@ export default function HealthHomeScreen() {
             <Text style={[styles.cardTitle, { color: themeColors.text }]}>Today's Meals</Text>
             <TouchableOpacity 
               onPress={() => router.push({ 
-                pathname: '/health-camera', 
+                pathname: '/(health-tabs)/camera', 
                 params: { fromMode: 'health' } 
               })} 
               style={styles.scanBtn}

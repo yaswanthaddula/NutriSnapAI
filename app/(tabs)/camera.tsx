@@ -22,12 +22,6 @@ export default function TabCameraScreen() {
   const [cooldownTime, setCooldownTime] = useState(0);
   const cameraRef = useRef<any>(null);
 
-  // Web Camera States
-  const [webStream, setWebStream] = useState<any>(null);
-  const [webPermission, setWebPermission] = useState<boolean | null>(null);
-  const [webFacing, setWebFacing] = useState<'environment' | 'user'>('environment');
-  const videoRef = useRef<any>(null);
-
   useEffect(() => {
     let timer: any;
     if (cooldownTime > 0) {
@@ -38,9 +32,7 @@ export default function TabCameraScreen() {
     return () => clearInterval(timer);
   }, [cooldownTime]);
 
-  // Handle native permission checking
   useEffect(() => {
-    if (Platform.OS === 'web') return;
     const checkPermissions = async () => {
       if (!permission || !permission.granted) {
         try {
@@ -53,190 +45,6 @@ export default function TabCameraScreen() {
     checkPermissions();
   }, []);
 
-  // Web Camera Setup
-  useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    let activeStream: any = null;
-
-    async function initWebCamera() {
-      try {
-        if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error("Camera API is not supported in this browser context (HTTPS required)");
-        }
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            facingMode: { ideal: 'environment' },
-            width: { ideal: 1920, min: 1280 },
-            height: { ideal: 1080, min: 720 },
-          }
-        });
-        activeStream = stream;
-        setWebStream(stream);
-        setWebPermission(true);
-        setIsCameraReady(true);
-      } catch (err) {
-        console.warn("Direct HD rear camera access failed, trying fallback...", err);
-        try {
-          if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            throw new Error("Camera API is not supported in this browser context (HTTPS required)");
-          }
-          const fallbackStream = await navigator.mediaDevices.getUserMedia({
-            audio: false,
-            video: true
-          });
-          activeStream = fallbackStream;
-          setWebStream(fallbackStream);
-          setWebPermission(true);
-          setIsCameraReady(true);
-        } catch (fallbackErr) {
-          console.error("Camera access denied:", fallbackErr);
-          setWebPermission(false);
-        }
-      }
-    }
-
-    initWebCamera();
-
-    return () => {
-      if (activeStream) {
-        activeStream.getTracks().forEach((track: any) => track.stop());
-      }
-    };
-  }, [webFacing]);
-
-  // Sync web stream to video element
-  useEffect(() => {
-    if (Platform.OS === 'web' && videoRef.current && webStream) {
-      if (videoRef.current.srcObject !== webStream) {
-        videoRef.current.srcObject = webStream;
-      }
-    }
-  }, [webStream]);
-
-  const handleWebCapture = () => {
-    if (!isScannerReady()) {
-      Alert.alert('Scanner Cooldown', 'Please wait a few seconds before scanning again.');
-      return;
-    }
-
-    if (videoRef.current) {
-      try {
-        const video = videoRef.current;
-        const canvas = document.createElement('canvas');
-        const width = video.videoWidth || 1920;
-        const height = video.videoHeight || 1080;
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(video, 0, 0, width, height);
-          // High-quality JPEG without aggressive compression
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-          
-          setTempCapturedImageWeb(dataUrl);
-          setCooldownTime(4); // Start 4s countdown
-
-          router.push({
-            pathname: '/food-analysis',
-            params: { imageUri: 'captured-web', fromMode: 'gym' }
-          });
-        }
-      } catch (error) {
-        console.error("Web capture error:", error);
-        Alert.alert('Capture Error', 'Failed to take photo. Please try again.');
-      }
-    }
-  };
-
-  // Render Web View early if on Web
-  if (Platform.OS === 'web') {
-    if (webPermission === false) {
-      return (
-        <View style={styles.permissionContainer}>
-          <Ionicons name="camera-outline" size={60} color="#666" />
-          <Text style={styles.permissionText}>Camera access is required to scan your meals. Please allow camera access in your browser settings.</Text>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.container}>
-        <video
-          ref={(el) => {
-            videoRef.current = el;
-            if (el && webStream && el.srcObject !== webStream) {
-              el.srcObject = webStream;
-            }
-          }}
-          autoPlay
-          playsInline
-          muted
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-          }}
-        />
-        <SafeAreaView style={styles.overlay}>
-          <View style={styles.topBar}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-              <Ionicons name="close" size={30} color="white" />
-            </TouchableOpacity>
-            <View style={{ width: 45 }} />
-          </View>
-
-          <View style={styles.viewportContainer}>
-            <View style={styles.scannerFrame}>
-              <View style={styles.cornerTopLeft} />
-              <View style={styles.cornerTopRight} />
-              <View style={styles.cornerBottomLeft} />
-              <View style={styles.cornerBottomRight} />
-              <Text style={styles.scannerText}>Point camera at food</Text>
-            </View>
-          </View>
-
-          <View style={styles.bottomBar}>
-            <TouchableOpacity 
-              style={[styles.sideBtn, cooldownTime > 0 && { opacity: 0.5 }]} 
-              onPress={handleGallery}
-              disabled={cooldownTime > 0}
-            >
-              <Ionicons name="images-outline" size={28} color="white" />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.captureBtnOuter, cooldownTime > 0 && { borderColor: '#777' }]} 
-              onPress={handleWebCapture}
-              disabled={cooldownTime > 0}
-            >
-              <View style={[styles.captureBtnInner, cooldownTime > 0 && { backgroundColor: '#777' }]}>
-                {cooldownTime > 0 && (
-                  <Text style={{ fontWeight: 'bold', color: 'white' }}>{cooldownTime}s</Text>
-                )}
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.sideBtn} 
-              onPress={() => {
-                setWebFacing(prev => prev === 'environment' ? 'user' : 'environment');
-              }}
-            >
-              <Ionicons name="refresh-outline" size={28} color="white" />
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </View>
-    );
-  }
-
-  // Native permissions checks and rendering
   if (!permission) return <View style={{ flex: 1, backgroundColor: 'black' }} />;
   
   if (!permission.granted) {

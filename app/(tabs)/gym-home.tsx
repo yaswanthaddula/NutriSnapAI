@@ -478,7 +478,7 @@ export default function GymHomeScreen() {
         <View style={[styles.gaugeCard, { backgroundColor: theme.card }]}>
           <View style={styles.gaugeHeader}>
             <Text style={[styles.gaugeTitle, { color: theme.text }]}>Calories</Text>
-            <TouchableOpacity onPress={() => router.push({ pathname: '/camera', params: { fromMode: 'gym' } })}>
+            <TouchableOpacity onPress={() => router.push({ pathname: '/(tabs)/camera', params: { fromMode: 'gym' } })}>
               <MaterialCommunityIcons name="pencil-outline" size={20} color="#00C853" />
             </TouchableOpacity>
           </View>
@@ -548,7 +548,7 @@ export default function GymHomeScreen() {
         <View style={[styles.insightCard, { backgroundColor: theme.card, borderColor: theme.border, borderLeftColor: '#00C853' }]}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Today's Meals</Text>
-            <TouchableOpacity onPress={() => router.push({ pathname: '/camera', params: { fromMode: 'gym' } })}>
+            <TouchableOpacity onPress={() => router.push({ pathname: '/(tabs)/camera', params: { fromMode: 'gym' } })}>
               <Text style={styles.linkText}>+ Add</Text>
             </TouchableOpacity>
           </View>
