@@ -19,10 +19,48 @@ import notificationService from '../src/services/notificationService';
 
 // Custom Time Picker Component
 const CustomTimePicker = ({ label, value, onChange, theme }: any) => {
-  const match = value ? value.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i) : null;
-  const currentHour = match ? match[1] : "08";
-  const currentMinute = match ? match[2] : "00";
-  const currentAmPm = match ? match[3].toUpperCase() : "AM";
+  const parseTo12h = (timeStr: string) => {
+    // Get current system time as fallback defaults
+    const now = new Date();
+    let defaultHourRaw = now.getHours();
+    const defaultAmPm = defaultHourRaw >= 12 ? 'PM' : 'AM';
+    defaultHourRaw = defaultHourRaw % 12;
+    if (defaultHourRaw === 0) defaultHourRaw = 12;
+    const defaultHour = String(defaultHourRaw).padStart(2, '0');
+    // Round to nearest 5 minutes
+    const defaultMinute = String(Math.floor(now.getMinutes() / 5) * 5).padStart(2, '0');
+
+    if (!timeStr) return { hour: defaultHour, minute: defaultMinute, ampm: defaultAmPm };
+
+    // Try matching 12h format: "08:00 AM" or "8.00 PM"
+    const ampmMatch = timeStr.match(/^(\d{1,2})[:.](\d{2})\s*(AM|PM)$/i);
+    if (ampmMatch) {
+      return {
+        hour: String(parseInt(ampmMatch[1], 10)).padStart(2, '0'),
+        minute: ampmMatch[2],
+        ampm: ampmMatch[3].toUpperCase()
+      };
+    }
+
+    // Try matching 24h format: "18.30" or "08:30"
+    const match24 = timeStr.match(/^(\d{1,2})[:.](\d{2})$/);
+    if (match24) {
+      let hour = parseInt(match24[1], 10);
+      const minute = match24[2];
+      const ampm = hour >= 12 ? "PM" : "AM";
+      hour = hour % 12;
+      if (hour === 0) hour = 12;
+      return {
+        hour: String(hour).padStart(2, '0'),
+        minute: minute,
+        ampm: ampm
+      };
+    }
+
+    return { hour: defaultHour, minute: defaultMinute, ampm: defaultAmPm };
+  };
+
+  const { hour: currentHour, minute: currentMinute, ampm: currentAmPm } = parseTo12h(value);
 
   const [showDropdowns, setShowDropdowns] = useState(false);
 
@@ -167,6 +205,16 @@ export default function NotificationsScreen() {
 
   const handleSaveReminder = async () => {
     try {
+      const granted = await notificationService.registerForPushNotificationsAsync();
+      if (!granted) {
+        Alert.alert(
+          "Permission Required",
+          "Notification permissions are disabled. Please enable them in your device settings to receive reminders.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+
       const updated = {
         ...userProfile,
         ...localProfile
@@ -184,6 +232,17 @@ export default function NotificationsScreen() {
   };
 
   const handleTogglePref = async (key: string, val: boolean) => {
+    if (val) {
+      const granted = await notificationService.registerForPushNotificationsAsync();
+      if (!granted) {
+        Alert.alert(
+          "Permission Required",
+          "Notification permissions are disabled. Please enable them in your device settings to receive reminders.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+    }
     updateNotificationPrefs(key, val);
     setTimeout(async () => {
       await notificationService.scheduleReminderNotifications();
