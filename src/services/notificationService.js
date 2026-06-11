@@ -751,7 +751,16 @@ export const notificationService = {
   },
 
   registerForPushNotificationsAsync: async () => {
-    if (Platform.OS === 'web') return true; // Web handles permissions directly in showWebNotification via HTML5 APIs
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        if (window.Notification.permission !== 'granted' && window.Notification.permission !== 'denied') {
+          const permission = await window.Notification.requestPermission();
+          return permission === 'granted';
+        }
+        return window.Notification.permission === 'granted';
+      }
+      return true; // Fallback to in-app alerts if Notification API is missing
+    }
     
     try {
       if (!Notifications) return false;

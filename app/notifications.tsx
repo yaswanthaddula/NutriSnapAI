@@ -83,7 +83,8 @@ const CustomTimePicker = ({ label, value, onChange, theme }: any) => {
         <DateTimePicker
           value={currentDate}
           mode="time"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          is24Hour={false}
+          display={Platform.OS === 'ios' ? 'spinner' : 'spinner'}
           onChange={onChangePicker}
         />
       )}
