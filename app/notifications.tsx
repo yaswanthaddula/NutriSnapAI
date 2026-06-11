@@ -97,12 +97,20 @@ const CustomWebTimePickerModal = ({ visible, initialValue, onClose, onSave, them
           <WebSpinnerColumn items={periods} selectedValue={ampm} onValueChange={setAmpm} theme={theme} />
         </View>
 
-        <TouchableOpacity 
-          onPress={() => onSave(`${h}:${m} ${ampm}`)} 
-          style={{ backgroundColor: '#00C853', padding: 15, borderRadius: 10, marginTop: 20, alignItems: 'center' }}
-        >
-          <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 16 }}>DONE</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20, gap: 10 }}>
+          <TouchableOpacity 
+            onPress={onClose} 
+            style={{ flex: 1, backgroundColor: theme.cardBg, padding: 15, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: theme.border }}
+          >
+            <Text style={{ color: theme.text, fontWeight: 'bold', fontSize: 16 }}>CANCEL</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => onSave(`${h}:${m} ${ampm}`)} 
+            style={{ flex: 1, backgroundColor: '#00C853', padding: 15, borderRadius: 10, alignItems: 'center' }}
+          >
+            <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 16 }}>DONE</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -191,9 +199,14 @@ const CustomTimePicker = ({ label, value, onChange, theme }: any) => {
                 display="spinner"
                 onChange={onChangePicker}
               />
-              <TouchableOpacity onPress={handleIosDone} style={{ backgroundColor: '#00C853', padding: 15, borderRadius: 12, alignItems: 'center', marginTop: 15 }}>
-                <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 16 }}>Done</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 15, gap: 10 }}>
+                <TouchableOpacity onPress={() => setShowPicker(false)} style={{ flex: 1, backgroundColor: theme.cardBg, padding: 15, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: theme.border }}>
+                  <Text style={{ color: theme.text, fontWeight: 'bold', fontSize: 16 }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleIosDone} style={{ flex: 1, backgroundColor: '#00C853', padding: 15, borderRadius: 12, alignItems: 'center' }}>
+                  <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 16 }}>Done</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
