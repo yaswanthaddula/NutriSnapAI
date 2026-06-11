@@ -561,7 +561,7 @@ export const notificationService = {
               priority: Notifications.AndroidNotificationPriority.MAX,
               channelId: 'default',
             },
-            trigger: null,
+            trigger: { seconds: 1, channelId: 'default' },
           });
         } catch (e) {
           console.log("Event notification failed:", e.message);
@@ -622,7 +622,7 @@ export const notificationService = {
                 sound: true,
                 channelId: 'default',
               },
-              trigger: null,
+              trigger: { seconds: 1, channelId: 'default' },
             });
           } catch (e) {
             console.log("Passive notification failed:", e.message);
@@ -666,13 +666,13 @@ export const notificationService = {
                 sound: true,
                 vibrate: [0, 250, 250, 250],
                 priority: Notifications.AndroidNotificationPriority.MAX,
-                channelId: channelId,
+                channelId: channelId || 'default',
                 data: { 
                   screen: currentMode === 'gym' ? '/food-selection' : '/health-food-selection',
                   type: `meal-${item.type}`
                 },
               },
-              trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true },
+              trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'default' },
             });
             console.log(`Notification Scheduled: ${item.type} at ${parsed.hour}:${parsed.minute}`);
           }
@@ -690,13 +690,13 @@ export const notificationService = {
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
-              channelId: channelId,
+              channelId: channelId || 'default',
               data: { 
                 screen: currentMode === 'gym' ? '/(tabs)/gym-home' : '/(health-tabs)/health-home',
                 type: 'water-reminder'
               },
             },
-            trigger: { seconds: intervalSeconds, repeats: true },
+            trigger: { seconds: intervalSeconds, repeats: true, channelId: channelId || 'default' },
           });
           console.log(`Notification Scheduled: water-reminder every ${intervalSeconds}s`);
         }
@@ -713,13 +713,13 @@ export const notificationService = {
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
-              channelId: channelId,
+              channelId: channelId || 'default',
               data: { 
                 screen: currentMode === 'gym' ? '/(tabs)/plans' : '/(health-tabs)/plans',
                 type: 'workout-reminder'
               },
             },
-            trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true },
+            trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'default' },
           });
           console.log(`Notification Scheduled: workout-reminder at ${parsed.hour}:${parsed.minute}`);
         }
@@ -736,13 +736,13 @@ export const notificationService = {
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
-              channelId: channelId,
+              channelId: channelId || 'default',
               data: { 
                 screen: currentMode === 'gym' ? '/(tabs)/gym-home' : '/(health-tabs)/health-home',
                 type: 'sleep-reminder'
               },
             },
-            trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true },
+            trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'default' },
           });
           console.log(`Notification Scheduled: sleep-reminder at ${parsed.hour}:${parsed.minute}`);
         }
