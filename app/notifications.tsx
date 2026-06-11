@@ -98,7 +98,7 @@ const CustomWebTimePickerModal = ({ visible, initialValue, onClose, onSave, them
 };
 
 // Custom Time Picker Component
-const CustomTimePicker = ({ label, value, onChange, suggestions, theme }: any) => {
+const CustomTimePicker = ({ label, value, onChange, theme }: any) => {
   const parseToDate = (timeStr: string) => {
     const now = new Date();
     if (!timeStr) return now;
@@ -168,21 +168,6 @@ const CustomTimePicker = ({ label, value, onChange, suggestions, theme }: any) =
         </Text>
         <Ionicons name="time-outline" size={18} color={theme.text} />
       </TouchableOpacity>
-
-      {/* Quick Suggestions */}
-      {suggestions && (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
-          {suggestions.map((s: string) => (
-            <TouchableOpacity 
-              key={s} 
-              style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, backgroundColor: value === s ? '#00C853' : theme.cardBg, borderWidth: 1, borderColor: value === s ? '#00C853' : theme.border }}
-              onPress={() => onChange(s)}
-            >
-              <Text style={{ fontSize: 12, color: value === s ? '#FFF' : theme.subText, fontWeight: 'bold' }}>{s}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
 
       {showPicker && Platform.OS === 'ios' && (
         <Modal transparent={true} animationType="slide" visible={showPicker}>
@@ -439,7 +424,6 @@ export default function NotificationsScreen() {
                 label="Breakfast"
                 value={localProfile.breakfastReminderTime}
                 onChange={(val: string) => handleAutoSave({ breakfastReminderTime: val })}
-                suggestions={["06:00 AM", "07:00 AM", "08:00 AM", "09:00 AM"]}
                 theme={theme}
               />
               <RepeatPicker value={localProfile.breakfastRepeat} onChange={(val: string) => handleAutoSave({ breakfastRepeat: val })} theme={theme} />
@@ -451,7 +435,6 @@ export default function NotificationsScreen() {
                 label="Lunch"
                 value={localProfile.lunchReminderTime}
                 onChange={(val: string) => handleAutoSave({ lunchReminderTime: val })}
-                suggestions={["12:00 PM", "01:00 PM", "02:00 PM"]}
                 theme={theme}
               />
               <RepeatPicker value={localProfile.lunchRepeat} onChange={(val: string) => handleAutoSave({ lunchRepeat: val })} theme={theme} />
@@ -463,7 +446,6 @@ export default function NotificationsScreen() {
                 label="Dinner"
                 value={localProfile.dinnerReminderTime}
                 onChange={(val: string) => handleAutoSave({ dinnerReminderTime: val })}
-                suggestions={["07:00 PM", "08:00 PM", "09:00 PM"]}
                 theme={theme}
               />
               <RepeatPicker value={localProfile.dinnerRepeat} onChange={(val: string) => handleAutoSave({ dinnerRepeat: val })} theme={theme} />
@@ -483,7 +465,6 @@ export default function NotificationsScreen() {
                 label="Workout Time"
                 value={localProfile.workoutReminderTime}
                 onChange={(val: string) => handleAutoSave({ workoutReminderTime: val })}
-                suggestions={["05:00 AM", "06:00 AM", "06:00 PM", "07:00 PM"]}
                 theme={theme}
               />
               <RepeatPicker value={localProfile.workoutRepeat} onChange={(val: string) => handleAutoSave({ workoutRepeat: val })} theme={theme} />
@@ -519,7 +500,6 @@ export default function NotificationsScreen() {
                 label="Bedtime Reminder"
                 value={localProfile.sleepReminderTime}
                 onChange={(val: string) => handleAutoSave({ sleepReminderTime: val })}
-                suggestions={["09:00 PM", "10:00 PM", "11:00 PM"]}
                 theme={theme}
               />
               <RepeatPicker value={localProfile.sleepRepeat} onChange={(val: string) => handleAutoSave({ sleepRepeat: val })} theme={theme} />
