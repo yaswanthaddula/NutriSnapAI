@@ -24,6 +24,15 @@ export default function WelcomeScreen() {
     const checkUserSession = async () => {
       try {
         await loadStoredData();
+        
+        const token = await apiService.getToken();
+        if (!token) {
+          console.log("No token found (ephemeral session cleared), forcing login.");
+          useAppStore.getState().resetStore();
+          setIsCheckingSession(false);
+          return;
+        }
+
         const profile = useAppStore.getState().userProfile;
         if (profile && profile.email) {
           if (profile.selected_mode) {

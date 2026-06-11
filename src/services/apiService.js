@@ -1,5 +1,4 @@
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { API_BASE_URL } from '../config/apiConfig';
 
@@ -12,14 +11,15 @@ const api = axios.create({
 
 // Auth Token Storage Keys
 const TOKEN_KEY = 'nutrisnap_auth_token';
+let memoryToken = null; // Ephemeral storage for mobile
 
 // Helper methods for token storage to support both web and mobile
 const getToken = async () => {
   try {
     if (Platform.OS === 'web') {
-      return typeof window !== 'undefined' ? window.localStorage.getItem(TOKEN_KEY) : null;
+      return typeof window !== 'undefined' ? window.sessionStorage.getItem(TOKEN_KEY) : memoryToken;
     }
-    return await AsyncStorage.getItem(TOKEN_KEY);
+    return memoryToken;
   } catch (error) {
     console.error('Error getting token:', error);
     return null;
@@ -28,11 +28,10 @@ const getToken = async () => {
 
 const setToken = async (value) => {
   try {
+    memoryToken = value;
     if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined') window.localStorage.setItem(TOKEN_KEY, value);
-      return;
+      if (typeof window !== 'undefined') window.sessionStorage.setItem(TOKEN_KEY, value);
     }
-    await AsyncStorage.setItem(TOKEN_KEY, value);
   } catch (error) {
     console.error('Error setting token:', error);
   }
@@ -40,11 +39,10 @@ const setToken = async (value) => {
 
 const deleteToken = async () => {
   try {
+    memoryToken = null;
     if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined') window.localStorage.removeItem(TOKEN_KEY);
-      return;
+      if (typeof window !== 'undefined') window.sessionStorage.removeItem(TOKEN_KEY);
     }
-    await AsyncStorage.removeItem(TOKEN_KEY);
   } catch (error) {
     console.error('Error deleting token:', error);
   }
@@ -266,6 +264,8 @@ export const apiService = {
     const response = await api.delete('/ai-chat-history', { params: { mode } });
     return response.data;
   },
+
+  getToken,
 };
 
 export default apiService;
