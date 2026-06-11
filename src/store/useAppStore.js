@@ -63,6 +63,76 @@ const useAppStore = create((set, get) => ({
   lastActiveDate: null,
   activityHistory: [], // [{ date: '2023-01-01', steps: 5000, caloriesBurned: 200 }]
   waterHistory: [], // [{ date: '2023-01-01', amount: 2000 }]
+  reminderStatuses: {
+    breakfast: 'Upcoming',
+    lunch: 'Upcoming',
+    dinner: 'Upcoming',
+    snack: 'Upcoming',
+    workout: 'Upcoming',
+    sleep: 'Upcoming',
+    water: 'Upcoming'
+  },
+  
+  markReminderCompleted: (type) => {
+    const statuses = { ...get().reminderStatuses };
+    if (statuses[type]) {
+      statuses[type] = 'Completed';
+      set({ reminderStatuses: statuses });
+      get().saveStoredData();
+    }
+  },
+
+  evaluateReminderStatuses: () => {
+    const { userProfile, reminderStatuses } = get();
+    const now = new Date();
+    const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const newStatuses = { ...reminderStatuses };
+
+    const parseMinutes = (timeStr) => {
+      if (!timeStr) return null;
+      const match = timeStr.match(/^(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?\s*(AM|PM)$/i);
+      if (match) {
+        let h = parseInt(match[1], 10);
+        if (match[3].toUpperCase() === 'PM' && h < 12) h += 12;
+        if (match[3].toUpperCase() === 'AM' && h === 12) h = 0;
+        return h * 60 + parseInt(match[2], 10);
+      }
+      return null;
+    };
+
+    const types = [
+      { key: 'breakfast', time: userProfile.breakfastReminderTime },
+      { key: 'lunch', time: userProfile.lunchReminderTime },
+      { key: 'dinner', time: userProfile.dinnerReminderTime },
+      { key: 'snack', time: userProfile.snackReminderTime },
+      { key: 'workout', time: userProfile.workoutReminderTime },
+      { key: 'sleep', time: userProfile.sleepReminderTime },
+    ];
+
+    types.forEach(({ key, time }) => {
+      if (newStatuses[key] === 'Completed') return; // Don't override Completed
+
+      const targetMinutes = parseMinutes(time);
+      if (targetMinutes !== null) {
+        if (currentTotalMinutes < targetMinutes) {
+          newStatuses[key] = 'Upcoming';
+        } else if (currentTotalMinutes >= targetMinutes && currentTotalMinutes <= targetMinutes + 60) {
+          newStatuses[key] = 'Active';
+        } else if (currentTotalMinutes > targetMinutes + 60) {
+          newStatuses[key] = 'Missed';
+        }
+      }
+    });
+
+    // For water interval, just default to Active if not completed today
+    if (newStatuses.water !== 'Completed') {
+        newStatuses.water = 'Active';
+    }
+
+    set({ reminderStatuses: newStatuses });
+    get().saveStoredData();
+  },
 
   setUserProfile: (profile) => {
     const current = get().userProfile;
@@ -466,6 +536,7 @@ const useAppStore = create((set, get) => ({
     const storedLastActiveDate = await storage.getData('lastActiveDate');
     const storedActivityHistory = await storage.getData('activityHistory');
     const storedWaterHistory = await storage.getData('waterHistory');
+    const storedReminderStatuses = await storage.getData('reminderStatuses');
     
     if (storedProfile) {
       // Handle missing fields for legacy users
@@ -501,6 +572,7 @@ const useAppStore = create((set, get) => ({
     if (storedLastStreakDate) set({ lastStreakDate: storedLastStreakDate });
     if (storedActivityHistory) set({ activityHistory: storedActivityHistory });
     if (storedWaterHistory) set({ waterHistory: storedWaterHistory });
+    if (storedReminderStatuses) set({ reminderStatuses: storedReminderStatuses });
     
     
     if (storedLastActiveDate) set({ lastActiveDate: storedLastActiveDate });
@@ -509,7 +581,21 @@ const useAppStore = create((set, get) => ({
         if (storedTodayMood !== undefined) set({ todayMood: storedTodayMood });
         if (storedTodaySleep !== undefined) set({ todaySleep: storedTodaySleep });
     } else {
-        set({ todayMood: null, todaySleep: 0, lastActiveDate: today });
+        // New Day Reset
+        set({ 
+            todayMood: null, 
+            todaySleep: 0, 
+            lastActiveDate: today,
+            reminderStatuses: {
+                breakfast: 'Upcoming',
+                lunch: 'Upcoming',
+                dinner: 'Upcoming',
+                snack: 'Upcoming',
+                workout: 'Upcoming',
+                sleep: 'Upcoming',
+                water: 'Upcoming'
+            }
+        });
     }
 
     if (storedWaterData) {
@@ -590,13 +676,22 @@ const useAppStore = create((set, get) => ({
       activityHistory: [],
       waterHistory: [],
       notifications: [],
+      reminderStatuses: {
+        breakfast: 'Upcoming',
+        lunch: 'Upcoming',
+        dinner: 'Upcoming',
+        snack: 'Upcoming',
+        workout: 'Upcoming',
+        sleep: 'Upcoming',
+        water: 'Upcoming'
+      }
     });
 
     const keys = [
       'userProfile', 'meals', 'themeMode', 'steps', 'caloriesBurned', 'lastStepDate', 
       'workouts', 'activeWorkout', 'weightHistory', 'notifications', 'notificationPrefs',
       'waterData', 'streak', 'lastStreakDate', 'todayMood', 'todaySleep', 'lastActiveDate',
-      'activityHistory', 'waterHistory'
+      'activityHistory', 'waterHistory', 'reminderStatuses'
     ];
     for (const key of keys) {
       await storage.removeData(key);
@@ -607,7 +702,7 @@ const useAppStore = create((set, get) => ({
     const { 
       userProfile, meals, themeMode, steps, caloriesBurned, lastStepDate, 
       workouts, activeWorkout, weightHistory, notifications, notificationPrefs,       waterData, streak, lastStreakDate, todayMood, todaySleep, lastActiveDate,
-      activityHistory, waterHistory
+      activityHistory, waterHistory, reminderStatuses
     } = get();
     await storage.saveData('userProfile', userProfile);
     await storage.saveData('meals', meals);
@@ -628,6 +723,7 @@ const useAppStore = create((set, get) => ({
     await storage.saveData('lastActiveDate', lastActiveDate);
     await storage.saveData('activityHistory', activityHistory);
     await storage.saveData('waterHistory', waterHistory);
+    await storage.saveData('reminderStatuses', reminderStatuses);
   }
 }));
 

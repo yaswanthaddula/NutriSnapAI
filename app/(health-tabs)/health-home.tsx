@@ -45,7 +45,7 @@ export default function HealthHomeScreen() {
     userProfile, meals, steps, caloriesBurned, updateSteps, 
     loadStoredData, saveStoredData, waterData, addWater,
     streak, todayMood, setMood, todaySleep, setSleep, updateStreak,
-    notifications, notificationPrefs
+    notifications, notificationPrefs, reminderStatuses
   } = useAppStore();
 
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.mode === 'health').length;
@@ -659,6 +659,41 @@ export default function HealthHomeScreen() {
           <View style={{ width: '48%' }} /> 
         </View>
 
+        {/* --- REMINDER STATUS SUMMARY --- */}
+        <View style={[styles.mainCard, { backgroundColor: themeColors.card, borderColor: themeColors.border, borderWidth: 1, marginBottom: 15 }]}>
+          <Text style={[styles.cardTitle, { color: themeColors.text, marginBottom: 10 }]}>Reminder Status</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+            <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, marginRight: 8 }}>⏰</Text>
+              <View>
+                <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Upcoming</Text>
+                <Text style={{ color: themeColors.text, fontSize: 16 }}>{Object.values(reminderStatuses).filter(s => s === 'Upcoming').length}</Text>
+              </View>
+            </View>
+            <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, marginRight: 8 }}>🔔</Text>
+              <View>
+                <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Active</Text>
+                <Text style={{ color: themeColors.text, fontSize: 16 }}>{Object.values(reminderStatuses).filter(s => s === 'Active').length}</Text>
+              </View>
+            </View>
+            <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, marginRight: 8 }}>✅</Text>
+              <View>
+                <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Completed</Text>
+                <Text style={{ color: themeColors.text, fontSize: 16 }}>{Object.values(reminderStatuses).filter(s => s === 'Completed').length}</Text>
+              </View>
+            </View>
+            <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, marginRight: 8 }}>⚠️</Text>
+              <View>
+                <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Missed</Text>
+                <Text style={{ color: themeColors.text, fontSize: 16 }}>{Object.values(reminderStatuses).filter(s => s === 'Missed').length}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
         {/* --- TODAY'S REMINDERS --- */}
         <View style={[styles.mainCard, { backgroundColor: themeColors.card, borderColor: themeColors.border, borderWidth: 1, marginBottom: 15 }]}>
           <View style={styles.mainCardHeader}>
@@ -674,9 +709,9 @@ export default function HealthHomeScreen() {
               <Text style={{fontSize: 24}}>🍳</Text>
               <View style={{flex: 1, marginLeft: 15}}>
                 <Text style={[styles.mealName, { color: themeColors.text }]}>Breakfast</Text>
-                <Text style={[styles.mealTime, { color: themeColors.subText }]}>{userProfile.breakfastReminderTime} • Active</Text>
+                <Text style={[styles.mealTime, { color: reminderStatuses.breakfast === 'Missed' ? '#F44336' : reminderStatuses.breakfast === 'Completed' ? '#4CAF50' : reminderStatuses.breakfast === 'Active' ? '#FF9800' : '#2196F3' }]}>{userProfile.breakfastReminderTime} • Status: {reminderStatuses.breakfast}</Text>
               </View>
-              <Ionicons name="notifications" size={20} color="#00C853" />
+              <Ionicons name={reminderStatuses.breakfast === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={reminderStatuses.breakfast === 'Completed' ? "#4CAF50" : "#00C853"} />
             </View>
           )}
 
@@ -685,9 +720,9 @@ export default function HealthHomeScreen() {
               <Text style={{fontSize: 24}}>🍽️</Text>
               <View style={{flex: 1, marginLeft: 15}}>
                 <Text style={[styles.mealName, { color: themeColors.text }]}>Lunch</Text>
-                <Text style={[styles.mealTime, { color: themeColors.subText }]}>{userProfile.lunchReminderTime} • Active</Text>
+                <Text style={[styles.mealTime, { color: reminderStatuses.lunch === 'Missed' ? '#F44336' : reminderStatuses.lunch === 'Completed' ? '#4CAF50' : reminderStatuses.lunch === 'Active' ? '#FF9800' : '#2196F3' }]}>{userProfile.lunchReminderTime} • Status: {reminderStatuses.lunch}</Text>
               </View>
-              <Ionicons name="notifications" size={20} color="#00C853" />
+              <Ionicons name={reminderStatuses.lunch === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={reminderStatuses.lunch === 'Completed' ? "#4CAF50" : "#00C853"} />
             </View>
           )}
 
@@ -696,9 +731,9 @@ export default function HealthHomeScreen() {
               <Text style={{fontSize: 24}}>🌙</Text>
               <View style={{flex: 1, marginLeft: 15}}>
                 <Text style={[styles.mealName, { color: themeColors.text }]}>Dinner</Text>
-                <Text style={[styles.mealTime, { color: themeColors.subText }]}>{userProfile.dinnerReminderTime} • Active</Text>
+                <Text style={[styles.mealTime, { color: reminderStatuses.dinner === 'Missed' ? '#F44336' : reminderStatuses.dinner === 'Completed' ? '#4CAF50' : reminderStatuses.dinner === 'Active' ? '#FF9800' : '#2196F3' }]}>{userProfile.dinnerReminderTime} • Status: {reminderStatuses.dinner}</Text>
               </View>
-              <Ionicons name="notifications" size={20} color="#00C853" />
+              <Ionicons name={reminderStatuses.dinner === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={reminderStatuses.dinner === 'Completed' ? "#4CAF50" : "#00C853"} />
             </View>
           )}
 
@@ -707,9 +742,9 @@ export default function HealthHomeScreen() {
               <Text style={{fontSize: 24}}>💧</Text>
               <View style={{flex: 1, marginLeft: 15}}>
                 <Text style={[styles.mealName, { color: themeColors.text }]}>Water Reminder</Text>
-                <Text style={[styles.mealTime, { color: themeColors.subText }]}>{userProfile.waterReminderInterval} • Active</Text>
+                <Text style={[styles.mealTime, { color: reminderStatuses.water === 'Missed' ? '#F44336' : reminderStatuses.water === 'Completed' ? '#4CAF50' : reminderStatuses.water === 'Active' ? '#FF9800' : '#2196F3' }]}>{userProfile.waterReminderInterval} • Status: {reminderStatuses.water}</Text>
               </View>
-              <Ionicons name="notifications" size={20} color="#2196F3" />
+              <Ionicons name={reminderStatuses.water === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={reminderStatuses.water === 'Completed' ? "#4CAF50" : "#2196F3"} />
             </View>
           )}
           
@@ -718,9 +753,9 @@ export default function HealthHomeScreen() {
               <Text style={{fontSize: 24}}>😴</Text>
               <View style={{flex: 1, marginLeft: 15}}>
                 <Text style={[styles.mealName, { color: themeColors.text }]}>Sleep Reminder</Text>
-                <Text style={[styles.mealTime, { color: themeColors.subText }]}>{userProfile.sleepReminderTime} • Active</Text>
+                <Text style={[styles.mealTime, { color: reminderStatuses.sleep === 'Missed' ? '#F44336' : reminderStatuses.sleep === 'Completed' ? '#4CAF50' : reminderStatuses.sleep === 'Active' ? '#FF9800' : '#2196F3' }]}>{userProfile.sleepReminderTime} • Status: {reminderStatuses.sleep}</Text>
               </View>
-              <Ionicons name="notifications" size={20} color="#9C27B0" />
+              <Ionicons name={reminderStatuses.sleep === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={reminderStatuses.sleep === 'Completed' ? "#4CAF50" : "#9C27B0"} />
             </View>
           )}
 

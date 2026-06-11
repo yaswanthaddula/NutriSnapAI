@@ -849,14 +849,28 @@ export const notificationService = {
       const data = response.notification?.request?.content?.data;
       console.log("Notification Triggered (Mobile Click):", data);
       
+      if (data?.type) {
+        let reminderType = data.type.replace('-reminder', ''); // e.g. workout-reminder -> workout
+        if (data.type.includes('meal-')) reminderType = data.type.replace('meal-', ''); // meal-breakfast -> breakfast
+        if (['breakfast', 'lunch', 'dinner', 'snack', 'workout', 'sleep', 'water'].includes(reminderType)) {
+          useAppStore.getState().markReminderCompleted(reminderType);
+        }
+      }
+
       if (data?.screen) {
         router.push(data.screen);
       }
     }) : { remove: () => {} };
 
-    let intervalId = null;
+    // Set up global periodic evaluator (for both web and mobile foreground)
+    const statusInterval = setInterval(() => {
+      useAppStore.getState().evaluateReminderStatuses();
+    }, 30000); // Check every 30 seconds
+
+    // Web-specific notification fallback
+    let webIntervalId = null;
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      intervalId = setInterval(() => {
+      webIntervalId = setInterval(() => {
         const now = new Date();
         const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
         const todayDateStr = now.toISOString().split('T')[0];
@@ -899,7 +913,8 @@ export const notificationService = {
     return () => {
       foregroundSubscription.remove();
       responseSubscription.remove();
-      if (intervalId) clearInterval(intervalId);
+      clearInterval(statusInterval);
+      if (webIntervalId) clearInterval(webIntervalId);
     };
   }
 };
