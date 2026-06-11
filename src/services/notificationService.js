@@ -829,9 +829,8 @@ export const notificationService = {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       intervalId = setInterval(() => {
         const now = new Date();
-        const hh = String(now.getHours()).padStart(2, '0');
-        const mm = String(now.getMinutes()).padStart(2, '0');
-        const current24 = `${hh}:${mm}`;
+        const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+        const todayDateStr = now.toISOString().split('T')[0];
         
         const state = useAppStore.getState();
         const profile = state.userProfile;
@@ -840,11 +839,15 @@ export const notificationService = {
         const checkTime = (timeStr, title, body) => {
            if (!timeStr) return;
            const parsed = parseTime(timeStr);
-           if (parsed && String(parsed.hour).padStart(2, '0') + ':' + String(parsed.minute).padStart(2, '0') === current24) {
-              const key = `web-notif-${current24}-${title}`;
-              if (!window[key]) {
-                window[key] = true;
-                showWebNotification(title, body);
+           if (parsed) {
+              const targetTotalMinutes = parsed.hour * 60 + parsed.minute;
+              // Check if we are within a 5 minute window after the target time
+              if (currentTotalMinutes >= targetTotalMinutes && currentTotalMinutes <= targetTotalMinutes + 5) {
+                const key = `web-notif-${todayDateStr}-${title}`;
+                if (!window[key]) {
+                  window[key] = true;
+                  showWebNotification(title, body);
+                }
               }
            }
         };
@@ -861,7 +864,7 @@ export const notificationService = {
         if (prefs.sleep) {
            checkTime(profile.sleepReminderTime, 'Sleep Reminder', 'Time to sleep and recover. 🌙');
         }
-      }, 30000); // Check every 30 seconds to catch the exact minute
+      }, 30000); // Check every 30 seconds
     }
 
     return () => {

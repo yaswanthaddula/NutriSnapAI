@@ -90,36 +90,73 @@ const CustomTimePicker = ({ label, value, onChange, theme }: any) => {
       )}
       
       {showPicker && Platform.OS === 'web' && (
-        <View style={{ marginTop: 10 }}>
-          {React.createElement('input', {
-            type: 'time',
-            value: `${String(currentDate.getHours()).padStart(2, '0')}:${String(currentDate.getMinutes()).padStart(2, '0')}`,
-            style: {
-              fontSize: '16px',
-              padding: '12px',
-              borderRadius: '12px',
-              border: `1px solid ${theme.border}`,
-              backgroundColor: theme.cardBg,
-              color: theme.text,
-              width: '100%',
-              fontFamily: 'inherit',
-              outline: 'none',
-              cursor: 'pointer'
-            },
-            onChange: (e: any) => {
-              const val = e.target.value; // expected "HH:mm"
-              if (val) {
-                const [hStr, mStr] = val.split(':');
-                let h = parseInt(hStr, 10);
-                const m = mStr;
-                const ampm = h >= 12 ? 'PM' : 'AM';
-                h = h % 12;
-                if (h === 0) h = 12;
-                onChange(`${String(h).padStart(2, '0')}:${m} ${ampm}`);
-                setShowPicker(false);
-              }
-            }
-          })}
+        <View style={[styles.gridPickerWrapper, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.gridSectionHeader, { color: theme.text }]}>Hour</Text>
+          <View style={styles.gridRow}>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(h => {
+              const strH = String(h).padStart(2, '0');
+              const isSelected = value.startsWith(strH);
+              return (
+                <TouchableOpacity 
+                  key={h} 
+                  style={[styles.gridItem, { borderColor: theme.border }, isSelected && { backgroundColor: '#00C853', borderColor: '#00C853' }]}
+                  onPress={() => {
+                    const parts = value.split(/[: ]/);
+                    const currentM = parts[1] || '00';
+                    const currentAMPM = parts[2] || 'AM';
+                    onChange(`${strH}:${currentM} ${currentAMPM}`);
+                  }}
+                >
+                  <Text style={[styles.gridItemText, { color: isSelected ? '#FFF' : theme.text }]}>{h}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <Text style={[styles.gridSectionHeader, { color: theme.text }]}>Minute</Text>
+          <View style={styles.gridRow}>
+            {['00', '15', '30', '45'].map(m => {
+              const isSelected = value.includes(`:${m}`);
+              return (
+                <TouchableOpacity 
+                  key={m} 
+                  style={[styles.gridItem, { width: '23%', borderColor: theme.border }, isSelected && { backgroundColor: '#00C853', borderColor: '#00C853' }]}
+                  onPress={() => {
+                    const parts = value.split(/[: ]/);
+                    const currentH = parts[0] || '12';
+                    const currentAMPM = parts[2] || 'AM';
+                    onChange(`${currentH}:${m} ${currentAMPM}`);
+                  }}
+                >
+                  <Text style={[styles.gridItemText, { color: isSelected ? '#FFF' : theme.text }]}>{m}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <View style={[styles.gridRow, { marginTop: 10 }]}>
+            {['AM', 'PM'].map(ampm => {
+              const isSelected = value.includes(ampm);
+              return (
+                <TouchableOpacity 
+                  key={ampm} 
+                  style={[styles.ampmItem, { borderColor: theme.border }, isSelected && { backgroundColor: '#00C853', borderColor: '#00C853' }]}
+                  onPress={() => {
+                    const parts = value.split(/[: ]/);
+                    const currentH = parts[0] || '12';
+                    const currentM = parts[1] || '00';
+                    onChange(`${currentH}:${currentM} ${ampm}`);
+                  }}
+                >
+                  <Text style={[styles.gridItemText, { color: isSelected ? '#FFF' : theme.text }]}>{ampm}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <TouchableOpacity style={[styles.closeGridBtn, { borderTopColor: theme.border }]} onPress={() => setShowPicker(false)}>
+            <Text style={{ color: '#00C853', fontWeight: 'bold' }}>Done</Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>
