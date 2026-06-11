@@ -33,10 +33,21 @@ const WebSpinnerColumn = ({ items, selectedValue, onValueChange, itemHeight = 40
             onValueChange(items[index]);
           }
         }}
+        onScrollEndDrag={(e) => {
+          const index = Math.round(e.nativeEvent.contentOffset.y / itemHeight);
+          if (items[index] !== undefined && items[index] !== selectedValue) {
+            onValueChange(items[index]);
+          }
+        }}
         contentContainerStyle={{ paddingVertical: itemHeight }}
       >
         {items.map((item: any, i: number) => (
-          <View key={i} style={{ height: itemHeight, justifyContent: 'center', alignItems: 'center' }}>
+          <TouchableOpacity 
+            key={i} 
+            style={{ height: itemHeight, justifyContent: 'center', alignItems: 'center' }}
+            onPress={() => onValueChange(item)}
+            activeOpacity={0.7}
+          >
             <Text style={{ 
               fontSize: item === selectedValue ? 18 : 16, 
               color: item === selectedValue ? theme.text : theme.subText,
@@ -44,7 +55,7 @@ const WebSpinnerColumn = ({ items, selectedValue, onValueChange, itemHeight = 40
             }}>
               {item}
             </Text>
-          </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </View>
