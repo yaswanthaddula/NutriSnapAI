@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import { API_BASE_URL } from '../config/apiConfig';
 
 const BASE_URL = API_BASE_URL;
@@ -15,8 +16,8 @@ const TOKEN_KEY = 'nutrisnap_auth_token';
 // Helper methods for token storage to support both web and mobile
 const getToken = async () => {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      return window.localStorage.getItem(TOKEN_KEY);
+    if (Platform.OS === 'web') {
+      return typeof window !== 'undefined' ? window.localStorage.getItem(TOKEN_KEY) : null;
     }
     return await SecureStore.getItemAsync(TOKEN_KEY);
   } catch (error) {
@@ -27,8 +28,8 @@ const getToken = async () => {
 
 const setToken = async (value) => {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(TOKEN_KEY, value);
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') window.localStorage.setItem(TOKEN_KEY, value);
       return;
     }
     await SecureStore.setItemAsync(TOKEN_KEY, value);
@@ -39,8 +40,8 @@ const setToken = async (value) => {
 
 const deleteToken = async () => {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.removeItem(TOKEN_KEY);
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') window.localStorage.removeItem(TOKEN_KEY);
       return;
     }
     await SecureStore.deleteItemAsync(TOKEN_KEY);

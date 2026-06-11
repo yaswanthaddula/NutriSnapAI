@@ -44,23 +44,8 @@ export default function LoginScreen() {
       return;
     }
 
-    isSubmitting.current = true;
-    setIsLoading(true);
-    setEmailError('');
-    try {
-      const response = await apiService.checkEmail(email);
-      if (response.data.exists) {
-        setStep(2);
-      } else {
-        setEmailError("Sign up first.");
-      }
-    } catch (error: any) {
-      console.error("Check email error details:", error);
-      setEmailError("Unable to connect. Please try again.");
-    } finally {
-      isSubmitting.current = false;
-      setIsLoading(false);
-    }
+    // Instantly transition to password step
+    setStep(2);
   };
 
   const handleLogin = async () => {
