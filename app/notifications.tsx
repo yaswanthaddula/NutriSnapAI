@@ -244,8 +244,13 @@ export default function NotificationsScreen() {
         ...localProfile
       };
       
+      console.log("Reminder Created: New configuration ready to save ->", localProfile);
+      
       setUserProfile(updated);
       await apiService.saveProfile(updated);
+      
+      console.log("Reminder Saved: Configuration successfully saved to backend.");
+      
       await notificationService.scheduleReminderNotifications();
 
       Alert.alert("Success", "Reminder settings saved successfully!");

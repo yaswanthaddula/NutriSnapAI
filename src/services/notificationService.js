@@ -470,7 +470,7 @@ const playBeep = () => {
   }
 };
 
-const showWebNotification = (title, message) => {
+const showWebNotification = (title, message, screen) => {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     // 1. Play synthesized beep (guaranteed to not have CORS issues)
     playBeep();
@@ -478,9 +478,17 @@ const showWebNotification = (title, message) => {
     // 2. Try Native Web Notification
     if ('Notification' in window) {
       const trigger = () => {
-        new window.Notification(`NutriSnap AI: ${title}`, {
+        const notif = new window.Notification(title, {
           body: message,
+          icon: '/favicon.ico' // Ensure an icon exists
         });
+        console.log(`Notification Delivered (Web): ${title} - ${message}`);
+        
+        notif.onclick = () => {
+          console.log(`Notification Triggered (Web Click): Routing to ${screen}`);
+          window.focus();
+          if (screen) router.push(screen);
+        };
       };
 
       if (window.Notification.permission === 'granted') {
@@ -492,14 +500,10 @@ const showWebNotification = (title, message) => {
           }
         });
       }
+    } else {
+      // Fallback: Non-blocking console log instead of blocking Alert.alert for background intervals
+      console.log(`Notification Delivered (Web Fallback): ${title} - ${message}`);
     }
-
-    // 3. Always show an in-app alert on Web since mobile browsers often block OS-level pushes
-    setTimeout(() => {
-      import('react-native').then(({ Alert }) => {
-        Alert.alert(`NutriSnap AI: ${title}`, message);
-      });
-    }, 100);
   }
 };
 
@@ -528,6 +532,7 @@ export const notificationService = {
     if (checkResult) {
       const message = typeof checkResult === 'object' ? checkResult.message : rule.message;
       const uniqueKey = `${rule.type}-${today}`;
+      const screenRoute = rule.mode === 'gym' ? '/gym-home' : '/health-home';
 
       const newNotif = state.addNotification({
         title: rule.title,
@@ -540,7 +545,7 @@ export const notificationService = {
       });
 
       if (newNotif) {
-        showWebNotification(rule.title, message);
+        showWebNotification(rule.title, message, screenRoute);
         try {
           await Notifications.scheduleNotificationAsync({
             content: {
@@ -549,7 +554,7 @@ export const notificationService = {
               data: { 
                 type: rule.type,
                 mode: rule.mode,
-                screen: rule.mode === 'gym' ? '/gym-home' : '/health-home'
+                screen: screenRoute
               },
               sound: true,
               vibrate: [0, 250, 250, 250],
@@ -590,6 +595,7 @@ export const notificationService = {
       if (checkResult) {
         const message = typeof checkResult === 'object' ? checkResult.message : rule.message;
         const uniqueKey = `${rule.type}-${today}`;
+        const screenRoute = rule.mode === 'gym' ? '/gym-home' : '/health-home';
 
         const newNotif = state.addNotification({
           title: rule.title,
@@ -602,7 +608,7 @@ export const notificationService = {
         });
 
         if (newNotif) {
-          showWebNotification(rule.title, message);
+          showWebNotification(rule.title, message, screenRoute);
           try {
             await Notifications.scheduleNotificationAsync({
               content: {
@@ -611,7 +617,7 @@ export const notificationService = {
                 data: { 
                   type: rule.type,
                   mode: rule.mode,
-                  screen: rule.mode === 'gym' ? '/gym-home' : '/health-home'
+                  screen: screenRoute
                 },
                 sound: true,
                 channelId: 'default',
@@ -644,10 +650,10 @@ export const notificationService = {
       // 1. Meals Reminders
       if (prefs.meals) {
         const mealReminders = [
-          { time: profile.breakfastReminderTime, title: 'Breakfast Reminder', body: 'Time for your healthy breakfast. 🍎', type: 'breakfast' },
-          { time: profile.lunchReminderTime, title: 'Lunch Reminder', body: "Don't forget to track your lunch. 🥗", type: 'lunch' },
-          { time: profile.dinnerReminderTime, title: 'Dinner Reminder', body: 'Time for your healthy dinner. 🍲', type: 'dinner' },
-          { time: profile.snackReminderTime, title: 'Snack Reminder', body: 'Time for a healthy snack check-in. 🍌', type: 'snack' },
+          { time: profile.breakfastReminderTime, title: 'NutriSnap AI', body: '🍳 Time for Breakfast', type: 'breakfast' },
+          { time: profile.lunchReminderTime, title: 'NutriSnap AI', body: '🍽️ Time for Lunch', type: 'lunch' },
+          { time: profile.dinnerReminderTime, title: 'NutriSnap AI', body: '🌙 Time for Dinner', type: 'dinner' },
+          { time: profile.snackReminderTime, title: 'NutriSnap AI', body: '🥗 Time for Snack', type: 'snack' },
         ];
 
         for (const item of mealReminders) {
@@ -655,7 +661,7 @@ export const notificationService = {
           if (parsed) {
             await Notifications.scheduleNotificationAsync({
               content: {
-                title: 'NutriSnap AI',
+                title: item.title,
                 body: item.body,
                 sound: true,
                 vibrate: [0, 250, 250, 250],
@@ -668,7 +674,7 @@ export const notificationService = {
               },
               trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true },
             });
-            console.log(`Scheduled daily ${item.title} at ${parsed.hour}:${parsed.minute}`);
+            console.log(`Notification Scheduled: ${item.type} at ${parsed.hour}:${parsed.minute}`);
           }
         }
       }
@@ -680,7 +686,7 @@ export const notificationService = {
           await Notifications.scheduleNotificationAsync({
             content: {
               title: 'NutriSnap AI',
-              body: "Don't forget to drink water. 💧",
+              body: "💧 Time to drink water.",
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
@@ -692,7 +698,7 @@ export const notificationService = {
             },
             trigger: { seconds: intervalSeconds, repeats: true },
           });
-          console.log(`Scheduled repeating Water Reminder every ${intervalSeconds}s`);
+          console.log(`Notification Scheduled: water-reminder every ${intervalSeconds}s`);
         }
       }
 
@@ -703,7 +709,7 @@ export const notificationService = {
           await Notifications.scheduleNotificationAsync({
             content: {
               title: 'NutriSnap AI',
-              body: 'Workout session starts now. 🔥',
+              body: '🏋️ Workout session starts now.',
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
@@ -715,7 +721,7 @@ export const notificationService = {
             },
             trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true },
           });
-          console.log(`Scheduled daily Workout Reminder at ${parsed.hour}:${parsed.minute}`);
+          console.log(`Notification Scheduled: workout-reminder at ${parsed.hour}:${parsed.minute}`);
         }
       }
 
@@ -726,7 +732,7 @@ export const notificationService = {
           await Notifications.scheduleNotificationAsync({
             content: {
               title: 'NutriSnap AI',
-              body: 'Time to sleep and recover. 🌙',
+              body: '😴 Time to sleep and recover.',
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
@@ -738,7 +744,7 @@ export const notificationService = {
             },
             trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true },
           });
-          console.log(`Scheduled daily Sleep Reminder at ${parsed.hour}:${parsed.minute}`);
+          console.log(`Notification Scheduled: sleep-reminder at ${parsed.hour}:${parsed.minute}`);
         }
       }
     } catch (e) {
@@ -812,13 +818,13 @@ export const notificationService = {
   setupListeners: () => {
     // Listener for when a notification is received while the app is foregrounded
     const foregroundSubscription = Notifications ? Notifications.addNotificationReceivedListener(notification => {
-      console.log("Notification received in foreground:", notification);
+      console.log("Notification Delivered (Mobile Foreground):", notification.request.content);
     }) : { remove: () => {} };
 
     // Listener for when a user interacts with a notification (clicked)
     const responseSubscription = Notifications ? Notifications.addNotificationResponseReceivedListener(response => {
       const data = response.notification?.request?.content?.data;
-      console.log("Notification clicked with data:", data);
+      console.log("Notification Triggered (Mobile Click):", data);
       
       if (data?.screen) {
         router.push(data.screen);
