@@ -632,6 +632,35 @@ export const notificationService = {
     }
   },
 
+  scheduleWithRepeat: async (content, parsed, repeatType) => {
+    if (!Notifications) return;
+    const channelId = Platform.OS === 'android' ? 'default' : undefined;
+    
+    if (repeatType === 'Weekdays') {
+      const days = [2, 3, 4, 5, 6]; // Monday to Friday
+      for (const day of days) {
+        await Notifications.scheduleNotificationAsync({
+          content,
+          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'default' }
+        });
+      }
+    } else if (repeatType === 'Weekends') {
+      const days = [1, 7]; // Sunday, Saturday
+      for (const day of days) {
+        await Notifications.scheduleNotificationAsync({
+          content,
+          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'default' }
+        });
+      }
+    } else {
+      // Daily or Custom Days (fallback to daily)
+      await Notifications.scheduleNotificationAsync({
+        content,
+        trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'default' }
+      });
+    }
+  },
+
   scheduleReminderNotifications: async () => {
     try {
       if (!Notifications) return;
@@ -650,31 +679,29 @@ export const notificationService = {
       // 1. Meals Reminders
       if (prefs.meals) {
         const mealReminders = [
-          { time: profile.breakfastReminderTime, title: 'NutriSnap AI', body: '🍳 Time for Breakfast', type: 'breakfast' },
-          { time: profile.lunchReminderTime, title: 'NutriSnap AI', body: '🍽️ Time for Lunch', type: 'lunch' },
-          { time: profile.dinnerReminderTime, title: 'NutriSnap AI', body: '🌙 Time for Dinner', type: 'dinner' },
-          { time: profile.snackReminderTime, title: 'NutriSnap AI', body: '🥗 Time for Snack', type: 'snack' },
+          { time: profile.breakfastReminderTime, repeat: prefs.breakfastRepeat, title: 'NutriSnap AI', body: '🍳 Time for Breakfast', type: 'breakfast' },
+          { time: profile.lunchReminderTime, repeat: prefs.lunchRepeat, title: 'NutriSnap AI', body: '🍽️ Time for Lunch', type: 'lunch' },
+          { time: profile.dinnerReminderTime, repeat: prefs.dinnerRepeat, title: 'NutriSnap AI', body: '🌙 Time for Dinner', type: 'dinner' },
+          { time: profile.snackReminderTime, repeat: prefs.snackRepeat, title: 'NutriSnap AI', body: '🥗 Time for Snack', type: 'snack' },
         ];
 
         for (const item of mealReminders) {
           const parsed = parseTime(item.time);
           if (parsed) {
-            await Notifications.scheduleNotificationAsync({
-              content: {
-                title: item.title,
-                body: item.body,
-                sound: true,
-                vibrate: [0, 250, 250, 250],
-                priority: Notifications.AndroidNotificationPriority.MAX,
-                channelId: channelId || 'default',
-                data: { 
-                  screen: currentMode === 'gym' ? '/food-selection' : '/health-food-selection',
-                  type: `meal-${item.type}`
-                },
+            const content = {
+              title: item.title,
+              body: item.body,
+              sound: true,
+              vibrate: [0, 250, 250, 250],
+              priority: Notifications.AndroidNotificationPriority.MAX,
+              channelId: channelId || 'default',
+              data: { 
+                screen: currentMode === 'gym' ? '/food-selection' : '/health-food-selection',
+                type: `meal-${item.type}`
               },
-              trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'default' },
-            });
-            console.log(`Notification Scheduled: ${item.type} at ${parsed.hour}:${parsed.minute}`);
+            };
+            await notificationService.scheduleWithRepeat(content, parsed, item.repeat);
+            console.log(`Notification Scheduled: ${item.type} at ${parsed.hour}:${parsed.minute} (${item.repeat || 'Daily'})`);
           }
         }
       }
@@ -706,22 +733,20 @@ export const notificationService = {
       if (prefs.workout && profile.workoutReminderTime) {
         const parsed = parseTime(profile.workoutReminderTime);
         if (parsed) {
-          await Notifications.scheduleNotificationAsync({
-            content: {
-              title: 'NutriSnap AI',
-              body: '🏋️ Workout session starts now.',
-              sound: true,
-              vibrate: [0, 250, 250, 250],
-              priority: Notifications.AndroidNotificationPriority.MAX,
-              channelId: channelId || 'default',
-              data: { 
-                screen: currentMode === 'gym' ? '/(tabs)/plans' : '/(health-tabs)/plans',
-                type: 'workout-reminder'
-              },
+          const content = {
+            title: 'NutriSnap AI',
+            body: '🏋️ Workout session starts now.',
+            sound: true,
+            vibrate: [0, 250, 250, 250],
+            priority: Notifications.AndroidNotificationPriority.MAX,
+            channelId: channelId || 'default',
+            data: { 
+              screen: currentMode === 'gym' ? '/(tabs)/plans' : '/(health-tabs)/plans',
+              type: 'workout-reminder'
             },
-            trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'default' },
-          });
-          console.log(`Notification Scheduled: workout-reminder at ${parsed.hour}:${parsed.minute}`);
+          };
+          await notificationService.scheduleWithRepeat(content, parsed, prefs.workoutRepeat);
+          console.log(`Notification Scheduled: workout-reminder at ${parsed.hour}:${parsed.minute} (${prefs.workoutRepeat || 'Daily'})`);
         }
       }
 
@@ -729,22 +754,20 @@ export const notificationService = {
       if (prefs.sleep && profile.sleepReminderTime) {
         const parsed = parseTime(profile.sleepReminderTime);
         if (parsed) {
-          await Notifications.scheduleNotificationAsync({
-            content: {
-              title: 'NutriSnap AI',
-              body: '😴 Time to sleep and recover.',
-              sound: true,
-              vibrate: [0, 250, 250, 250],
-              priority: Notifications.AndroidNotificationPriority.MAX,
-              channelId: channelId || 'default',
-              data: { 
-                screen: currentMode === 'gym' ? '/(tabs)/gym-home' : '/(health-tabs)/health-home',
-                type: 'sleep-reminder'
-              },
+          const content = {
+            title: 'NutriSnap AI',
+            body: '😴 Time to sleep and recover.',
+            sound: true,
+            vibrate: [0, 250, 250, 250],
+            priority: Notifications.AndroidNotificationPriority.MAX,
+            channelId: channelId || 'default',
+            data: { 
+              screen: currentMode === 'gym' ? '/(tabs)/gym-home' : '/(health-tabs)/health-home',
+              type: 'sleep-reminder'
             },
-            trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'default' },
-          });
-          console.log(`Notification Scheduled: sleep-reminder at ${parsed.hour}:${parsed.minute}`);
+          };
+          await notificationService.scheduleWithRepeat(content, parsed, prefs.sleepRepeat);
+          console.log(`Notification Scheduled: sleep-reminder at ${parsed.hour}:${parsed.minute} (${prefs.sleepRepeat || 'Daily'})`);
         }
       }
     } catch (e) {

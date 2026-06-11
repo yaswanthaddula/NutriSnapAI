@@ -44,6 +44,12 @@ const useAppStore = create((set, get) => ({
     goals: true,
     reports: true,
     quotes: true,
+    breakfastRepeat: 'Daily',
+    lunchRepeat: 'Daily',
+    dinnerRepeat: 'Daily',
+    snackRepeat: 'Daily',
+    workoutRepeat: 'Daily',
+    sleepRepeat: 'Daily'
   },
   waterData: {
     date: new Date().toISOString().split('T')[0],
