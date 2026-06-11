@@ -8,7 +8,8 @@ import {
   SafeAreaView, 
   Switch, 
   Platform,
-  Alert
+  Alert,
+  Modal
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -120,26 +121,39 @@ const CustomTimePicker = ({ label, value, onChange, suggestions, theme }: any) =
     return now;
   };
 
-  const currentDate = parseToDate(value);
+  const [currentDate, setCurrentDate] = useState(parseToDate(value));
   const [showPicker, setShowPicker] = useState(false);
+
+  useEffect(() => {
+    setCurrentDate(parseToDate(value));
+  }, [value]);
 
   const onChangePicker = (event: any, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
       setShowPicker(false);
-    }
-    if (selectedDate && event.type !== 'dismissed') {
-      let h = selectedDate.getHours();
-      const m = String(selectedDate.getMinutes()).padStart(2, '0');
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      h = h % 12;
-      if (h === 0) h = 12;
-      onChange(`${String(h).padStart(2, '0')}:${m} ${ampm}`);
-      if (Platform.OS === 'ios') {
-        setShowPicker(false);
+      if (selectedDate && event.type !== 'dismissed') {
+        let h = selectedDate.getHours();
+        const m = String(selectedDate.getMinutes()).padStart(2, '0');
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12;
+        if (h === 0) h = 12;
+        onChange(`${String(h).padStart(2, '0')}:${m} ${ampm}`);
       }
-    } else if (event.type === 'dismissed') {
-      setShowPicker(false);
+    } else if (Platform.OS === 'ios') {
+      if (selectedDate) {
+        setCurrentDate(selectedDate);
+      }
     }
+  };
+
+  const handleIosDone = () => {
+    let h = currentDate.getHours();
+    const m = String(currentDate.getMinutes()).padStart(2, '0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    if (h === 0) h = 12;
+    onChange(`${String(h).padStart(2, '0')}:${m} ${ampm}`);
+    setShowPicker(false);
   };
 
   return (
@@ -170,12 +184,31 @@ const CustomTimePicker = ({ label, value, onChange, suggestions, theme }: any) =
         </View>
       )}
 
-      {showPicker && Platform.OS !== 'web' && (
+      {showPicker && Platform.OS === 'ios' && (
+        <Modal transparent={true} animationType="slide" visible={showPicker}>
+          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <View style={{ backgroundColor: theme.cardBg, padding: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+              <DateTimePicker
+                value={currentDate}
+                mode="time"
+                is24Hour={false}
+                display="spinner"
+                onChange={onChangePicker}
+              />
+              <TouchableOpacity onPress={handleIosDone} style={{ backgroundColor: '#00C853', padding: 15, borderRadius: 12, alignItems: 'center', marginTop: 15 }}>
+                <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 16 }}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {showPicker && Platform.OS === 'android' && (
         <DateTimePicker
           value={currentDate}
           mode="time"
           is24Hour={false}
-          display={Platform.OS === 'ios' ? 'spinner' : 'spinner'}
+          display="default" // Native Android Clock Wheel
           onChange={onChangePicker}
         />
       )}
@@ -316,44 +349,30 @@ export default function NotificationsScreen() {
     });
   }, [userProfile]);
 
-  const handleSaveReminder = async () => {
+  const handleAutoSave = async (updatedFields: any) => {
     try {
-      const granted = await notificationService.registerForPushNotificationsAsync();
-      if (!granted) {
-        Alert.alert(
-          "Permission Required",
-          "Notification permissions are disabled. Please enable them in your device settings to receive reminders.",
-          [{ text: "OK" }]
-        );
-        return;
-      }
+      const merged = { ...localProfile, ...updatedFields };
+      setLocalProfile(merged);
 
-      const updated = {
-        ...userProfile,
-        ...localProfile
-      };
+      const toSave = { ...userProfile, ...merged };
+      setUserProfile(toSave); // This directly syncs with dashboard
       
-      console.log("Reminder Created: New configuration ready to save ->", localProfile);
-      
-      setUserProfile(updated);
-      await apiService.saveProfile(updated);
-      
-      // Save repeats to notificationPrefs so they persist locally
-      updateNotificationPrefs('breakfastRepeat', localProfile.breakfastRepeat);
-      updateNotificationPrefs('lunchRepeat', localProfile.lunchRepeat);
-      updateNotificationPrefs('dinnerRepeat', localProfile.dinnerRepeat);
-      updateNotificationPrefs('snackRepeat', localProfile.snackRepeat);
-      updateNotificationPrefs('workoutRepeat', localProfile.workoutRepeat);
-      updateNotificationPrefs('sleepRepeat', localProfile.sleepRepeat);
+      // Save repeat preferences locally
+      if (updatedFields.breakfastRepeat) updateNotificationPrefs('breakfastRepeat', updatedFields.breakfastRepeat);
+      if (updatedFields.lunchRepeat) updateNotificationPrefs('lunchRepeat', updatedFields.lunchRepeat);
+      if (updatedFields.dinnerRepeat) updateNotificationPrefs('dinnerRepeat', updatedFields.dinnerRepeat);
+      if (updatedFields.snackRepeat) updateNotificationPrefs('snackRepeat', updatedFields.snackRepeat);
+      if (updatedFields.workoutRepeat) updateNotificationPrefs('workoutRepeat', updatedFields.workoutRepeat);
+      if (updatedFields.sleepRepeat) updateNotificationPrefs('sleepRepeat', updatedFields.sleepRepeat);
 
-      console.log("Reminder Saved: Configuration successfully saved to backend and local storage.");
+      // Save to backend silently
+      apiService.saveProfile(toSave).catch(e => console.log("Silent backend save error:", e));
       
+      // Reschedule Native Notifications instantly
       await notificationService.scheduleReminderNotifications();
-
-      Alert.alert("Success", "Reminder settings saved successfully!");
+      console.log("Reminder Auto-Saved & Rescheduled Instantly!");
     } catch (err) {
-      console.error("Failed to save reminders:", err);
-      Alert.alert("Error", "Failed to save reminders to the server.");
+      console.error("Failed to auto-save reminder:", err);
     }
   };
 
@@ -419,11 +438,11 @@ export default function NotificationsScreen() {
               <CustomTimePicker
                 label="Breakfast"
                 value={localProfile.breakfastReminderTime}
-                onChange={(val: string) => setLocalProfile((prev: any) => ({ ...prev, breakfastReminderTime: val }))}
+                onChange={(val: string) => handleAutoSave({ breakfastReminderTime: val })}
                 suggestions={["06:00 AM", "07:00 AM", "08:00 AM", "09:00 AM"]}
                 theme={theme}
               />
-              <RepeatPicker value={localProfile.breakfastRepeat} onChange={(val: string) => setLocalProfile((prev: any) => ({ ...prev, breakfastRepeat: val }))} theme={theme} />
+              <RepeatPicker value={localProfile.breakfastRepeat} onChange={(val: string) => handleAutoSave({ breakfastRepeat: val })} theme={theme} />
               <ReminderPreview title="Breakfast Reminder" time={localProfile.breakfastReminderTime} repeat={localProfile.breakfastRepeat} theme={theme} />
               
               <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 20 }} />
@@ -431,11 +450,11 @@ export default function NotificationsScreen() {
               <CustomTimePicker
                 label="Lunch"
                 value={localProfile.lunchReminderTime}
-                onChange={(val: string) => setLocalProfile((prev: any) => ({ ...prev, lunchReminderTime: val }))}
+                onChange={(val: string) => handleAutoSave({ lunchReminderTime: val })}
                 suggestions={["12:00 PM", "01:00 PM", "02:00 PM"]}
                 theme={theme}
               />
-              <RepeatPicker value={localProfile.lunchRepeat} onChange={(val: string) => setLocalProfile((prev: any) => ({ ...prev, lunchRepeat: val }))} theme={theme} />
+              <RepeatPicker value={localProfile.lunchRepeat} onChange={(val: string) => handleAutoSave({ lunchRepeat: val })} theme={theme} />
               <ReminderPreview title="Lunch Reminder" time={localProfile.lunchReminderTime} repeat={localProfile.lunchRepeat} theme={theme} />
 
               <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 20 }} />
@@ -443,16 +462,12 @@ export default function NotificationsScreen() {
               <CustomTimePicker
                 label="Dinner"
                 value={localProfile.dinnerReminderTime}
-                onChange={(val: string) => setLocalProfile((prev: any) => ({ ...prev, dinnerReminderTime: val }))}
+                onChange={(val: string) => handleAutoSave({ dinnerReminderTime: val })}
                 suggestions={["07:00 PM", "08:00 PM", "09:00 PM"]}
                 theme={theme}
               />
-              <RepeatPicker value={localProfile.dinnerRepeat} onChange={(val: string) => setLocalProfile((prev: any) => ({ ...prev, dinnerRepeat: val }))} theme={theme} />
+              <RepeatPicker value={localProfile.dinnerRepeat} onChange={(val: string) => handleAutoSave({ dinnerRepeat: val })} theme={theme} />
               <ReminderPreview title="Dinner Reminder" time={localProfile.dinnerReminderTime} repeat={localProfile.dinnerRepeat} theme={theme} />
-
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveReminder}>
-                <Text style={styles.saveBtnText}>Save Meal Reminders</Text>
-              </TouchableOpacity>
             </View>
           )}
 
@@ -467,16 +482,12 @@ export default function NotificationsScreen() {
               <CustomTimePicker
                 label="Workout Time"
                 value={localProfile.workoutReminderTime}
-                onChange={(val: string) => setLocalProfile((prev: any) => ({ ...prev, workoutReminderTime: val }))}
+                onChange={(val: string) => handleAutoSave({ workoutReminderTime: val })}
                 suggestions={["05:00 AM", "06:00 AM", "06:00 PM", "07:00 PM"]}
                 theme={theme}
               />
-              <RepeatPicker value={localProfile.workoutRepeat} onChange={(val: string) => setLocalProfile((prev: any) => ({ ...prev, workoutRepeat: val }))} theme={theme} />
+              <RepeatPicker value={localProfile.workoutRepeat} onChange={(val: string) => handleAutoSave({ workoutRepeat: val })} theme={theme} />
               <ReminderPreview title="Workout Reminder" time={localProfile.workoutReminderTime} repeat={localProfile.workoutRepeat} theme={theme} />
-
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveReminder}>
-                <Text style={styles.saveBtnText}>Save Workout Reminder</Text>
-              </TouchableOpacity>
             </View>
           )}
 
@@ -490,12 +501,9 @@ export default function NotificationsScreen() {
             <View style={[styles.expandedConfig, { backgroundColor: theme.card, borderColor: theme.border }]}>
               <WaterIntervalPicker
                 value={localProfile.waterReminderInterval}
-                onChange={(val: string) => setLocalProfile((prev: any) => ({ ...prev, waterReminderInterval: val }))}
+                onChange={(val: string) => handleAutoSave({ waterReminderInterval: val })}
                 theme={theme}
               />
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveReminder}>
-                <Text style={styles.saveBtnText}>Save Water Reminder</Text>
-              </TouchableOpacity>
             </View>
           )}
 
@@ -510,16 +518,12 @@ export default function NotificationsScreen() {
               <CustomTimePicker
                 label="Bedtime Reminder"
                 value={localProfile.sleepReminderTime}
-                onChange={(val: string) => setLocalProfile((prev: any) => ({ ...prev, sleepReminderTime: val }))}
+                onChange={(val: string) => handleAutoSave({ sleepReminderTime: val })}
                 suggestions={["09:00 PM", "10:00 PM", "11:00 PM"]}
                 theme={theme}
               />
-              <RepeatPicker value={localProfile.sleepRepeat} onChange={(val: string) => setLocalProfile((prev: any) => ({ ...prev, sleepRepeat: val }))} theme={theme} />
+              <RepeatPicker value={localProfile.sleepRepeat} onChange={(val: string) => handleAutoSave({ sleepRepeat: val })} theme={theme} />
               <ReminderPreview title="Sleep Reminder" time={localProfile.sleepReminderTime} repeat={localProfile.sleepRepeat} theme={theme} />
-
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveReminder}>
-                <Text style={styles.saveBtnText}>Save Sleep Reminder</Text>
-              </TouchableOpacity>
             </View>
           )}
 
