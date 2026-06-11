@@ -18,13 +18,92 @@ import apiService from '../src/services/apiService';
 import notificationService from '../src/services/notificationService';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
+// Web Scroll Spinner Component
+const WebSpinnerColumn = ({ items, selectedValue, onValueChange, itemHeight = 40, theme }: any) => {
+  return (
+    <View style={{ height: itemHeight * 3, overflow: 'hidden' }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        snapToInterval={itemHeight}
+        decelerationRate="fast"
+        onMomentumScrollEnd={(e) => {
+          const index = Math.round(e.nativeEvent.contentOffset.y / itemHeight);
+          if (items[index] !== undefined && items[index] !== selectedValue) {
+            onValueChange(items[index]);
+          }
+        }}
+        contentContainerStyle={{ paddingVertical: itemHeight }}
+      >
+        {items.map((item: any, i: number) => (
+          <View key={i} style={{ height: itemHeight, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ 
+              fontSize: item === selectedValue ? 18 : 16, 
+              color: item === selectedValue ? theme.text : theme.subText,
+              fontWeight: item === selectedValue ? 'bold' : 'normal'
+            }}>
+              {item}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
+const CustomWebTimePickerModal = ({ visible, initialValue, onClose, onSave, theme }: any) => {
+  const [h, setH] = useState('12');
+  const [m, setM] = useState('00');
+  const [ampm, setAmpm] = useState('AM');
+
+  useEffect(() => {
+    if (visible && initialValue) {
+      const parts = initialValue.split(/[: ]/);
+      setH(parts[0] || '12');
+      setM(parts[1] || '00');
+      setAmpm(parts[2] || 'AM');
+    }
+  }, [visible, initialValue]);
+
+  if (!visible) return null;
+
+  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+  const periods = ['AM', 'PM'];
+
+  return (
+    <View style={styles.modalOverlay}>
+      <View style={[styles.modalContent, { backgroundColor: theme.cardBg }]}>
+        <View style={styles.spinnerContainer}>
+          {/* Highlight Lines */}
+          <View style={[styles.highlightLine, { top: 40, borderColor: theme.border }]} />
+          <View style={[styles.highlightLine, { top: 80, borderColor: theme.border }]} />
+          
+          <WebSpinnerColumn items={hours} selectedValue={h} onValueChange={setH} theme={theme} />
+          <Text style={[styles.colonText, { color: theme.text }]}>:</Text>
+          <WebSpinnerColumn items={minutes} selectedValue={m} onValueChange={setM} theme={theme} />
+          <View style={{ width: 10 }} />
+          <WebSpinnerColumn items={periods} selectedValue={ampm} onValueChange={setAmpm} theme={theme} />
+        </View>
+
+        <View style={styles.modalActions}>
+          <TouchableOpacity onPress={onClose} style={styles.modalBtn}>
+            <Text style={[styles.modalBtnText, { color: theme.subText }]}>CANCEL</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => onSave(`${h}:${m} ${ampm}`)} style={styles.modalBtn}>
+            <Text style={[styles.modalBtnText, { color: '#00C853' }]}>OK</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+};
+
 // Custom Time Picker Component
 const CustomTimePicker = ({ label, value, onChange, theme }: any) => {
   const parseToDate = (timeStr: string) => {
     const now = new Date();
     if (!timeStr) return now;
 
-    // Try matching 12h format: "08:00 AM" or "8.00 PM"
     const ampmMatch = timeStr.match(/^(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?\s*(AM|PM)$/i);
     if (ampmMatch) {
       let h = parseInt(ampmMatch[1], 10);
@@ -34,7 +113,6 @@ const CustomTimePicker = ({ label, value, onChange, theme }: any) => {
       return now;
     }
 
-    // Try matching 24h format: "18.30" or "08:30"
     const match24 = timeStr.match(/^(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?$/);
     if (match24) {
       now.setHours(parseInt(match24[1], 10), parseInt(match24[2], 10), 0, 0);
@@ -71,12 +149,12 @@ const CustomTimePicker = ({ label, value, onChange, theme }: any) => {
       <Text style={[styles.timePickerLabel, { color: theme.subText }]}>{label}</Text>
       <TouchableOpacity 
         style={[styles.timePickerValueBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-        onPress={() => setShowPicker(!showPicker)}
+        onPress={() => setShowPicker(true)}
       >
         <Text style={[styles.timePickerValueText, { color: theme.text }]}>
           {value || "Select Time"}
         </Text>
-        <Ionicons name={showPicker ? "time" : "time-outline"} size={18} color={theme.text} />
+        <Ionicons name="time-outline" size={18} color={theme.text} />
       </TouchableOpacity>
 
       {showPicker && Platform.OS !== 'web' && (
@@ -89,75 +167,17 @@ const CustomTimePicker = ({ label, value, onChange, theme }: any) => {
         />
       )}
       
-      {showPicker && Platform.OS === 'web' && (
-        <View style={[styles.gridPickerWrapper, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.gridSectionHeader, { color: theme.text }]}>Hour</Text>
-          <View style={styles.gridRow}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(h => {
-              const strH = String(h).padStart(2, '0');
-              const isSelected = value.startsWith(strH);
-              return (
-                <TouchableOpacity 
-                  key={h} 
-                  style={[styles.gridItem, { borderColor: theme.border }, isSelected && { backgroundColor: '#00C853', borderColor: '#00C853' }]}
-                  onPress={() => {
-                    const parts = value.split(/[: ]/);
-                    const currentM = parts[1] || '00';
-                    const currentAMPM = parts[2] || 'AM';
-                    onChange(`${strH}:${currentM} ${currentAMPM}`);
-                  }}
-                >
-                  <Text style={[styles.gridItemText, { color: isSelected ? '#FFF' : theme.text }]}>{h}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          <Text style={[styles.gridSectionHeader, { color: theme.text }]}>Minute</Text>
-          <View style={styles.gridRow}>
-            {['00', '15', '30', '45'].map(m => {
-              const isSelected = value.includes(`:${m}`);
-              return (
-                <TouchableOpacity 
-                  key={m} 
-                  style={[styles.gridItem, { width: '23%', borderColor: theme.border }, isSelected && { backgroundColor: '#00C853', borderColor: '#00C853' }]}
-                  onPress={() => {
-                    const parts = value.split(/[: ]/);
-                    const currentH = parts[0] || '12';
-                    const currentAMPM = parts[2] || 'AM';
-                    onChange(`${currentH}:${m} ${currentAMPM}`);
-                  }}
-                >
-                  <Text style={[styles.gridItemText, { color: isSelected ? '#FFF' : theme.text }]}>{m}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          <View style={[styles.gridRow, { marginTop: 10 }]}>
-            {['AM', 'PM'].map(ampm => {
-              const isSelected = value.includes(ampm);
-              return (
-                <TouchableOpacity 
-                  key={ampm} 
-                  style={[styles.ampmItem, { borderColor: theme.border }, isSelected && { backgroundColor: '#00C853', borderColor: '#00C853' }]}
-                  onPress={() => {
-                    const parts = value.split(/[: ]/);
-                    const currentH = parts[0] || '12';
-                    const currentM = parts[1] || '00';
-                    onChange(`${currentH}:${currentM} ${ampm}`);
-                  }}
-                >
-                  <Text style={[styles.gridItemText, { color: isSelected ? '#FFF' : theme.text }]}>{ampm}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          <TouchableOpacity style={[styles.closeGridBtn, { borderTopColor: theme.border }]} onPress={() => setShowPicker(false)}>
-            <Text style={{ color: '#00C853', fontWeight: 'bold' }}>Done</Text>
-          </TouchableOpacity>
-        </View>
+      {Platform.OS === 'web' && (
+        <CustomWebTimePickerModal
+          visible={showPicker}
+          initialValue={value}
+          onClose={() => setShowPicker(false)}
+          onSave={(newVal: string) => {
+            onChange(newVal);
+            setShowPicker(false);
+          }}
+          theme={theme}
+        />
       )}
     </View>
   );
@@ -558,6 +578,57 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  modalContent: {
+    width: 300,
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  spinnerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 120,
+    position: 'relative',
+  },
+  highlightLine: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    height: 1,
+    borderBottomWidth: 1,
+    zIndex: -1,
+  },
+  colonText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginHorizontal: 10,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 20,
+    gap: 20,
+  },
+  modalBtn: {
+    padding: 10,
+  },
+  modalBtnText: {
     fontWeight: 'bold',
     fontSize: 16,
   }

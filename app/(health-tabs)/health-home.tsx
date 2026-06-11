@@ -45,7 +45,7 @@ export default function HealthHomeScreen() {
     userProfile, meals, steps, caloriesBurned, updateSteps, 
     loadStoredData, saveStoredData, waterData, addWater,
     streak, todayMood, setMood, todaySleep, setSleep, updateStreak,
-    notifications
+    notifications, notificationPrefs
   } = useAppStore();
 
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.mode === 'health').length;
@@ -657,6 +657,76 @@ export default function HealthHomeScreen() {
           </TouchableOpacity>
           
           <View style={{ width: '48%' }} /> 
+        </View>
+
+        {/* --- TODAY'S REMINDERS --- */}
+        <View style={[styles.mainCard, { backgroundColor: themeColors.card, borderColor: themeColors.border, borderWidth: 1, marginBottom: 15 }]}>
+          <View style={styles.mainCardHeader}>
+            <Text style={[styles.cardTitle, { color: themeColors.text }]}>Today's Reminders</Text>
+            <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.scanBtn}>
+               <Ionicons name="settings-outline" size={20} color="#00C853" />
+               <Text style={styles.scanText}>Edit</Text>
+            </TouchableOpacity>
+          </View>
+
+          {notificationPrefs?.meals && userProfile.breakfastReminderTime && (
+            <View style={[styles.mealItem, { borderBottomColor: themeColors.border, paddingVertical: 12 }]}>
+              <Text style={{fontSize: 24}}>🍳</Text>
+              <View style={{flex: 1, marginLeft: 15}}>
+                <Text style={[styles.mealName, { color: themeColors.text }]}>Breakfast</Text>
+                <Text style={[styles.mealTime, { color: themeColors.subText }]}>{userProfile.breakfastReminderTime} • Active</Text>
+              </View>
+              <Ionicons name="notifications" size={20} color="#00C853" />
+            </View>
+          )}
+
+          {notificationPrefs?.meals && userProfile.lunchReminderTime && (
+            <View style={[styles.mealItem, { borderBottomColor: themeColors.border, paddingVertical: 12 }]}>
+              <Text style={{fontSize: 24}}>🍽️</Text>
+              <View style={{flex: 1, marginLeft: 15}}>
+                <Text style={[styles.mealName, { color: themeColors.text }]}>Lunch</Text>
+                <Text style={[styles.mealTime, { color: themeColors.subText }]}>{userProfile.lunchReminderTime} • Active</Text>
+              </View>
+              <Ionicons name="notifications" size={20} color="#00C853" />
+            </View>
+          )}
+
+          {notificationPrefs?.meals && userProfile.dinnerReminderTime && (
+            <View style={[styles.mealItem, { borderBottomColor: themeColors.border, paddingVertical: 12 }]}>
+              <Text style={{fontSize: 24}}>🌙</Text>
+              <View style={{flex: 1, marginLeft: 15}}>
+                <Text style={[styles.mealName, { color: themeColors.text }]}>Dinner</Text>
+                <Text style={[styles.mealTime, { color: themeColors.subText }]}>{userProfile.dinnerReminderTime} • Active</Text>
+              </View>
+              <Ionicons name="notifications" size={20} color="#00C853" />
+            </View>
+          )}
+
+          {notificationPrefs?.water && userProfile.waterReminderInterval && (
+            <View style={[styles.mealItem, { borderBottomColor: themeColors.border, paddingVertical: 12 }]}>
+              <Text style={{fontSize: 24}}>💧</Text>
+              <View style={{flex: 1, marginLeft: 15}}>
+                <Text style={[styles.mealName, { color: themeColors.text }]}>Water Reminder</Text>
+                <Text style={[styles.mealTime, { color: themeColors.subText }]}>{userProfile.waterReminderInterval} • Active</Text>
+              </View>
+              <Ionicons name="notifications" size={20} color="#2196F3" />
+            </View>
+          )}
+          
+          {notificationPrefs?.sleep && userProfile.sleepReminderTime && (
+            <View style={[styles.mealItem, { borderBottomColor: themeColors.border, paddingVertical: 12 }]}>
+              <Text style={{fontSize: 24}}>😴</Text>
+              <View style={{flex: 1, marginLeft: 15}}>
+                <Text style={[styles.mealName, { color: themeColors.text }]}>Sleep Reminder</Text>
+                <Text style={[styles.mealTime, { color: themeColors.subText }]}>{userProfile.sleepReminderTime} • Active</Text>
+              </View>
+              <Ionicons name="notifications" size={20} color="#9C27B0" />
+            </View>
+          )}
+
+          {(!notificationPrefs?.meals && !notificationPrefs?.water && !notificationPrefs?.sleep) && (
+            <Text style={{color: themeColors.subText, textAlign: 'center', marginVertical: 10, fontStyle: 'italic'}}>No active reminders.</Text>
+          )}
         </View>
 
         {/* --- TODAY'S MEALS --- */}

@@ -32,7 +32,7 @@ export default function GymHomeScreen() {
   const { isDark } = useTheme(); 
 
   // 1. GLOBAL STATE
-  const { userProfile, meals, steps, caloriesBurned, workouts, activeWorkout, notifications, waterData, updateSteps, loadStoredData, saveStoredData, setMeals, addWater, setWaterIntake, recalculateWaterGoal } = useAppStore();
+  const { userProfile, meals, steps, caloriesBurned, workouts, activeWorkout, notifications, notificationPrefs, waterData, updateSteps, loadStoredData, saveStoredData, setMeals, addWater, setWaterIntake, recalculateWaterGoal } = useAppStore();
   
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.mode === 'gym').length;
   
@@ -521,6 +521,53 @@ export default function GymHomeScreen() {
               <Text style={[styles.macroLabel, { color: theme.subText }]}>Carbs Left</Text>
             </View>
           </View>
+        </View>
+
+        {/* --- TODAY'S REMINDERS --- */}
+        <View style={[styles.insightCard, { backgroundColor: theme.card, borderColor: theme.border, borderLeftColor: '#00C853', marginBottom: 15 }]}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Today's Reminders</Text>
+            <TouchableOpacity onPress={() => router.push('/notifications')}>
+              <Text style={styles.linkText}>Edit</Text>
+            </TouchableOpacity>
+          </View>
+
+          {notificationPrefs?.workout && userProfile.workoutReminderTime && (
+            <View style={styles.mealItem}>
+              <Text style={{fontSize: 24}}>🏋️</Text>
+              <View style={{flex: 1, marginLeft: 15}}>
+                <Text style={[styles.mealName, {color: theme.text}]}>Workout</Text>
+                <Text style={styles.mealTime}>{userProfile.workoutReminderTime} • Active</Text>
+              </View>
+              <Ionicons name="notifications" size={20} color="#FF9800" />
+            </View>
+          )}
+
+          {notificationPrefs?.meals && userProfile.dinnerReminderTime && (
+            <View style={styles.mealItem}>
+              <Text style={{fontSize: 24}}>🥤</Text>
+              <View style={{flex: 1, marginLeft: 15}}>
+                <Text style={[styles.mealName, {color: theme.text}]}>Protein Reminder</Text>
+                <Text style={styles.mealTime}>{userProfile.dinnerReminderTime} • Active</Text>
+              </View>
+              <Ionicons name="notifications" size={20} color="#00C853" />
+            </View>
+          )}
+
+          {notificationPrefs?.water && userProfile.waterReminderInterval && (
+            <View style={styles.mealItem}>
+              <Text style={{fontSize: 24}}>💧</Text>
+              <View style={{flex: 1, marginLeft: 15}}>
+                <Text style={[styles.mealName, {color: theme.text}]}>Water Reminder</Text>
+                <Text style={styles.mealTime}>{userProfile.waterReminderInterval} • Active</Text>
+              </View>
+              <Ionicons name="notifications" size={20} color="#2196F3" />
+            </View>
+          )}
+
+          {(!notificationPrefs?.workout && !notificationPrefs?.meals && !notificationPrefs?.water) && (
+            <Text style={{color: theme.subText, fontSize: 12, marginTop: 5, paddingVertical: 10, fontStyle: 'italic', textAlign: 'center'}}>No active reminders.</Text>
+          )}
         </View>
 
         {/* STEPS & ACTIVITY ROW (COMPACT) */}
