@@ -1,5 +1,5 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { API_BASE_URL } from '../config/apiConfig';
 
@@ -19,7 +19,7 @@ const getToken = async () => {
     if (Platform.OS === 'web') {
       return typeof window !== 'undefined' ? window.localStorage.getItem(TOKEN_KEY) : null;
     }
-    return await SecureStore.getItemAsync(TOKEN_KEY);
+    return await AsyncStorage.getItem(TOKEN_KEY);
   } catch (error) {
     console.error('Error getting token:', error);
     return null;
@@ -32,7 +32,7 @@ const setToken = async (value) => {
       if (typeof window !== 'undefined') window.localStorage.setItem(TOKEN_KEY, value);
       return;
     }
-    await SecureStore.setItemAsync(TOKEN_KEY, value);
+    await AsyncStorage.setItem(TOKEN_KEY, value);
   } catch (error) {
     console.error('Error setting token:', error);
   }
@@ -44,7 +44,7 @@ const deleteToken = async () => {
       if (typeof window !== 'undefined') window.localStorage.removeItem(TOKEN_KEY);
       return;
     }
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await AsyncStorage.removeItem(TOKEN_KEY);
   } catch (error) {
     console.error('Error deleting token:', error);
   }
