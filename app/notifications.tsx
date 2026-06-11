@@ -85,14 +85,12 @@ const CustomWebTimePickerModal = ({ visible, initialValue, onClose, onSave, them
           <WebSpinnerColumn items={periods} selectedValue={ampm} onValueChange={setAmpm} theme={theme} />
         </View>
 
-        <View style={styles.modalActions}>
-          <TouchableOpacity onPress={onClose} style={styles.modalBtn}>
-            <Text style={[styles.modalBtnText, { color: theme.subText }]}>CANCEL</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => onSave(`${h}:${m} ${ampm}`)} style={styles.modalBtn}>
-            <Text style={[styles.modalBtnText, { color: '#00C853' }]}>OK</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity 
+          onPress={() => onSave(`${h}:${m} ${ampm}`)} 
+          style={{ backgroundColor: '#00C853', padding: 15, borderRadius: 10, marginTop: 20, alignItems: 'center' }}
+        >
+          <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 16 }}>DONE</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
