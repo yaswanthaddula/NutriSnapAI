@@ -19,53 +19,11 @@ import apiService from '../src/services/apiService';
 import notificationService from '../src/services/notificationService';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-// Web Scroll Spinner Component
-const WebSpinnerColumn = ({ items, selectedValue, onValueChange, itemHeight = 40, theme }: any) => {
-  return (
-    <View style={{ height: itemHeight * 3, overflow: 'hidden' }}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        snapToInterval={itemHeight}
-        decelerationRate="fast"
-        onMomentumScrollEnd={(e) => {
-          const index = Math.round(e.nativeEvent.contentOffset.y / itemHeight);
-          if (items[index] !== undefined && items[index] !== selectedValue) {
-            onValueChange(items[index]);
-          }
-        }}
-        onScrollEndDrag={(e) => {
-          const index = Math.round(e.nativeEvent.contentOffset.y / itemHeight);
-          if (items[index] !== undefined && items[index] !== selectedValue) {
-            onValueChange(items[index]);
-          }
-        }}
-        contentContainerStyle={{ paddingVertical: itemHeight }}
-      >
-        {items.map((item: any, i: number) => (
-          <TouchableOpacity 
-            key={i} 
-            style={{ height: itemHeight, justifyContent: 'center', alignItems: 'center' }}
-            onPress={() => onValueChange(item)}
-            activeOpacity={0.7}
-          >
-            <Text style={{ 
-              fontSize: item === selectedValue ? 18 : 16, 
-              color: item === selectedValue ? theme.text : theme.subText,
-              fontWeight: item === selectedValue ? 'bold' : 'normal'
-            }}>
-              {item}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
-};
-
-const CustomWebTimePickerModal = ({ visible, initialValue, onClose, onSave, theme }: any) => {
+const CircularWebTimePickerModal = ({ visible, initialValue, onClose, onSave, theme }: any) => {
   const [h, setH] = useState('12');
   const [m, setM] = useState('00');
   const [ampm, setAmpm] = useState('AM');
+  const [mode, setMode] = useState<'hour' | 'minute'>('hour');
 
   useEffect(() => {
     if (visible && initialValue) {
@@ -73,42 +31,122 @@ const CustomWebTimePickerModal = ({ visible, initialValue, onClose, onSave, them
       setH(parts[0] || '12');
       setM(parts[1] || '00');
       setAmpm(parts[2] || 'AM');
+      setMode('hour');
     }
   }, [visible, initialValue]);
 
   if (!visible) return null;
 
-  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
-  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
-  const periods = ['AM', 'PM'];
+  const clockSize = 240;
+  const center = clockSize / 2;
+  const radius = clockSize * 0.38;
+
+  const getCoordinates = (value: number, total: number) => {
+    const angle = (value / total) * 2 * Math.PI - Math.PI / 2;
+    return {
+      x: center + radius * Math.cos(angle) - 18,
+      y: center + radius * Math.sin(angle) - 18,
+    };
+  };
+
+  const getRotation = (value: number, total: number) => {
+    return (value / total) * 360;
+  };
+
+  const renderClockNumbers = () => {
+    const isHour = mode === 'hour';
+    const total = isHour ? 12 : 60;
+    const step = isHour ? 1 : 5;
+    const items = [];
+
+    const selectedValue = isHour ? parseInt(h, 10) % 12 : parseInt(m, 10);
+    const rotation = getRotation(selectedValue, total);
+
+    // Render Hand
+    items.push(
+      <View key="hand-container" style={{ position: 'absolute', top: center, left: center, width: 0, height: 0, zIndex: 1 }}>
+        <View style={{
+          position: 'absolute',
+          width: 2,
+          height: radius,
+          backgroundColor: '#1976D2',
+          bottom: 0,
+          left: -1,
+          transformOrigin: 'bottom center',
+          transform: [{ rotate: `${rotation}deg` }]
+        }} />
+        <View style={{ position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: '#1976D2', left: -4, top: -4 }} />
+      </View>
+    );
+
+    // Render Numbers
+    for (let i = 0; i < total; i += step) {
+      const displayVal = isHour ? (i === 0 ? 12 : i) : i;
+      const { x, y } = getCoordinates(i, total);
+      const isSelected = selectedValue === i;
+
+      items.push(
+        <TouchableOpacity
+          key={`num-${i}`}
+          onPress={() => {
+            if (isHour) {
+              setH(String(displayVal).padStart(2, '0'));
+              setMode('minute');
+            } else {
+              setM(String(displayVal).padStart(2, '0'));
+            }
+          }}
+          style={{
+            position: 'absolute', left: x, top: y, width: 36, height: 36, borderRadius: 18,
+            backgroundColor: isSelected ? '#1976D2' : 'transparent',
+            justifyContent: 'center', alignItems: 'center', zIndex: 2
+          }}
+        >
+          <Text style={{ color: isSelected ? '#FFF' : '#333', fontSize: 16 }}>{displayVal}</Text>
+        </TouchableOpacity>
+      );
+    }
+    return items;
+  };
 
   return (
     <View style={styles.modalOverlay}>
-      <View style={[styles.modalContent, { backgroundColor: theme.cardBg }]}>
-        <View style={styles.spinnerContainer}>
-          {/* Highlight Lines */}
-          <View style={[styles.highlightLine, { top: 40, borderColor: theme.border }]} />
-          <View style={[styles.highlightLine, { top: 80, borderColor: theme.border }]} />
-          
-          <WebSpinnerColumn items={hours} selectedValue={h} onValueChange={setH} theme={theme} />
-          <Text style={[styles.colonText, { color: theme.text }]}>:</Text>
-          <WebSpinnerColumn items={minutes} selectedValue={m} onValueChange={setM} theme={theme} />
-          <View style={{ width: 10 }} />
-          <WebSpinnerColumn items={periods} selectedValue={ampm} onValueChange={setAmpm} theme={theme} />
+      <View style={{ width: 320, backgroundColor: '#FFF', borderRadius: 4, overflow: 'hidden', elevation: 10, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 10 }}>
+        {/* Header */}
+        <View style={{ backgroundColor: '#1976D2', padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+            <TouchableOpacity onPress={() => setMode('hour')}>
+              <Text style={{ fontSize: 48, color: mode === 'hour' ? '#FFF' : 'rgba(255,255,255,0.6)', fontWeight: 'bold' }}>{h}</Text>
+            </TouchableOpacity>
+            <Text style={{ fontSize: 48, color: 'rgba(255,255,255,0.6)', fontWeight: 'bold', marginHorizontal: 5 }}>:</Text>
+            <TouchableOpacity onPress={() => setMode('minute')}>
+              <Text style={{ fontSize: 48, color: mode === 'minute' ? '#FFF' : 'rgba(255,255,255,0.6)', fontWeight: 'bold' }}>{m}</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{ marginLeft: 15, justifyContent: 'center' }}>
+            <TouchableOpacity onPress={() => setAmpm('AM')} style={{ marginBottom: 5 }}>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: ampm === 'AM' ? '#FFF' : 'rgba(255,255,255,0.6)' }}>AM</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setAmpm('PM')}>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: ampm === 'PM' ? '#FFF' : 'rgba(255,255,255,0.6)' }}>PM</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20, gap: 10 }}>
-          <TouchableOpacity 
-            onPress={onClose} 
-            style={{ flex: 1, backgroundColor: theme.cardBg, padding: 15, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: theme.border }}
-          >
-            <Text style={{ color: theme.text, fontWeight: 'bold', fontSize: 16 }}>CANCEL</Text>
+        {/* Clock Face */}
+        <View style={{ padding: 20, alignItems: 'center', backgroundColor: '#FFF' }}>
+          <View style={{ width: clockSize, height: clockSize, borderRadius: clockSize / 2, backgroundColor: '#F0F0F0', position: 'relative' }}>
+            {renderClockNumbers()}
+          </View>
+        </View>
+
+        {/* Footer */}
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 15, backgroundColor: '#FFF' }}>
+          <TouchableOpacity onPress={onClose} style={{ padding: 10, marginRight: 15 }}>
+            <Text style={{ color: '#1976D2', fontWeight: 'bold', fontSize: 16 }}>CANCEL</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            onPress={() => onSave(`${h}:${m} ${ampm}`)} 
-            style={{ flex: 1, backgroundColor: '#00C853', padding: 15, borderRadius: 10, alignItems: 'center' }}
-          >
-            <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 16 }}>DONE</Text>
+          <TouchableOpacity onPress={() => onSave(`${h}:${m} ${ampm}`)} style={{ padding: 10 }}>
+            <Text style={{ color: '#1976D2', fontWeight: 'bold', fontSize: 16 }}>OK</Text>
           </TouchableOpacity>
         </View>
       </View>

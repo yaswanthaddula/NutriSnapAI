@@ -60,7 +60,17 @@ export default function LoginScreen() {
     try {
       // 1. Call Backend Login
       console.log("Login payload:", { email, password });
-      await apiService.login(email, password);
+      try {
+        await apiService.login(email, password);
+      } catch (firstErr: any) {
+        if (!firstErr.response) {
+          console.log("Network error on first login attempt (possible cold start). Retrying in 3 seconds...");
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          await apiService.login(email, password);
+        } else {
+          throw firstErr;
+        }
+      }
       // 2. Parallel Fetch User Info and Profile
       const [userRespResult, profileRespResult] = await Promise.allSettled([
         apiService.getMe(),
