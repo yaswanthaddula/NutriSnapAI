@@ -13,8 +13,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
+interface StorageItem {
+  key: string;
+  value: any;
+}
+
 export default function DebugStorageScreen() {
-  const [storageData, setStorageData] = useState([]);
+  const [storageData, setStorageData] = useState<StorageItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchStorage = async () => {
@@ -24,11 +29,13 @@ export default function DebugStorageScreen() {
       const result = await AsyncStorage.multiGet(keys);
       
       const formattedData = result.map(([key, value]) => {
-        let parsedValue = value;
-        try {
-          parsedValue = JSON.parse(value);
-        } catch (e) {
-          // Not JSON, keep as is
+        let parsedValue: any = value;
+        if (value) {
+          try {
+            parsedValue = JSON.parse(value);
+          } catch (e) {
+            // Not JSON, keep as is
+          }
         }
         return { key, value: parsedValue };
       });
@@ -64,7 +71,7 @@ export default function DebugStorageScreen() {
     );
   };
 
-  const handleRemoveKey = (key) => {
+  const handleRemoveKey = (key: string) => {
     Alert.alert(
       "Remove Key",
       `Delete ${key}?`,
