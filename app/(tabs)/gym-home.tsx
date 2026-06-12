@@ -607,7 +607,10 @@ export default function GymHomeScreen() {
           )}
 
           {(!notificationPrefs?.workout && !notificationPrefs?.meals && !notificationPrefs?.water) && (
-            <Text style={{color: theme.subText, fontSize: 12, marginTop: 5, paddingVertical: 10, fontStyle: 'italic', textAlign: 'center'}}>No active reminders.</Text>
+            <View style={{ alignItems: 'center', paddingVertical: 15 }}>
+              <Text style={{color: theme.subText, fontSize: 13, fontStyle: 'italic', textAlign: 'center'}}>No reminders scheduled yet.</Text>
+              <Text style={{color: theme.subText, fontSize: 12, marginTop: 5, textAlign: 'center'}}>Tap Edit to create reminders.</Text>
+            </View>
           )}
         </View>
 

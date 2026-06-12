@@ -760,7 +760,10 @@ export default function HealthHomeScreen() {
           )}
 
           {(!notificationPrefs?.meals && !notificationPrefs?.water && !notificationPrefs?.sleep) && (
-            <Text style={{color: themeColors.subText, textAlign: 'center', marginVertical: 10, fontStyle: 'italic'}}>No active reminders.</Text>
+            <View style={{ alignItems: 'center', paddingVertical: 15 }}>
+              <Text style={{color: themeColors.subText, textAlign: 'center', fontStyle: 'italic'}}>No reminders scheduled yet.</Text>
+              <Text style={{color: themeColors.subText, textAlign: 'center', marginTop: 5, fontSize: 12}}>Tap Edit to create reminders.</Text>
+            </View>
           )}
         </View>
 

@@ -61,21 +61,26 @@ export default function LoginScreen() {
       // 1. Call Backend Login
       console.log("Login payload:", { email, password });
       await apiService.login(email, password);
-      
-      // 2. Fetch User Info (Name & Email)
-      const userResp = await apiService.getMe();
-      const userData = userResp.data;
+      // 2. Parallel Fetch User Info and Profile
+      const [userRespResult, profileRespResult] = await Promise.allSettled([
+        apiService.getMe(),
+        apiService.getProfile()
+      ]);
+
+      if (userRespResult.status === 'rejected') {
+        throw userRespResult.reason;
+      }
+
+      const userData = userRespResult.value.data;
       const userName = userData.name;
       const userEmail = userData.email;
 
       // 3. CHECK FOR PROFILE
-      try {
-        const profileResp = await apiService.getProfile();
-        const profileData = profileResp.data;
+      if (profileRespResult.status === 'fulfilled') {
+        const profileData = profileRespResult.value.data;
         
         console.log("Backend profile:", profileData);
         console.log("Selected mode:", profileData.selected_mode);
-        console.log("Suggested mode:", profileData.suggested_mode);
 
         // Save profile to store with recalculated fields
         setUserProfile({
@@ -94,7 +99,8 @@ export default function LoginScreen() {
         } else {
           router.replace('/(health-tabs)/health-home');
         }
-      } catch (profileErr: any) {
+      } else {
+        const profileErr = profileRespResult.reason;
         if (profileErr.response?.status === 404) {
           // No profile yet -> go to Setup
           console.log("No profile found, redirecting to setup.");
