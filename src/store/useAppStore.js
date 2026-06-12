@@ -125,17 +125,25 @@ const useAppStore = create((set, get) => ({
 
       const targetMinutes = parseMinutes(time);
       if (targetMinutes !== null) {
+        const activeWindowMinutes = 15;
         let newStatus = 'Upcoming';
         if (currentTotalMinutes < targetMinutes) {
           newStatus = 'Upcoming';
-        } else if (currentTotalMinutes >= targetMinutes && currentTotalMinutes <= targetMinutes + 60) {
+        } else if (currentTotalMinutes >= targetMinutes && currentTotalMinutes <= targetMinutes + activeWindowMinutes) {
           newStatus = 'Active';
-        } else if (currentTotalMinutes > targetMinutes + 60) {
+        } else if (currentTotalMinutes > targetMinutes + activeWindowMinutes) {
           newStatus = 'Missed';
         }
 
         if (newStatuses[key] !== newStatus) {
            console.log(`[DEBUG] Reminder Status Updated: ${key} changed from ${newStatuses[key]} to ${newStatus} at device time ${now.toLocaleTimeString()}`);
+           console.log("Reminder time:", time);
+           console.log("Current time:", now.toLocaleTimeString());
+           const activeUntil = new Date();
+           activeUntil.setHours(Math.floor((targetMinutes + activeWindowMinutes) / 60), (targetMinutes + activeWindowMinutes) % 60, 0, 0);
+           console.log("Active until:", activeUntil.toLocaleTimeString());
+           console.log("Old status:", newStatuses[key]);
+           console.log("New status:", newStatus);
         }
         newStatuses[key] = newStatus;
       }
@@ -146,6 +154,16 @@ const useAppStore = create((set, get) => ({
         newStatuses.water = 'Disabled';
     } else if (newStatuses.water !== 'Completed') {
         newStatuses.water = 'Active';
+    }
+
+    // Calculate Counts for Logging
+    const counts = { Upcoming: 0, Active: 0, Completed: 0, Missed: 0 };
+    Object.values(newStatuses).forEach(s => {
+      if (counts[s] !== undefined) counts[s]++;
+    });
+
+    if (JSON.stringify(reminderStatuses) !== JSON.stringify(newStatuses)) {
+      console.log("Counts:", counts);
     }
 
     set({ reminderStatuses: newStatuses });
