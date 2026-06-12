@@ -1,7 +1,7 @@
 import React, { useState, createContext, useContext } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, LogBox, Alert } from 'react-native';
+import { Platform, LogBox, Alert, View, Text, TouchableOpacity } from 'react-native';
 
 // Ignore the SDK 53+ Expo Go notification warning/error globally
 LogBox.ignoreLogs([
@@ -32,6 +32,34 @@ export const ThemeContext = createContext({
 
 import { notificationService } from '../src/services/notificationService';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
+import useAppStore from '../src/store/useAppStore';
+
+const GlobalReminderPopup = () => {
+  const { activePopup, setActivePopup, markReminderCompleted } = useAppStore();
+  
+  if (!activePopup) return null;
+
+  return (
+    <View style={{ position: 'absolute', top: 50, left: 20, right: 20, backgroundColor: '#FFF', padding: 20, borderRadius: 15, elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, zIndex: 9999 }}>
+      <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>{activePopup.title}</Text>
+      <Text style={{ fontSize: 15, color: '#555', marginTop: 8 }}>{activePopup.message}</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 15, gap: 10 }}>
+        <TouchableOpacity onPress={() => setActivePopup(null)} style={{ paddingVertical: 8, paddingHorizontal: 15, borderRadius: 8, backgroundColor: '#EEE' }}>
+          <Text style={{ color: '#555', fontWeight: 'bold' }}>Dismiss</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          onPress={() => {
+            markReminderCompleted(activePopup.type);
+            setActivePopup(null);
+          }} 
+          style={{ paddingVertical: 8, paddingHorizontal: 15, borderRadius: 8, backgroundColor: '#00C853' }}
+        >
+          <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Open / Done</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
 
 export default function RootLayout() {
   console.log("API URL:", process.env.EXPO_PUBLIC_API_BASE_URL);
@@ -84,6 +112,8 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
       
+      <GlobalReminderPopup />
+
       {/* 3. StatusBar automatically changes color based on theme */}
       <StatusBar style={isDark ? "light" : "dark"} />
     </ThemeContext.Provider>

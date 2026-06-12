@@ -72,6 +72,8 @@ const useAppStore = create((set, get) => ({
     sleep: 'Upcoming',
     water: 'Upcoming'
   },
+  activePopup: null,
+  setActivePopup: (popup) => set({ activePopup: popup }),
   
   markReminderCompleted: (type) => {
     const statuses = { ...get().reminderStatuses };
@@ -144,6 +146,21 @@ const useAppStore = create((set, get) => ({
            console.log("Active until:", activeUntil.toLocaleTimeString());
            console.log("Old status:", newStatuses[key]);
            console.log("New status:", newStatus);
+
+           // Trigger In-App Custom Popup when entering Active
+           if (newStatus === 'Active') {
+               let icon = '🔔';
+               if (key === 'workout') icon = '🏋️';
+               else if (['breakfast', 'lunch', 'dinner', 'snack'].includes(key)) icon = '🍳';
+               else if (key === 'sleep') icon = '🌙';
+               else if (key === 'water') icon = '💧';
+
+               get().setActivePopup({
+                   title: 'NutriSnap AI',
+                   message: `${icon} Time for your ${key} session.`,
+                   type: key,
+               });
+           }
         }
         newStatuses[key] = newStatus;
       }
