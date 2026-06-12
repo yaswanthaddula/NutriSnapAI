@@ -701,7 +701,7 @@ export const notificationService = {
               },
             };
             await notificationService.scheduleWithRepeat(content, parsed, item.repeat);
-            console.log(`Notification Scheduled: ${item.type} at ${parsed.hour}:${parsed.minute} (${item.repeat || 'Daily'})`);
+            console.log(`[DEBUG] Reminder Scheduled: ${item.type} at ${parsed.hour}:${parsed.minute} (${item.repeat || 'Daily'})`);
           }
         }
       }
@@ -725,7 +725,7 @@ export const notificationService = {
             },
             trigger: { seconds: intervalSeconds, repeats: true, channelId: channelId || 'default' },
           });
-          console.log(`Notification Scheduled: water-reminder every ${intervalSeconds}s`);
+          console.log(`[DEBUG] Reminder Scheduled: water-reminder every ${intervalSeconds}s`);
         }
       }
 
@@ -746,7 +746,7 @@ export const notificationService = {
             },
           };
           await notificationService.scheduleWithRepeat(content, parsed, prefs.workoutRepeat);
-          console.log(`Notification Scheduled: workout-reminder at ${parsed.hour}:${parsed.minute} (${prefs.workoutRepeat || 'Daily'})`);
+          console.log(`[DEBUG] Reminder Scheduled: workout-reminder at ${parsed.hour}:${parsed.minute} (${prefs.workoutRepeat || 'Daily'})`);
         }
       }
 
@@ -767,7 +767,7 @@ export const notificationService = {
             },
           };
           await notificationService.scheduleWithRepeat(content, parsed, prefs.sleepRepeat);
-          console.log(`Notification Scheduled: sleep-reminder at ${parsed.hour}:${parsed.minute} (${prefs.sleepRepeat || 'Daily'})`);
+          console.log(`[DEBUG] Reminder Scheduled: sleep-reminder at ${parsed.hour}:${parsed.minute} (${prefs.sleepRepeat || 'Daily'})`);
         }
       }
     } catch (e) {
@@ -841,13 +841,13 @@ export const notificationService = {
   setupListeners: () => {
     // Listener for when a notification is received while the app is foregrounded
     const foregroundSubscription = Notifications ? Notifications.addNotificationReceivedListener(notification => {
-      console.log("Notification Delivered (Mobile Foreground):", notification.request.content);
+      console.log("[DEBUG] Reminder Triggered / Notification Delivered (Mobile Foreground):", notification.request.content);
     }) : { remove: () => {} };
 
     // Listener for when a user interacts with a notification (clicked)
     const responseSubscription = Notifications ? Notifications.addNotificationResponseReceivedListener(response => {
       const data = response.notification?.request?.content?.data;
-      console.log("Notification Triggered (Mobile Click):", data);
+      console.log("[DEBUG] Reminder Completed / Notification Triggered (Mobile Click):", data);
       
       if (data?.type) {
         let reminderType = data.type.replace('-reminder', ''); // e.g. workout-reminder -> workout

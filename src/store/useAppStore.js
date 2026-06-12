@@ -83,7 +83,7 @@ const useAppStore = create((set, get) => ({
   },
 
   evaluateReminderStatuses: () => {
-    const { userProfile, reminderStatuses } = get();
+    const { userProfile, reminderStatuses, notificationPrefs } = get();
     const now = new Date();
     const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
 
@@ -111,22 +111,40 @@ const useAppStore = create((set, get) => ({
     ];
 
     types.forEach(({ key, time }) => {
+      let isEnabled = false;
+      if (['breakfast', 'lunch', 'dinner', 'snack'].includes(key)) isEnabled = notificationPrefs.meals;
+      else if (key === 'workout') isEnabled = notificationPrefs.workout;
+      else if (key === 'sleep') isEnabled = notificationPrefs.sleep;
+
+      if (!isEnabled) {
+         newStatuses[key] = 'Disabled';
+         return;
+      }
+
       if (newStatuses[key] === 'Completed') return; // Don't override Completed
 
       const targetMinutes = parseMinutes(time);
       if (targetMinutes !== null) {
+        let newStatus = 'Upcoming';
         if (currentTotalMinutes < targetMinutes) {
-          newStatuses[key] = 'Upcoming';
+          newStatus = 'Upcoming';
         } else if (currentTotalMinutes >= targetMinutes && currentTotalMinutes <= targetMinutes + 60) {
-          newStatuses[key] = 'Active';
+          newStatus = 'Active';
         } else if (currentTotalMinutes > targetMinutes + 60) {
-          newStatuses[key] = 'Missed';
+          newStatus = 'Missed';
         }
+
+        if (newStatuses[key] !== newStatus) {
+           console.log(`[DEBUG] Reminder Status Updated: ${key} changed from ${newStatuses[key]} to ${newStatus} at device time ${now.toLocaleTimeString()}`);
+        }
+        newStatuses[key] = newStatus;
       }
     });
 
-    // For water interval, just default to Active if not completed today
-    if (newStatuses.water !== 'Completed') {
+    // For water interval
+    if (!notificationPrefs.water) {
+        newStatuses.water = 'Disabled';
+    } else if (newStatuses.water !== 'Completed') {
         newStatuses.water = 'Active';
     }
 
