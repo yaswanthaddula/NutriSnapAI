@@ -261,7 +261,7 @@ const CustomTimePicker = ({ label, value, onChange, theme }: any) => {
       )}
       
       {Platform.OS === 'web' && (
-        <CustomWebTimePickerModal
+        <CircularWebTimePickerModal
           visible={showPicker}
           initialValue={value}
           onClose={() => setShowPicker(false)}
