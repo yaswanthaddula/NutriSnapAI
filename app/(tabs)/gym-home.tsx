@@ -38,7 +38,7 @@ export default function GymHomeScreen() {
     addWater, setWaterIntake, recalculateWaterGoal, reminderStatuses 
   } = useAppStore();
   
-  const unreadCount = notifications.filter((n: any) => !n.isRead && n.mode === 'gym').length;
+  const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'gym')).length;
   
   // Calculate Today's Workout
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -215,6 +215,29 @@ export default function GymHomeScreen() {
     }
   };
 
+  useEffect(() => {
+    // Only for web fallback
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    
+    let lastStepTime = 0;
+    const handleMotion = (event: any) => {
+      const acc = event.accelerationIncludingGravity;
+      if (!acc) return;
+      const mag = Math.sqrt((acc.x || 0)**2 + (acc.y || 0)**2 + (acc.z || 0)**2);
+      if (mag > 11.5) { 
+        const now = Date.now();
+        if (now - lastStepTime > 300) {
+           lastStepTime = now;
+           const store = useAppStore.getState();
+           store.updateSteps(store.steps + 1);
+        }
+      }
+    };
+    
+    window.addEventListener('devicemotion', handleMotion);
+    return () => window.removeEventListener('devicemotion', handleMotion);
+  }, []);
+
   const subscribePedometer = async () => {
     const isAvailable = await Pedometer.isAvailableAsync();
     
@@ -356,8 +379,23 @@ export default function GymHomeScreen() {
   const handleManualSteps = () => {
     const s = parseInt(manualStepsVal) || 0;
     updateSteps(s);
-    saveStoredData();
     setShowManualSteps(false);
+  };
+
+  const handleStepsPress = async () => {
+    if (Platform.OS === 'web' && typeof DeviceMotionEvent !== 'undefined' && typeof (DeviceMotionEvent as any).requestPermission === 'function') {
+      try {
+        const permission = await (DeviceMotionEvent as any).requestPermission();
+        if (permission === 'granted') {
+          alert("Step tracking activated! Walk with your phone.");
+          return;
+        }
+      } catch (e) {
+        console.warn("Motion permission error", e);
+      }
+    }
+    // Fallback to manual entry if not web, if already granted, or if denied
+    setShowManualSteps(true);
   };
 
   const theme = {
@@ -618,7 +656,7 @@ export default function GymHomeScreen() {
         <View style={styles.statRowCompact}>
           <TouchableOpacity 
             style={[styles.compactStat, { backgroundColor: isDark ? '#1E1E1E' : '#FFF', borderColor: theme.border, borderWidth: 1 }]}
-            onPress={() => setShowManualSteps(true)}
+            onPress={handleStepsPress}
           >
             <Ionicons name="footsteps" size={20} color="#FF9800" />
             <View style={{ marginLeft: 10 }}>

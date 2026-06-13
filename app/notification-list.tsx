@@ -17,11 +17,13 @@ import { notificationService } from '../src/services/notificationService';
 
 export default function NotificationList() {
   const { isDark } = useTheme();
-  const { notifications, userProfile, markAllAsRead, clearNotifications } = useAppStore();
+  const { notifications, userProfile, markAllAsRead, clearNotifications, clearNotification } = useAppStore();
   
   const currentMode = (userProfile.selected_mode || 'gym').toLowerCase();
-  // Show notifications for current mode, or those without a mode (for backward compatibility)
-  const filteredNotifications = notifications.filter((n: any) => !n.mode || n.mode === currentMode);
+  // Show notifications for current mode, or those without a mode, EXCLUDING cleared ones
+  const filteredNotifications = notifications.filter((n: any) => 
+    (!n.mode || n.mode === currentMode) && n.status !== 'cleared'
+  );
 
   useEffect(() => {
     // Generate fresh notifications when opening the list
@@ -74,7 +76,7 @@ export default function NotificationList() {
              <Text style={styles.markRead}>Mark Read</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleClear}>
-             <Text style={[styles.markRead, { color: '#FF5252' }]}>Clear</Text>
+             <Text style={[styles.markRead, { color: '#FF5252' }]}>Clear All</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -101,12 +103,21 @@ export default function NotificationList() {
               </View>
               <View style={styles.textContent}>
                 <View style={styles.notifHeader}>
-                  <Text style={[styles.notifTitle, { color: theme.text }]}>{item.title}</Text>
+                  <Text style={[styles.notifTitle, { color: theme.text, flex: 1 }]} numberOfLines={1}>{item.title}</Text>
                   {!item.isRead && <View style={styles.unreadDot} />}
                 </View>
                 <Text style={[styles.notifDesc, { color: theme.subText }]}>{item.message}</Text>
                 <Text style={styles.notifTime}>{getTimeAgo(item.createdAt)}</Text>
               </View>
+              <TouchableOpacity 
+                style={styles.clearBtn} 
+                onPress={() => {
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                  clearNotification(item.id);
+                }}
+              >
+                <Ionicons name="close" size={20} color={theme.subText} />
+              </TouchableOpacity>
             </TouchableOpacity>
           ))
         ) : (
@@ -155,11 +166,12 @@ const styles = StyleSheet.create({
     marginRight: 15 
   },
   textContent: { flex: 1 },
-  notifHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  notifHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
   notifTitle: { fontSize: 17, fontWeight: 'bold' },
-  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#00C853' },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#00C853', marginLeft: 8 },
   notifDesc: { fontSize: 14, marginTop: 4 },
   notifTime: { fontSize: 12, color: '#AAAAAA', marginTop: 8 },
+  clearBtn: { padding: 5, marginLeft: 10, justifyContent: 'center' },
   emptyContainer: { 
     alignItems: 'center', 
     justifyContent: 'center', 

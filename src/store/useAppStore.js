@@ -540,6 +540,7 @@ const useAppStore = create((set, get) => ({
       id: Date.now() + Math.random(), 
       createdAt: new Date().toISOString(), 
       isRead: false,
+      status: 'unread',
       key: uniqueKey,
       ...notif 
     };
@@ -551,7 +552,7 @@ const useAppStore = create((set, get) => ({
   markAsRead: (id) => {
     const { notifications, saveStoredData } = get();
     set({ 
-      notifications: notifications.map(n => n.id === id ? { ...n, isRead: true } : n) 
+      notifications: notifications.map(n => n.id === id ? { ...n, isRead: true, status: 'read' } : n) 
     });
     saveStoredData();
   },
@@ -559,14 +560,24 @@ const useAppStore = create((set, get) => ({
   markAllAsRead: () => {
     const { notifications, saveStoredData } = get();
     set({ 
-      notifications: notifications.map(n => ({ ...n, isRead: true })) 
+      notifications: notifications.map(n => ({ ...n, isRead: true, status: n.status === 'cleared' ? 'cleared' : 'read' })) 
     });
     saveStoredData();
   },
 
   clearNotifications: () => {
-    const { saveStoredData } = get();
-    set({ notifications: [] });
+    const { notifications, saveStoredData } = get();
+    set({ 
+      notifications: notifications.map(n => ({ ...n, status: 'cleared', clearedAt: new Date().toISOString() })) 
+    });
+    saveStoredData();
+  },
+
+  clearNotification: (id) => {
+    const { notifications, saveStoredData } = get();
+    set({ 
+      notifications: notifications.map(n => n.id === id ? { ...n, status: 'cleared', clearedAt: new Date().toISOString() } : n) 
+    });
     saveStoredData();
   },
 

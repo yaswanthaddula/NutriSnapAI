@@ -48,7 +48,7 @@ export default function HealthHomeScreen() {
     notifications, notificationPrefs, reminderStatuses
   } = useAppStore();
 
-  const unreadCount = notifications.filter((n: any) => !n.isRead && n.mode === 'health').length;
+  const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'health')).length;
 
   const [isPedometerAvailable, setIsPedometerAvailable] = useState('checking');
   const [showManualSteps, setShowManualSteps] = useState(false);
@@ -162,6 +162,30 @@ export default function HealthHomeScreen() {
     if (userProfile.id) syncHealthLog();
   }, [waterData.waterIntake, todaySleep, todayMood, steps, caloriesBurned]);
 
+  useEffect(() => {
+    // Only for web fallback
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    
+    let lastStepTime = 0;
+    const handleMotion = (event: any) => {
+      const acc = event.accelerationIncludingGravity;
+      if (!acc) return;
+      const mag = Math.sqrt((acc.x || 0)**2 + (acc.y || 0)**2 + (acc.z || 0)**2);
+      // Average gravity is ~9.8. A spike above 11.5 usually indicates a step in pocket or hand.
+      if (mag > 11.5) { 
+        const now = Date.now();
+        if (now - lastStepTime > 300) {
+           lastStepTime = now;
+           const store = useAppStore.getState();
+           store.updateSteps(store.steps + 1);
+        }
+      }
+    };
+    
+    window.addEventListener('devicemotion', handleMotion);
+    return () => window.removeEventListener('devicemotion', handleMotion);
+  }, []);
+
   const subscribePedometer = async () => {
     const isAvailable = await Pedometer.isAvailableAsync();
     setIsPedometerAvailable(isAvailable ? 'available' : 'unavailable');
@@ -215,8 +239,23 @@ export default function HealthHomeScreen() {
   const handleManualSteps = () => {
     const s = parseInt(manualStepsVal) || 0;
     updateSteps(s);
-    saveStoredData();
     setShowManualSteps(false);
+  };
+
+  const handleStepsPress = async () => {
+    if (Platform.OS === 'web' && typeof DeviceMotionEvent !== 'undefined' && typeof (DeviceMotionEvent as any).requestPermission === 'function') {
+      try {
+        const permission = await (DeviceMotionEvent as any).requestPermission();
+        if (permission === 'granted') {
+          alert("Step tracking activated! Walk with your phone.");
+          return;
+        }
+      } catch (e) {
+        console.warn("Motion permission error", e);
+      }
+    }
+    // Fallback to manual entry if not web, if already granted, or if denied
+    setShowManualSteps(true);
   };
 
   const handleManualSleep = () => {
@@ -609,7 +648,7 @@ export default function HealthHomeScreen() {
 
           <TouchableOpacity 
             style={[styles.statCard, { backgroundColor: themeColors.card, borderColor: themeColors.border, borderWidth: 1 }]}
-            onPress={() => setShowManualSteps(true)}
+            onPress={handleStepsPress}
           >
             <View style={styles.cardTop}>
               <MaterialCommunityIcons name="shoe-print" size={18} color="#FF9800" />
