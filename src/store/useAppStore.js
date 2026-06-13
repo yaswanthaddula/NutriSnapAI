@@ -120,8 +120,7 @@ const useAppStore = create((set, get) => ({
     if (meals.some(m => m.date === todayStr && m.type.toLowerCase() === 'lunch')) newStatuses.lunch = 'Completed';
     if (meals.some(m => m.date === todayStr && m.type.toLowerCase() === 'dinner')) newStatuses.dinner = 'Completed';
     if (meals.some(m => m.date === todayStr && m.type.toLowerCase() === 'snack')) newStatuses.snack = 'Completed';
-    
-    if (workouts.some((w: any) => w.date === todayStr)) newStatuses.workout = 'Completed';
+    if (workouts.some(w => w.date === todayStr)) newStatuses.workout = 'Completed';
     if (todaySleep > 0) newStatuses.sleep = 'Completed';
 
     types.forEach(({ key, time }) => {
