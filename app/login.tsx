@@ -15,7 +15,6 @@ import { Ionicons, AntDesign } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import apiService from '../src/services/apiService';
 import useAppStore from '../src/store/useAppStore';
-import { Modal } from 'react-native';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -25,7 +24,6 @@ export default function LoginScreen() {
   const [emailError, setEmailError] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
-  const [showGoogleAccounts, setShowGoogleAccounts] = useState(false);
   const { setUserProfile, saveStoredData } = useAppStore();
   const isSubmitting = React.useRef(false);
 
@@ -159,17 +157,6 @@ export default function LoginScreen() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    // Demo only
-    setShowGoogleAccounts(true);
-  };
-
-  const handleSelectMockAccount = (account: string) => {
-    setShowGoogleAccounts(false);
-    Alert.alert("Google Login", `Logged in as ${account} (Demo Mode)`);
-    router.push('/profile-setup');
-  };
-
   const handleForgotPassword = () => {
     router.push('/forgot-password');
   };
@@ -259,22 +246,6 @@ export default function LoginScreen() {
               </Text>
             </TouchableOpacity>
 
-            {step === 1 && (
-              <>
-                <View style={styles.dividerRow}>
-                  <View style={styles.line} />
-                  <Text style={styles.orText}>or</Text>
-                  <View style={styles.line} />
-                </View>
-
-                <TouchableOpacity 
-                  style={styles.googleBtn} 
-                  onPress={handleGoogleLogin}
-                >
-                  <AntDesign name="google" size={20} color="#DB4437" />
-                  <Text style={styles.googleBtnText}>Continue with Google</Text>
-                </TouchableOpacity>
-              </>
             )}
 
             <View style={styles.footer}>
@@ -363,32 +334,7 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { backgroundColor: '#A5D6A7' },
   loginBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 30 },
-  line: { flex: 1, height: 1, backgroundColor: '#EEE' },
-  orText: { marginHorizontal: 10, color: '#AAA' },
-  googleBtn: { 
-    flexDirection: 'row', 
-    borderWidth: 1, 
-    borderColor: '#E0E0E0', 
-    padding: 15, 
-    borderRadius: 12, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
-  },
-  googleBtnText: { marginLeft: 10, fontWeight: '600', color: '#555' },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 40, paddingBottom: 20 },
   footerText: { color: '#707070' },
-  signUpText: { color: '#00C853', fontWeight: 'bold' },
-
-  // Modal Styles for Google Mock
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { width: '85%', backgroundColor: '#FFF', borderRadius: 8, padding: 20 },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  modalSub: { fontSize: 14, color: '#666', marginBottom: 20 },
-  accountRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#EEE' },
-  avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#4285F4', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-  accountName: { fontSize: 14, fontWeight: '600', color: '#333' },
-  accountEmail: { fontSize: 12, color: '#666' },
-  closeBtn: { marginTop: 20, alignSelf: 'flex-end' },
-  closeText: { color: '#4285F4', fontWeight: 'bold' }
+  signUpText: { color: '#00C853', fontWeight: 'bold' }
 });
