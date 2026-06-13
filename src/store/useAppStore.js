@@ -112,6 +112,18 @@ const useAppStore = create((set, get) => ({
       { key: 'sleep', time: userProfile.sleepReminderTime },
     ];
 
+    const todayStr = new Date().toISOString().split('T')[0];
+    const { meals, workouts, waterData, todaySleep, notificationPrefs, userProfile } = get();
+
+    // Auto-complete based on actual data
+    if (meals.some(m => m.date === todayStr && m.type.toLowerCase() === 'breakfast')) newStatuses.breakfast = 'Completed';
+    if (meals.some(m => m.date === todayStr && m.type.toLowerCase() === 'lunch')) newStatuses.lunch = 'Completed';
+    if (meals.some(m => m.date === todayStr && m.type.toLowerCase() === 'dinner')) newStatuses.dinner = 'Completed';
+    if (meals.some(m => m.date === todayStr && m.type.toLowerCase() === 'snack')) newStatuses.snack = 'Completed';
+    
+    if (workouts.some((w: any) => w.date === todayStr)) newStatuses.workout = 'Completed';
+    if (todaySleep > 0) newStatuses.sleep = 'Completed';
+
     types.forEach(({ key, time }) => {
       let isEnabled = false;
       if (['breakfast', 'lunch', 'dinner', 'snack'].includes(key)) isEnabled = notificationPrefs.meals;
