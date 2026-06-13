@@ -139,7 +139,7 @@ export default function LoginScreen() {
 
         if (stepsRespResult.status === 'fulfilled' && stepsRespResult.value?.length > 0) {
           // get latest step count
-          const latestStep = stepsRespResult.value[stepsRespResult.value.length - 1];
+          const latestStep = stepsRespResult.value[0];
           storeUpdates.steps = latestStep.steps || 0;
           storeUpdates.caloriesBurned = latestStep.calories_burned || 0;
           storeUpdates.lastStepDate = latestStep.date || new Date().toISOString().split('T')[0];

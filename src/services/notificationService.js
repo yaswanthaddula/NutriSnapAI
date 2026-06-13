@@ -559,9 +559,9 @@ export const notificationService = {
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
-              channelId: 'high_priority_v1',
+              channelId: 'high_priority_v2',
             },
-            trigger: { seconds: 1, channelId: 'high_priority_v1' },
+            trigger: { seconds: 1, channelId: 'high_priority_v2' },
           });
         } catch (e) {
           console.log("Event notification failed:", e.message);
@@ -620,9 +620,9 @@ export const notificationService = {
                   screen: screenRoute
                 },
                 sound: true,
-                channelId: 'high_priority_v1',
+                channelId: 'high_priority_v2',
               },
-              trigger: { seconds: 1, channelId: 'high_priority_v1' },
+              trigger: { seconds: 1, channelId: 'high_priority_v2' },
             });
           } catch (e) {
             console.log("Passive notification failed:", e.message);
@@ -634,14 +634,14 @@ export const notificationService = {
 
   scheduleWithRepeat: async (content, parsed, repeatType) => {
     if (!Notifications) return;
-    const channelId = Platform.OS === 'android' ? 'high_priority_v1' : undefined;
+    const channelId = Platform.OS === 'android' ? 'high_priority_v2' : undefined;
     
     if (repeatType === 'Weekdays') {
       const days = [2, 3, 4, 5, 6]; // Monday to Friday
       for (const day of days) {
         await Notifications.scheduleNotificationAsync({
           content,
-          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'high_priority_v1' }
+          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'high_priority_v2' }
         });
       }
     } else if (repeatType === 'Weekends') {
@@ -649,14 +649,14 @@ export const notificationService = {
       for (const day of days) {
         await Notifications.scheduleNotificationAsync({
           content,
-          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'high_priority_v1' }
+          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'high_priority_v2' }
         });
       }
     } else {
       // Daily or Custom Days (fallback to daily)
       await Notifications.scheduleNotificationAsync({
         content,
-        trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'high_priority_v1' }
+        trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'high_priority_v2' }
       });
     }
   },
@@ -674,7 +674,7 @@ export const notificationService = {
       await Notifications.cancelAllScheduledNotificationsAsync();
       console.log("Cancelled all existing scheduled notifications.");
 
-      const channelId = Platform.OS === 'android' ? 'high_priority_v1' : undefined;
+      const channelId = Platform.OS === 'android' ? 'high_priority_v2' : undefined;
 
       // 1. Meals Reminders
       if (prefs.meals) {
@@ -694,7 +694,7 @@ export const notificationService = {
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
-            channelId: channelId || 'high_priority_v1',
+            channelId: channelId || 'high_priority_v2',
               data: { 
                 screen: currentMode === 'gym' ? '/food-selection' : '/health-food-selection',
                 type: `meal-${item.type}`
@@ -717,13 +717,13 @@ export const notificationService = {
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
-            channelId: channelId || 'high_priority_v1',
+            channelId: channelId || 'high_priority_v2',
               data: { 
                 screen: currentMode === 'gym' ? '/(tabs)/gym-home' : '/(health-tabs)/health-home',
                 type: 'water-reminder'
               },
             },
-            trigger: { seconds: intervalSeconds, repeats: true, channelId: channelId || 'high_priority_v1' },
+            trigger: { seconds: intervalSeconds, repeats: true, channelId: channelId || 'high_priority_v2' },
           });
           console.log(`[DEBUG] Reminder Scheduled: water-reminder every ${intervalSeconds}s`);
         }
@@ -739,7 +739,7 @@ export const notificationService = {
             sound: true,
             vibrate: [0, 250, 250, 250],
             priority: Notifications.AndroidNotificationPriority.MAX,
-            channelId: channelId || 'high_priority_v1',
+            channelId: channelId || 'high_priority_v2',
             data: { 
               screen: currentMode === 'gym' ? '/(tabs)/plans' : '/(health-tabs)/plans',
               type: 'workout-reminder'
@@ -760,7 +760,7 @@ export const notificationService = {
             sound: true,
             vibrate: [0, 250, 250, 250],
             priority: Notifications.AndroidNotificationPriority.MAX,
-            channelId: channelId || 'high_priority_v1',
+            channelId: channelId || 'high_priority_v2',
             data: { 
               screen: currentMode === 'gym' ? '/(tabs)/gym-home' : '/(health-tabs)/health-home',
               type: 'sleep-reminder'
@@ -796,11 +796,14 @@ export const notificationService = {
       let token;
       
       if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('high_priority_v1', {
+        await Notifications.setNotificationChannelAsync('high_priority_v2', {
           name: 'High Priority Reminders',
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: '#FF231F7C',
+          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+          bypassDnd: true,
+          showBadge: true,
         });
       }
 

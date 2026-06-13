@@ -10,7 +10,9 @@ router = APIRouter(prefix="/sync", tags=["sync"])
 
 @router.get("/reminder-statuses", response_model=List[schemas.ReminderStatusResponse])
 def get_reminder_statuses(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    return db.query(models.ReminderStatus).filter(models.ReminderStatus.user_id == current_user.id).all()
+    return db.query(models.ReminderStatus).filter(
+        models.ReminderStatus.user_id == current_user.id
+    ).order_by(models.ReminderStatus.date.desc()).all()
 
 @router.post("/reminder-statuses", response_model=schemas.ReminderStatusResponse)
 def sync_reminder_status(status_in: schemas.ReminderStatusCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
@@ -46,13 +48,15 @@ def sync_reminder_status(status_in: schemas.ReminderStatusCreate, db: Session = 
     db.refresh(db_status)
     return db_status
 
+from datetime import datetime, timezone, timedelta
+
 @router.get("/notifications", response_model=List[schemas.NotificationHistoryResponse])
 def get_notifications(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    today = datetime.now(timezone.utc).date()
-    # Return today's notifications only to avoid bloat
+    # Return notifications from the last 24 hours to avoid timezone clipping bugs
+    twenty_four_hours_ago = datetime.now(timezone.utc) - timedelta(hours=24)
     return db.query(models.NotificationHistory).filter(
         models.NotificationHistory.user_id == current_user.id,
-        models.NotificationHistory.date == today
+        models.NotificationHistory.created_at >= twenty_four_hours_ago
     ).order_by(models.NotificationHistory.created_at.desc()).all()
 
 @router.post("/notifications", response_model=schemas.NotificationHistoryResponse)
@@ -85,7 +89,9 @@ def sync_notification(notif_in: schemas.NotificationHistoryCreate, db: Session =
 
 @router.get("/steps", response_model=List[schemas.DailyStepResponse])
 def get_steps(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    return db.query(models.DailyStep).filter(models.DailyStep.user_id == current_user.id).all()
+    return db.query(models.DailyStep).filter(
+        models.DailyStep.user_id == current_user.id
+    ).order_by(models.DailyStep.date.desc()).all()
 
 @router.post("/steps", response_model=schemas.DailyStepResponse)
 def sync_steps(steps_in: schemas.DailyStepCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
