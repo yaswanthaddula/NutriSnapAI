@@ -267,6 +267,34 @@ export const apiService = {
     return response.data;
   },
 
+  // Sync
+  syncReminderStatuses: async (statuses) => {
+    if (!statuses) {
+      const response = await api.get('/sync/reminder-statuses');
+      return response.data;
+    }
+    const response = await api.post('/sync/reminder-statuses', statuses);
+    return response.data;
+  },
+
+  syncNotifications: async (notification) => {
+    if (!notification) {
+      const response = await api.get('/sync/notifications');
+      return response.data;
+    }
+    const response = await api.post('/sync/notifications', notification);
+    return response.data;
+  },
+
+  syncSteps: async (stepsData) => {
+    if (!stepsData) {
+      const response = await api.get('/sync/steps');
+      return response.data;
+    }
+    const response = await api.post('/sync/steps', stepsData);
+    return response.data;
+  },
+
   getToken,
 };
 

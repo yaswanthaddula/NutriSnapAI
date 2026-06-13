@@ -69,10 +69,19 @@ export default function LoginScreen() {
           throw firstErr;
         }
       }
-      // 2. Parallel Fetch User Info and Profile
-      const [userRespResult, profileRespResult] = await Promise.allSettled([
+      // 2. Parallel Fetch User Info, Profile, and Synced Data
+      const [
+        userRespResult, 
+        profileRespResult,
+        remindersRespResult,
+        notifsRespResult,
+        stepsRespResult
+      ] = await Promise.allSettled([
         apiService.getMe(),
-        apiService.getProfile()
+        apiService.getProfile(),
+        apiService.syncReminderStatuses(),
+        apiService.syncNotifications(),
+        apiService.syncSteps()
       ]);
 
       if (userRespResult.status === 'rejected') {
@@ -97,6 +106,47 @@ export default function LoginScreen() {
           email: userEmail,
         });
         
+        // Sync additional data to local store
+        const storeUpdates: any = {};
+        if (remindersRespResult.status === 'fulfilled' && remindersRespResult.value?.length > 0) {
+          const rs = remindersRespResult.value[0]; // Assuming one per date or latest
+          storeUpdates.reminderStatuses = {
+            breakfast: rs.breakfast || 'Upcoming',
+            lunch: rs.lunch || 'Upcoming',
+            dinner: rs.dinner || 'Upcoming',
+            snack: rs.snack || 'Upcoming',
+            workout: rs.workout || 'Upcoming',
+            sleep: rs.sleep || 'Upcoming',
+            water: rs.water || 'Upcoming'
+          };
+        }
+        
+        if (notifsRespResult.status === 'fulfilled' && notifsRespResult.value) {
+          storeUpdates.notifications = notifsRespResult.value.map((n: any) => ({
+            id: n.id,
+            message: n.message,
+            title: n.title,
+            type: n.type,
+            mode: n.mode,
+            color: n.color,
+            icon: n.icon,
+            key: n.key,
+            createdAt: n.created_at,
+            isRead: true,
+            status: 'read'
+          }));
+        }
+
+        if (stepsRespResult.status === 'fulfilled' && stepsRespResult.value?.length > 0) {
+          // get latest step count
+          const latestStep = stepsRespResult.value[stepsRespResult.value.length - 1];
+          storeUpdates.steps = latestStep.steps || 0;
+          storeUpdates.caloriesBurned = latestStep.calories_burned || 0;
+          storeUpdates.lastStepDate = latestStep.date || new Date().toISOString().split('T')[0];
+        }
+
+        useAppStore.setState(storeUpdates);
+
         await saveStoredData();
 
         // Navigate to correct dashboard based on selected_mode

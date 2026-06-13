@@ -128,3 +128,42 @@ class PendingVerification(Base):
     email: Mapped[str] = mapped_column(String, unique=True, index=True)
     code: Mapped[str] = mapped_column(String)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+class ReminderStatus(Base):
+    __tablename__ = "reminder_statuses"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    date: Mapped[dt_date] = mapped_column(Date, default=lambda: datetime.now(timezone.utc).date())
+    breakfast: Mapped[str] = mapped_column(String, default="Upcoming")
+    lunch: Mapped[str] = mapped_column(String, default="Upcoming")
+    dinner: Mapped[str] = mapped_column(String, default="Upcoming")
+    snack: Mapped[str] = mapped_column(String, default="Upcoming")
+    workout: Mapped[str] = mapped_column(String, default="Upcoming")
+    sleep: Mapped[str] = mapped_column(String, default="Upcoming")
+    water: Mapped[str] = mapped_column(String, default="Upcoming")
+
+class NotificationHistory(Base):
+    __tablename__ = "notification_history"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    date: Mapped[dt_date] = mapped_column(Date, default=lambda: datetime.now(timezone.utc).date())
+    message: Mapped[str] = mapped_column(String)
+    title: Mapped[str] = mapped_column(String)
+    type: Mapped[str] = mapped_column(String)
+    mode: Mapped[str] = mapped_column(String)
+    color: Mapped[str] = mapped_column(String)
+    icon: Mapped[str] = mapped_column(String)
+    key: Mapped[str] = mapped_column(String, unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+class DailyStep(Base):
+    __tablename__ = "daily_steps"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    date: Mapped[dt_date] = mapped_column(Date, default=lambda: datetime.now(timezone.utc).date())
+    steps: Mapped[int] = mapped_column(Integer, default=0)
+    calories_burned: Mapped[int] = mapped_column(Integer, default=0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

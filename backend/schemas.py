@@ -221,3 +221,117 @@ class AIChatHistoryResponse(AIChatHistoryBase):
 
     class Config:
         from_attributes = True
+
+# ReminderStatus Schemas
+class ReminderStatusBase(BaseModel):
+    date: Optional[Any] = None
+    breakfast: str = "Upcoming"
+    lunch: str = "Upcoming"
+    dinner: str = "Upcoming"
+    snack: str = "Upcoming"
+    workout: str = "Upcoming"
+    sleep: str = "Upcoming"
+    water: str = "Upcoming"
+
+    @field_validator('date', mode='before')
+    @classmethod
+    def parse_date(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, datetime):
+            return v.date()
+        if isinstance(v, date):
+            return v
+        if isinstance(v, str):
+            try:
+                if 'T' in v:
+                    return datetime.fromisoformat(v.replace('Z', '+00:00')).date()
+                return date.fromisoformat(v)
+            except:
+                return v
+        return v
+
+class ReminderStatusCreate(ReminderStatusBase):
+    pass
+
+class ReminderStatusResponse(ReminderStatusBase):
+    id: int
+    user_id: int
+
+    class Config:
+        from_attributes = True
+
+# NotificationHistory Schemas
+class NotificationHistoryBase(BaseModel):
+    date: Optional[Any] = None
+    message: str
+    title: str
+    type: str
+    mode: str
+    color: str
+    icon: str
+    key: str
+
+    @field_validator('date', mode='before')
+    @classmethod
+    def parse_date(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, datetime):
+            return v.date()
+        if isinstance(v, date):
+            return v
+        if isinstance(v, str):
+            try:
+                if 'T' in v:
+                    return datetime.fromisoformat(v.replace('Z', '+00:00')).date()
+                return date.fromisoformat(v)
+            except:
+                return v
+        return v
+
+class NotificationHistoryCreate(NotificationHistoryBase):
+    pass
+
+class NotificationHistoryResponse(NotificationHistoryBase):
+    id: int
+    user_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# DailyStep Schemas
+class DailyStepBase(BaseModel):
+    date: Optional[Any] = None
+    steps: int = 0
+    calories_burned: int = 0
+
+    @field_validator('date', mode='before')
+    @classmethod
+    def parse_date(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, datetime):
+            return v.date()
+        if isinstance(v, date):
+            return v
+        if isinstance(v, str):
+            try:
+                if 'T' in v:
+                    return datetime.fromisoformat(v.replace('Z', '+00:00')).date()
+                return date.fromisoformat(v)
+            except:
+                return v
+        return v
+
+class DailyStepCreate(DailyStepBase):
+    pass
+
+class DailyStepResponse(DailyStepBase):
+    id: int
+    user_id: int
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True

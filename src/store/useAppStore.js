@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { storage } from '../services/storageService';
 import { calculateBMI, getBMIStatus, calculateBMR, calculateTargets, calculateSuggestedMode } from '../utils/calculations';
+import apiService from '../services/apiService';
 
 const useAppStore = create((set, get) => ({
   userProfile: {
@@ -81,6 +82,7 @@ const useAppStore = create((set, get) => ({
       statuses[type] = 'Completed';
       set({ reminderStatuses: statuses });
       get().saveStoredData();
+      apiService.syncReminderStatuses(statuses).catch(e => console.log('Sync err:', e));
     }
   },
 
@@ -321,6 +323,7 @@ const useAppStore = create((set, get) => ({
     
     set({ steps, caloriesBurned, lastStepDate: today, activityHistory: history });
     get().saveStoredData();
+    apiService.syncSteps({ steps, calories_burned: caloriesBurned, date: today }).catch(e => console.log('Sync err:', e));
   },
   setCaloriesBurned: (cals) => set({ caloriesBurned: cals }),
 
@@ -556,7 +559,20 @@ const useAppStore = create((set, get) => ({
       ...notif 
     };
     set({ notifications: [newNotif, ...notifications] });
-    saveStoredData();
+    get().saveStoredData();
+    
+    // Sync to backend (fire and forget)
+    apiService.syncNotifications({
+      message: newNotif.message,
+      title: newNotif.title,
+      type: newNotif.type,
+      mode: newNotif.mode || 'health',
+      color: newNotif.color || '#000000',
+      icon: newNotif.icon || 'bell',
+      key: uniqueKey,
+      date: today
+    }).catch(e => console.log('Sync err:', e));
+
     return newNotif;
   },
 
