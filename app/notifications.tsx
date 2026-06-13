@@ -110,47 +110,49 @@ const CircularWebTimePickerModal = ({ visible, initialValue, onClose, onSave, th
   };
 
   return (
-    <View style={styles.modalOverlay}>
-      <View style={{ width: 320, backgroundColor: '#FFF', borderRadius: 4, overflow: 'hidden', elevation: 10, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 10 }}>
-        {/* Header */}
-        <View style={{ backgroundColor: '#1976D2', padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-            <TouchableOpacity onPress={() => setMode('hour')}>
-              <Text style={{ fontSize: 48, color: mode === 'hour' ? '#FFF' : 'rgba(255,255,255,0.6)', fontWeight: 'bold' }}>{h}</Text>
-            </TouchableOpacity>
-            <Text style={{ fontSize: 48, color: 'rgba(255,255,255,0.6)', fontWeight: 'bold', marginHorizontal: 5 }}>:</Text>
-            <TouchableOpacity onPress={() => setMode('minute')}>
-              <Text style={{ fontSize: 48, color: mode === 'minute' ? '#FFF' : 'rgba(255,255,255,0.6)', fontWeight: 'bold' }}>{m}</Text>
-            </TouchableOpacity>
+    <Modal transparent={true} visible={visible} animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <View style={{ width: 320, backgroundColor: '#FFF', borderRadius: 4, overflow: 'hidden', elevation: 10, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 10 }}>
+          {/* Header */}
+          <View style={{ backgroundColor: '#1976D2', padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+              <TouchableOpacity onPress={() => setMode('hour')}>
+                <Text style={{ fontSize: 48, color: mode === 'hour' ? '#FFF' : 'rgba(255,255,255,0.6)', fontWeight: 'bold' }}>{h}</Text>
+              </TouchableOpacity>
+              <Text style={{ fontSize: 48, color: 'rgba(255,255,255,0.6)', fontWeight: 'bold', marginHorizontal: 5 }}>:</Text>
+              <TouchableOpacity onPress={() => setMode('minute')}>
+                <Text style={{ fontSize: 48, color: mode === 'minute' ? '#FFF' : 'rgba(255,255,255,0.6)', fontWeight: 'bold' }}>{m}</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={{ marginLeft: 15, justifyContent: 'center' }}>
+              <TouchableOpacity onPress={() => setAmpm('AM')} style={{ marginBottom: 5 }}>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: ampm === 'AM' ? '#FFF' : 'rgba(255,255,255,0.6)' }}>AM</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setAmpm('PM')}>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: ampm === 'PM' ? '#FFF' : 'rgba(255,255,255,0.6)' }}>PM</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <View style={{ marginLeft: 15, justifyContent: 'center' }}>
-            <TouchableOpacity onPress={() => setAmpm('AM')} style={{ marginBottom: 5 }}>
-              <Text style={{ fontSize: 16, fontWeight: 'bold', color: ampm === 'AM' ? '#FFF' : 'rgba(255,255,255,0.6)' }}>AM</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setAmpm('PM')}>
-              <Text style={{ fontSize: 16, fontWeight: 'bold', color: ampm === 'PM' ? '#FFF' : 'rgba(255,255,255,0.6)' }}>PM</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
 
-        {/* Clock Face */}
-        <View style={{ padding: 20, alignItems: 'center', backgroundColor: '#FFF' }}>
-          <View style={{ width: clockSize, height: clockSize, borderRadius: clockSize / 2, backgroundColor: '#F0F0F0', position: 'relative' }}>
-            {renderClockNumbers()}
+          {/* Clock Face */}
+          <View style={{ padding: 20, alignItems: 'center', backgroundColor: '#FFF' }}>
+            <View style={{ width: clockSize, height: clockSize, borderRadius: clockSize / 2, backgroundColor: '#F0F0F0', position: 'relative' }}>
+              {renderClockNumbers()}
+            </View>
           </View>
-        </View>
 
-        {/* Footer */}
-        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 15, backgroundColor: '#FFF' }}>
-          <TouchableOpacity onPress={onClose} style={{ padding: 10, marginRight: 15 }}>
-            <Text style={{ color: '#1976D2', fontWeight: 'bold', fontSize: 16 }}>CANCEL</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => onSave(`${h}:${m} ${ampm}`)} style={{ padding: 10 }}>
-            <Text style={{ color: '#1976D2', fontWeight: 'bold', fontSize: 16 }}>OK</Text>
-          </TouchableOpacity>
+          {/* Footer */}
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 15, backgroundColor: '#FFF' }}>
+            <TouchableOpacity onPress={onClose} style={{ padding: 10, marginRight: 15 }}>
+              <Text style={{ color: '#1976D2', fontWeight: 'bold', fontSize: 16 }}>CANCEL</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => onSave(`${h}:${m} ${ampm}`)} style={{ padding: 10 }}>
+              <Text style={{ color: '#1976D2', fontWeight: 'bold', fontSize: 16 }}>OK</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
+    </Modal>
   );
 };
 
