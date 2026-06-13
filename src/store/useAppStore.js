@@ -113,7 +113,7 @@ const useAppStore = create((set, get) => ({
     ];
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const { meals, workouts, waterData, todaySleep, notificationPrefs, userProfile } = get();
+    const { meals, workouts, waterData, todaySleep } = get();
 
     // Auto-complete based on actual data
     if (meals.some(m => m.date === todayStr && m.type.toLowerCase() === 'breakfast')) newStatuses.breakfast = 'Completed';
