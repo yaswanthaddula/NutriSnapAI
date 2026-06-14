@@ -14,7 +14,7 @@ import {
   Image
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { Platform as RNPlatform } from 'react-native';
 const LottieView = RNPlatform.OS !== 'web' ? require('lottie-react-native').default : null;
 import { useTheme } from '../_layout';
@@ -35,7 +35,7 @@ export default function GymHomeScreen() {
   const { 
     userProfile, meals, steps, caloriesBurned, workouts, activeWorkout, notifications, 
     notificationPrefs, waterData, updateSteps, loadStoredData, saveStoredData, setMeals, 
-    addWater, setWaterIntake, recalculateWaterGoal, reminderStatuses 
+    addWater, setWaterIntake, recalculateWaterGoal, reminderStatuses, fetchAndSyncReminders, reminders
   } = useAppStore();
   
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'gym')).length;
@@ -84,6 +84,12 @@ export default function GymHomeScreen() {
     };
     init();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchAndSyncReminders();
+    }, [])
+  );
 
   const syncBackendMeals = async () => {
     try {
@@ -611,40 +617,34 @@ export default function GymHomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {notificationPrefs?.workout && userProfile.workoutReminderTime && (
-            <View style={styles.mealItem}>
-              <Text style={{fontSize: 24}}>🏋️</Text>
-              <View style={{flex: 1, marginLeft: 15}}>
-                <Text style={[styles.mealName, {color: theme.text}]}>Workout</Text>
-                <Text style={[styles.mealTime, { color: reminderStatuses.workout === 'Missed' ? '#F44336' : reminderStatuses.workout === 'Completed' ? '#4CAF50' : reminderStatuses.workout === 'Active' ? '#FF9800' : '#2196F3' }]}>{userProfile.workoutReminderTime} • Status: {reminderStatuses.workout}</Text>
+          {reminders?.filter((r: any) => r.is_enabled).map((reminder: any, index: number) => {
+            let icon = '⏰';
+            let title = reminder.reminder_type || 'Reminder';
+            switch(reminder.reminder_type?.toLowerCase()) {
+              case 'workout': icon = '🏋️'; title = 'Workout'; break;
+              case 'breakfast': icon = '🍳'; title = 'Breakfast'; break;
+              case 'lunch': icon = '🍽️'; title = 'Lunch'; break;
+              case 'dinner': icon = '🌙'; title = 'Dinner'; break;
+              case 'snack': icon = '🍎'; title = 'Snack'; break;
+              case 'water': icon = '💧'; title = 'Water Reminder'; break;
+              case 'sleep': icon = '💤'; title = 'Sleep Reminder'; break;
+            }
+            const status = reminderStatuses[reminder.reminder_type] || 'Upcoming';
+            const statusColor = status === 'Missed' ? '#F44336' : status === 'Completed' ? '#4CAF50' : status === 'Active' ? '#FF9800' : '#2196F3';
+            
+            return (
+              <View key={index} style={styles.mealItem}>
+                <Text style={{fontSize: 24}}>{icon}</Text>
+                <View style={{flex: 1, marginLeft: 15}}>
+                  <Text style={[styles.mealName, {color: theme.text}]}>{title}</Text>
+                  <Text style={[styles.mealTime, { color: statusColor }]}>{reminder.reminder_time || reminder.title} • Status: {status}</Text>
+                </View>
+                <Ionicons name={status === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={status === 'Completed' ? "#4CAF50" : statusColor} />
               </View>
-              <Ionicons name={reminderStatuses.workout === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={reminderStatuses.workout === 'Completed' ? "#4CAF50" : "#FF9800"} />
-            </View>
-          )}
+            );
+          })}
 
-          {notificationPrefs?.meals && userProfile.dinnerReminderTime && (
-            <View style={styles.mealItem}>
-              <Text style={{fontSize: 24}}>🥤</Text>
-              <View style={{flex: 1, marginLeft: 15}}>
-                <Text style={[styles.mealName, {color: theme.text}]}>Protein Reminder</Text>
-                <Text style={[styles.mealTime, { color: reminderStatuses.dinner === 'Missed' ? '#F44336' : reminderStatuses.dinner === 'Completed' ? '#4CAF50' : reminderStatuses.dinner === 'Active' ? '#FF9800' : '#2196F3' }]}>{userProfile.dinnerReminderTime} • Status: {reminderStatuses.dinner}</Text>
-              </View>
-              <Ionicons name={reminderStatuses.dinner === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={reminderStatuses.dinner === 'Completed' ? "#4CAF50" : "#00C853"} />
-            </View>
-          )}
-
-          {notificationPrefs?.water && userProfile.waterReminderInterval && (
-            <View style={styles.mealItem}>
-              <Text style={{fontSize: 24}}>💧</Text>
-              <View style={{flex: 1, marginLeft: 15}}>
-                <Text style={[styles.mealName, {color: theme.text}]}>Water Reminder</Text>
-                <Text style={[styles.mealTime, { color: reminderStatuses.water === 'Missed' ? '#F44336' : reminderStatuses.water === 'Completed' ? '#4CAF50' : reminderStatuses.water === 'Active' ? '#FF9800' : '#2196F3' }]}>{userProfile.waterReminderInterval} • Status: {reminderStatuses.water}</Text>
-              </View>
-              <Ionicons name={reminderStatuses.water === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={reminderStatuses.water === 'Completed' ? "#4CAF50" : "#2196F3"} />
-            </View>
-          )}
-
-          {(!notificationPrefs?.workout && !notificationPrefs?.meals && !notificationPrefs?.water) && (
+          {(!reminders || reminders.filter((r: any) => r.is_enabled).length === 0) && (
             <View style={{ alignItems: 'center', paddingVertical: 15 }}>
               <Text style={{color: theme.subText, fontSize: 13, fontStyle: 'italic', textAlign: 'center'}}>No reminders scheduled yet.</Text>
               <Text style={{color: theme.subText, fontSize: 12, marginTop: 5, textAlign: 'center'}}>Tap Edit to create reminders.</Text>

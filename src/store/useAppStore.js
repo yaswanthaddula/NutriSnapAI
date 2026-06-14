@@ -83,18 +83,41 @@ const useAppStore = create((set, get) => ({
         if (targetReminder) {
           await apiService.updateReminder(targetReminder.id, {
             ...targetReminder,
-            notification_status: 'completed'
+            notification_status: 'Completed'
           });
-          // Update local array
-          set(state => ({
-            reminders: state.reminders.map(r => 
-              r.id === targetReminder.id ? { ...r, notification_status: 'completed' } : r
-            )
-          }));
+          // Refresh from backend to ensure strict consistency
+          await get().fetchAndSyncReminders();
         }
       } catch (e) {
         console.log('Failed to sync reminder status:', e);
       }
+    }
+  },
+
+  fetchAndSyncReminders: async () => {
+    try {
+      const user = get().userProfile;
+      console.log("Logged in user:", user.id || 'N/A', user.email);
+      console.log("Fetching reminders from backend");
+      
+      const fetchedReminders = await apiService.getReminders();
+      console.log("Fetched reminders:", fetchedReminders);
+      console.log("Reminder statuses:", fetchedReminders.map(r => r.notification_status));
+      
+      const dynamicStatuses = {};
+      fetchedReminders.forEach(r => {
+        let st = r.notification_status;
+        if (!st || st.trim() === '') st = 'Upcoming';
+        st = st.charAt(0).toUpperCase() + st.slice(1).toLowerCase();
+        dynamicStatuses[r.reminder_type] = st;
+        // Normalize the object property so components receive capitalized version
+        r.notification_status = st;
+      });
+      
+      set({ reminders: fetchedReminders, reminderStatuses: dynamicStatuses });
+      get().saveStoredData();
+    } catch (e) {
+      console.log("Error fetching reminders:", e);
     }
   },
 
@@ -135,8 +158,8 @@ const useAppStore = create((set, get) => ({
            // Optionally sync this missed status to backend
            apiService.updateReminder(r.id, {
               ...r,
-              notification_status: 'missed'
-           }).catch(() => {});
+              notification_status: 'Missed'
+           }).then(() => get().fetchAndSyncReminders()).catch(() => {});
         }
       }
     });

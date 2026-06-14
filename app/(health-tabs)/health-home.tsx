@@ -743,62 +743,34 @@ export default function HealthHomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {notificationPrefs?.meals && userProfile.breakfastReminderTime && (
-            <View style={[styles.mealItem, { borderBottomColor: themeColors.border, paddingVertical: 12 }]}>
-              <Text style={{fontSize: 24}}>🍳</Text>
-              <View style={{flex: 1, marginLeft: 15}}>
-                <Text style={[styles.mealName, { color: themeColors.text }]}>Breakfast</Text>
-                <Text style={[styles.mealTime, { color: reminderStatuses.breakfast === 'Missed' ? '#F44336' : reminderStatuses.breakfast === 'Completed' ? '#4CAF50' : reminderStatuses.breakfast === 'Active' ? '#FF9800' : '#2196F3' }]}>{userProfile.breakfastReminderTime} • Status: {reminderStatuses.breakfast}</Text>
+          {reminders?.filter((r: any) => r.is_enabled).map((reminder: any, index: number) => {
+            let icon = '⏰';
+            let title = reminder.reminder_type || 'Reminder';
+            switch(reminder.reminder_type?.toLowerCase()) {
+              case 'workout': icon = '🏋️'; title = 'Workout'; break;
+              case 'breakfast': icon = '🍳'; title = 'Breakfast'; break;
+              case 'lunch': icon = '🍽️'; title = 'Lunch'; break;
+              case 'dinner': icon = '🌙'; title = 'Dinner'; break;
+              case 'snack': icon = '🍎'; title = 'Snack'; break;
+              case 'water': icon = '💧'; title = 'Water Reminder'; break;
+              case 'sleep': icon = '😴'; title = 'Sleep Reminder'; break;
+            }
+            const status = reminderStatuses[reminder.reminder_type] || 'Upcoming';
+            const statusColor = status === 'Missed' ? '#F44336' : status === 'Completed' ? '#4CAF50' : status === 'Active' ? '#FF9800' : '#2196F3';
+            
+            return (
+              <View key={index} style={[styles.mealItem, { borderBottomColor: themeColors.border, paddingVertical: 12 }]}>
+                <Text style={{fontSize: 24}}>{icon}</Text>
+                <View style={{flex: 1, marginLeft: 15}}>
+                  <Text style={[styles.mealName, {color: themeColors.text}]}>{title}</Text>
+                  <Text style={[styles.mealTime, { color: statusColor }]}>{reminder.reminder_time || reminder.title} • Status: {status}</Text>
+                </View>
+                <Ionicons name={status === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={status === 'Completed' ? "#4CAF50" : statusColor} />
               </View>
-              <Ionicons name={reminderStatuses.breakfast === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={reminderStatuses.breakfast === 'Completed' ? "#4CAF50" : "#00C853"} />
-            </View>
-          )}
+            );
+          })}
 
-          {notificationPrefs?.meals && userProfile.lunchReminderTime && (
-            <View style={[styles.mealItem, { borderBottomColor: themeColors.border, paddingVertical: 12 }]}>
-              <Text style={{fontSize: 24}}>🍽️</Text>
-              <View style={{flex: 1, marginLeft: 15}}>
-                <Text style={[styles.mealName, { color: themeColors.text }]}>Lunch</Text>
-                <Text style={[styles.mealTime, { color: reminderStatuses.lunch === 'Missed' ? '#F44336' : reminderStatuses.lunch === 'Completed' ? '#4CAF50' : reminderStatuses.lunch === 'Active' ? '#FF9800' : '#2196F3' }]}>{userProfile.lunchReminderTime} • Status: {reminderStatuses.lunch}</Text>
-              </View>
-              <Ionicons name={reminderStatuses.lunch === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={reminderStatuses.lunch === 'Completed' ? "#4CAF50" : "#00C853"} />
-            </View>
-          )}
-
-          {notificationPrefs?.meals && userProfile.dinnerReminderTime && (
-            <View style={[styles.mealItem, { borderBottomColor: themeColors.border, paddingVertical: 12 }]}>
-              <Text style={{fontSize: 24}}>🌙</Text>
-              <View style={{flex: 1, marginLeft: 15}}>
-                <Text style={[styles.mealName, { color: themeColors.text }]}>Dinner</Text>
-                <Text style={[styles.mealTime, { color: reminderStatuses.dinner === 'Missed' ? '#F44336' : reminderStatuses.dinner === 'Completed' ? '#4CAF50' : reminderStatuses.dinner === 'Active' ? '#FF9800' : '#2196F3' }]}>{userProfile.dinnerReminderTime} • Status: {reminderStatuses.dinner}</Text>
-              </View>
-              <Ionicons name={reminderStatuses.dinner === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={reminderStatuses.dinner === 'Completed' ? "#4CAF50" : "#00C853"} />
-            </View>
-          )}
-
-          {notificationPrefs?.water && userProfile.waterReminderInterval && (
-            <View style={[styles.mealItem, { borderBottomColor: themeColors.border, paddingVertical: 12 }]}>
-              <Text style={{fontSize: 24}}>💧</Text>
-              <View style={{flex: 1, marginLeft: 15}}>
-                <Text style={[styles.mealName, { color: themeColors.text }]}>Water Reminder</Text>
-                <Text style={[styles.mealTime, { color: reminderStatuses.water === 'Missed' ? '#F44336' : reminderStatuses.water === 'Completed' ? '#4CAF50' : reminderStatuses.water === 'Active' ? '#FF9800' : '#2196F3' }]}>{userProfile.waterReminderInterval} • Status: {reminderStatuses.water}</Text>
-              </View>
-              <Ionicons name={reminderStatuses.water === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={reminderStatuses.water === 'Completed' ? "#4CAF50" : "#2196F3"} />
-            </View>
-          )}
-          
-          {notificationPrefs?.sleep && userProfile.sleepReminderTime && (
-            <View style={[styles.mealItem, { borderBottomColor: themeColors.border, paddingVertical: 12 }]}>
-              <Text style={{fontSize: 24}}>😴</Text>
-              <View style={{flex: 1, marginLeft: 15}}>
-                <Text style={[styles.mealName, { color: themeColors.text }]}>Sleep Reminder</Text>
-                <Text style={[styles.mealTime, { color: reminderStatuses.sleep === 'Missed' ? '#F44336' : reminderStatuses.sleep === 'Completed' ? '#4CAF50' : reminderStatuses.sleep === 'Active' ? '#FF9800' : '#2196F3' }]}>{userProfile.sleepReminderTime} • Status: {reminderStatuses.sleep}</Text>
-              </View>
-              <Ionicons name={reminderStatuses.sleep === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={reminderStatuses.sleep === 'Completed' ? "#4CAF50" : "#9C27B0"} />
-            </View>
-          )}
-
-          {(!notificationPrefs?.meals && !notificationPrefs?.water && !notificationPrefs?.sleep) && (
+          {(!reminders || reminders.filter((r: any) => r.is_enabled).length === 0) && (
             <View style={{ alignItems: 'center', paddingVertical: 15 }}>
               <Text style={{color: themeColors.subText, textAlign: 'center', fontStyle: 'italic'}}>No reminders scheduled yet.</Text>
               <Text style={{color: themeColors.subText, textAlign: 'center', marginTop: 5, fontSize: 12}}>Tap Edit to create reminders.</Text>

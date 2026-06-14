@@ -696,7 +696,7 @@ export const notificationService = {
               repeat_type: m.repeatKey ? prefs[m.repeatKey] : null,
               repeat_days: null,
               is_enabled: m.enabled,
-              notification_status: 'upcoming'
+              notification_status: 'Upcoming'
             };
             return apiService.createReminder(payload);
           })
