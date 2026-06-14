@@ -131,7 +131,6 @@ class PendingVerification(Base):
 
 class ReminderStatus(Base):
     __tablename__ = "reminder_statuses"
-
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
     date: Mapped[dt_date] = mapped_column(Date, default=lambda: datetime.now(timezone.utc).date())
@@ -142,6 +141,22 @@ class ReminderStatus(Base):
     workout: Mapped[str] = mapped_column(String, default="Upcoming")
     sleep: Mapped[str] = mapped_column(String, default="Upcoming")
     water: Mapped[str] = mapped_column(String, default="Upcoming")
+
+class Reminder(Base):
+    __tablename__ = "reminders"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    reminder_type: Mapped[str] = mapped_column(String)
+    title: Mapped[str] = mapped_column(String)
+    reminder_time: Mapped[str] = mapped_column(String)
+    repeat_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    repeat_days: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    notification_status: Mapped[str] = mapped_column(String, default="upcoming")
+    last_triggered_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_trigger_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 class NotificationHistory(Base):
     __tablename__ = "notification_history"

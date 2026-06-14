@@ -222,6 +222,33 @@ class AIChatHistoryResponse(AIChatHistoryBase):
     class Config:
         from_attributes = True
 
+# Reminder Schemas
+class ReminderBase(BaseModel):
+    reminder_type: str
+    title: str
+    reminder_time: str
+    repeat_type: Optional[str] = None
+    repeat_days: Optional[str] = None
+    is_enabled: bool = True
+    notification_status: str = "upcoming"
+
+class ReminderCreate(ReminderBase):
+    pass
+
+class ReminderUpdate(ReminderBase):
+    pass
+
+class ReminderResponse(ReminderBase):
+    id: int
+    user_id: int
+    last_triggered_at: Optional[datetime] = None
+    next_trigger_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
 # ReminderStatus Schemas
 class ReminderStatusBase(BaseModel):
     date: Optional[Any] = None

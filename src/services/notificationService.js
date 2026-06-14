@@ -674,6 +674,50 @@ export const notificationService = {
       await Notifications.cancelAllScheduledNotificationsAsync();
       console.log("Cancelled all existing scheduled notifications.");
 
+      // Sync to Backend Reminders Table seamlessly
+      try {
+        const mapping = [
+          { type: 'breakfast', timeKey: 'breakfastReminderTime', repeatKey: 'breakfastRepeat', enabled: prefs.meals, title: 'Breakfast Reminder' },
+          { type: 'lunch', timeKey: 'lunchReminderTime', repeatKey: 'lunchRepeat', enabled: prefs.meals, title: 'Lunch Reminder' },
+          { type: 'dinner', timeKey: 'dinnerReminderTime', repeatKey: 'dinnerRepeat', enabled: prefs.meals, title: 'Dinner Reminder' },
+          { type: 'snack', timeKey: 'snackReminderTime', repeatKey: 'snackRepeat', enabled: prefs.meals, title: 'Snack Reminder' },
+          { type: 'workout', timeKey: 'workoutReminderTime', repeatKey: 'workoutRepeat', enabled: prefs.workout, title: 'Workout Reminder' },
+          { type: 'sleep', timeKey: 'sleepReminderTime', repeatKey: 'sleepRepeat', enabled: prefs.sleep, title: 'Sleep Reminder' },
+          { type: 'water', timeKey: 'waterReminderInterval', repeatKey: null, enabled: prefs.water, title: 'Water Reminder' }
+        ];
+        
+        // Fire and forget
+        Promise.allSettled(
+          mapping.map(m => {
+            const payload = {
+              reminder_type: m.type,
+              title: m.title,
+              reminder_time: profile[m.timeKey] || '08:00 AM',
+              repeat_type: m.repeatKey ? prefs[m.repeatKey] : null,
+              repeat_days: null,
+              is_enabled: m.enabled,
+              notification_status: 'upcoming'
+            };
+            return apiService.createReminder(payload);
+          })
+        ).then(results => {
+          // Update the local store array with the newly synced reminders
+          const newReminders = results
+            .filter(r => r.status === 'fulfilled' && r.value)
+            .map(r => r.value);
+          if (newReminders.length > 0) {
+            const dynamicStatuses = {};
+            newReminders.forEach(r => {
+               dynamicStatuses[r.reminder_type] = r.notification_status === 'missed' ? 'Missed' : (r.notification_status === 'completed' ? 'Completed' : 'Upcoming');
+            });
+            useAppStore.setState({ reminders: newReminders, reminderStatuses: dynamicStatuses });
+            useAppStore.getState().saveStoredData();
+          }
+        }).catch(err => console.log('Reminder backend sync err:', err));
+      } catch (e) {
+        console.log('Error initiating reminder backend sync:', e);
+      }
+
       const channelId = Platform.OS === 'android' ? 'high_priority_v2' : undefined;
 
       // 1. Meals Reminders

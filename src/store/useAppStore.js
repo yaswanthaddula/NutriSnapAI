@@ -64,30 +64,44 @@ const useAppStore = create((set, get) => ({
   lastActiveDate: null,
   activityHistory: [], // [{ date: '2023-01-01', steps: 5000, caloriesBurned: 200 }]
   waterHistory: [], // [{ date: '2023-01-01', amount: 2000 }]
-  reminderStatuses: {
-    breakfast: 'Upcoming',
-    lunch: 'Upcoming',
-    dinner: 'Upcoming',
-    snack: 'Upcoming',
-    workout: 'Upcoming',
-    sleep: 'Upcoming',
-    water: 'Upcoming'
-  },
+  reminders: [], // Array of Reminder objects from backend
+  reminderStatuses: {}, // Dynamic mapping of type to status
   activePopup: null,
   setActivePopup: (popup) => set({ activePopup: popup }),
   
-  markReminderCompleted: (type) => {
+  markReminderCompleted: async (type) => {
     const statuses = { ...get().reminderStatuses };
     if (statuses[type]) {
       statuses[type] = 'Completed';
       set({ reminderStatuses: statuses });
       get().saveStoredData();
-      apiService.syncReminderStatuses(statuses).catch(e => console.log('Sync err:', e));
+      
+      // Sync to backend reminders table
+      try {
+        const reminders = get().reminders;
+        const targetReminder = reminders.find(r => r.reminder_type === type);
+        if (targetReminder) {
+          await apiService.updateReminder(targetReminder.id, {
+            ...targetReminder,
+            notification_status: 'completed'
+          });
+          // Update local array
+          set(state => ({
+            reminders: state.reminders.map(r => 
+              r.id === targetReminder.id ? { ...r, notification_status: 'completed' } : r
+            )
+          }));
+        }
+      } catch (e) {
+        console.log('Failed to sync reminder status:', e);
+      }
     }
   },
 
   evaluateReminderStatuses: () => {
-    const { userProfile, reminderStatuses, notificationPrefs } = get();
+    // Rely on backend-driven reminderStatuses instead of hardcoded recalculations.
+    // If we need to mark missed locally based on time, we can still do that.
+    const { reminderStatuses, reminders } = get();
     const now = new Date();
     const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
 
@@ -98,106 +112,39 @@ const useAppStore = create((set, get) => ({
       const match = timeStr.match(/^(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?\s*(AM|PM)$/i);
       if (match) {
         let h = parseInt(match[1], 10);
-        if (match[3].toUpperCase() === 'PM' && h < 12) h += 12;
-        if (match[3].toUpperCase() === 'AM' && h === 12) h = 0;
-        return h * 60 + parseInt(match[2], 10);
+        const m = parseInt(match[2], 10);
+        const ampm = match[3].toUpperCase();
+        if (ampm === 'PM' && h < 12) h += 12;
+        if (ampm === 'AM' && h === 12) h = 0;
+        return h * 60 + m;
       }
       return null;
     };
 
-    const types = [
-      { key: 'breakfast', time: userProfile.breakfastReminderTime },
-      { key: 'lunch', time: userProfile.lunchReminderTime },
-      { key: 'dinner', time: userProfile.dinnerReminderTime },
-      { key: 'snack', time: userProfile.snackReminderTime },
-      { key: 'workout', time: userProfile.workoutReminderTime },
-      { key: 'sleep', time: userProfile.sleepReminderTime },
-    ];
-
-    const todayStr = new Date().toISOString().split('T')[0];
-    const { meals, workouts, waterData, todaySleep } = get();
-
-    // Auto-complete based on actual data
-    if (meals.some(m => m.date === todayStr && m.type.toLowerCase() === 'breakfast')) newStatuses.breakfast = 'Completed';
-    if (meals.some(m => m.date === todayStr && m.type.toLowerCase() === 'lunch')) newStatuses.lunch = 'Completed';
-    if (meals.some(m => m.date === todayStr && m.type.toLowerCase() === 'dinner')) newStatuses.dinner = 'Completed';
-    if (meals.some(m => m.date === todayStr && m.type.toLowerCase() === 'snack')) newStatuses.snack = 'Completed';
-    if (workouts.some(w => w.date === todayStr)) newStatuses.workout = 'Completed';
-    if (todaySleep > 0) newStatuses.sleep = 'Completed';
-
-    types.forEach(({ key, time }) => {
-      let isEnabled = false;
-      if (['breakfast', 'lunch', 'dinner', 'snack'].includes(key)) isEnabled = notificationPrefs.meals;
-      else if (key === 'workout') isEnabled = notificationPrefs.workout;
-      else if (key === 'sleep') isEnabled = notificationPrefs.sleep;
-
-      if (!isEnabled) {
-         newStatuses[key] = 'Disabled';
-         return;
-      }
-
-      if (newStatuses[key] === 'Completed') return; // Don't override Completed
-
-      const targetMinutes = parseMinutes(time);
-      if (targetMinutes !== null) {
-        const activeWindowMinutes = 15;
-        let newStatus = 'Upcoming';
-        if (currentTotalMinutes < targetMinutes) {
-          newStatus = 'Upcoming';
-        } else if (currentTotalMinutes >= targetMinutes && currentTotalMinutes <= targetMinutes + activeWindowMinutes) {
-          newStatus = 'Active';
-        } else if (currentTotalMinutes > targetMinutes + activeWindowMinutes) {
-          newStatus = 'Missed';
+    let hasChanges = false;
+    
+    // Check local time against actual enabled reminders
+    reminders.forEach(r => {
+      if (!r.is_enabled) return;
+      const t = parseMinutes(r.reminder_time);
+      if (t !== null && t < currentTotalMinutes) {
+        const type = r.reminder_type;
+        if (newStatuses[type] === 'Upcoming') {
+           newStatuses[type] = 'Missed';
+           hasChanges = true;
+           // Optionally sync this missed status to backend
+           apiService.updateReminder(r.id, {
+              ...r,
+              notification_status: 'missed'
+           }).catch(() => {});
         }
-
-        if (newStatuses[key] !== newStatus) {
-           console.log(`[DEBUG] Reminder Status Updated: ${key} changed from ${newStatuses[key]} to ${newStatus} at device time ${now.toLocaleTimeString()}`);
-           console.log("Reminder time:", time);
-           console.log("Current time:", now.toLocaleTimeString());
-           const activeUntil = new Date();
-           activeUntil.setHours(Math.floor((targetMinutes + activeWindowMinutes) / 60), (targetMinutes + activeWindowMinutes) % 60, 0, 0);
-           console.log("Active until:", activeUntil.toLocaleTimeString());
-           console.log("Old status:", newStatuses[key]);
-           console.log("New status:", newStatus);
-
-           // Trigger In-App Custom Popup when entering Active
-           if (newStatus === 'Active') {
-               let icon = '🔔';
-               if (key === 'workout') icon = '🏋️';
-               else if (['breakfast', 'lunch', 'dinner', 'snack'].includes(key)) icon = '🍳';
-               else if (key === 'sleep') icon = '🌙';
-               else if (key === 'water') icon = '💧';
-
-               get().setActivePopup({
-                   title: 'NutriSnap AI',
-                   message: `${icon} Time for your ${key} session.`,
-                   type: key,
-               });
-           }
-        }
-        newStatuses[key] = newStatus;
       }
     });
 
-    // For water interval
-    if (!notificationPrefs.water) {
-        newStatuses.water = 'Disabled';
-    } else if (newStatuses.water !== 'Completed') {
-        newStatuses.water = 'Active';
+    if (hasChanges) {
+      set({ reminderStatuses: newStatuses });
+      get().saveStoredData();
     }
-
-    // Calculate Counts for Logging
-    const counts = { Upcoming: 0, Active: 0, Completed: 0, Missed: 0 };
-    Object.values(newStatuses).forEach(s => {
-      if (counts[s] !== undefined) counts[s]++;
-    });
-
-    if (JSON.stringify(reminderStatuses) !== JSON.stringify(newStatuses)) {
-      console.log("Counts:", counts);
-    }
-
-    set({ reminderStatuses: newStatuses });
-    get().saveStoredData();
   },
 
   setUserProfile: (profile) => {
@@ -628,6 +575,7 @@ const useAppStore = create((set, get) => ({
     const storedActivityHistory = await storage.getData('activityHistory');
     const storedWaterHistory = await storage.getData('waterHistory');
     const storedReminderStatuses = await storage.getData('reminderStatuses');
+    const storedReminders = await storage.getData('reminders');
     
     if (storedProfile) {
       // Handle missing fields for legacy users
@@ -664,6 +612,7 @@ const useAppStore = create((set, get) => ({
     if (storedActivityHistory) set({ activityHistory: storedActivityHistory });
     if (storedWaterHistory) set({ waterHistory: storedWaterHistory });
     if (storedReminderStatuses) set({ reminderStatuses: storedReminderStatuses });
+    if (storedReminders) set({ reminders: storedReminders });
     
     
     if (storedLastActiveDate) set({ lastActiveDate: storedLastActiveDate });
@@ -677,15 +626,7 @@ const useAppStore = create((set, get) => ({
             todayMood: null, 
             todaySleep: 0, 
             lastActiveDate: today,
-            reminderStatuses: {
-                breakfast: 'Upcoming',
-                lunch: 'Upcoming',
-                dinner: 'Upcoming',
-                snack: 'Upcoming',
-                workout: 'Upcoming',
-                sleep: 'Upcoming',
-                water: 'Upcoming'
-            }
+            reminderStatuses: {}
         });
     }
 
@@ -708,57 +649,40 @@ const useAppStore = create((set, get) => ({
     get().recalculateWaterGoal();
   },
 
-  resetStore: async () => {
-    const defaultProfile = {
-      name: 'User',
-      email: '',
-      age: 25,
-      height: 170,
-      weight: 60,
-      gender: 'Male',
-      activityLevel: 'Light Active',
-      goal: 'Maintain Weight',
-      calorieTarget: 2000,
-      proteinTarget: 100,
-      carbsTarget: 250,
-      fatsTarget: 70,
-      bmi: 20.8,
-      bmiStatus: 'Normal Weight',
-      selected_mode: null,
-      suggested_mode: null,
-      breakfastReminderTime: '08:00 AM',
-      lunchReminderTime: '01:00 PM',
-      dinnerReminderTime: '08:00 PM',
-      snackReminderTime: '04:00 PM',
-      waterReminderInterval: 'Every 1 hour',
-      workoutReminderTime: '06:00 PM',
-      sleepReminderTime: '10:00 PM',
-    };
-    
+  logout: async () => {
     set({
-      userProfile: defaultProfile,
+      userProfile: {
+        name: 'User',
+        email: '',
+        age: 25,
+        height: 170,
+        weight: 60,
+        gender: 'Male',
+        activityLevel: 'Light Active',
+        goal: 'Maintain Weight',
+        calorieTarget: 2000,
+        proteinTarget: 100,
+        carbsTarget: 250,
+        fatsTarget: 70,
+        bmi: 20.8,
+        bmiStatus: 'Normal Weight',
+        selected_mode: null,
+        suggested_mode: null,
+        breakfastReminderTime: '08:00 AM',
+        lunchReminderTime: '01:00 PM',
+        dinnerReminderTime: '08:00 PM',
+        snackReminderTime: '04:00 PM',
+        waterReminderInterval: 'Every 1 hour',
+        workoutReminderTime: '06:00 PM',
+        sleepReminderTime: '10:00 PM',
+      },
       meals: [],
       weightHistory: [],
       steps: 0,
       caloriesBurned: 0,
-      lastStepDate: new Date().toISOString().split('T')[0],
-      themeMode: 'light',
       workouts: [],
       activeWorkout: null,
-      notificationPrefs: {
-        meals: false,
-        workout: false,
-        water: false,
-        sleep: false,
-        goals: true,
-        reports: true,
-        quotes: true,
-      },
-      waterData: {
-        date: new Date().toISOString().split('T')[0],
-        waterIntake: 0,
-        waterGoal: 2500,
-      },
+      waterData: { date: new Date().toISOString().split('T')[0], waterIntake: 0, waterGoal: 2500 },
       streak: 0,
       lastStreakDate: null,
       todayMood: null,
@@ -766,23 +690,16 @@ const useAppStore = create((set, get) => ({
       lastActiveDate: null,
       activityHistory: [],
       waterHistory: [],
+      reminders: [],
+      reminderStatuses: {},
       notifications: [],
-      reminderStatuses: {
-        breakfast: 'Upcoming',
-        lunch: 'Upcoming',
-        dinner: 'Upcoming',
-        snack: 'Upcoming',
-        workout: 'Upcoming',
-        sleep: 'Upcoming',
-        water: 'Upcoming'
-      }
     });
 
     const keys = [
       'userProfile', 'meals', 'themeMode', 'steps', 'caloriesBurned', 'lastStepDate', 
       'workouts', 'activeWorkout', 'weightHistory', 'notifications', 'notificationPrefs',
       'waterData', 'streak', 'lastStreakDate', 'todayMood', 'todaySleep', 'lastActiveDate',
-      'activityHistory', 'waterHistory', 'reminderStatuses'
+      'activityHistory', 'waterHistory', 'reminderStatuses', 'reminders'
     ];
     for (const key of keys) {
       await storage.removeData(key);
@@ -793,7 +710,7 @@ const useAppStore = create((set, get) => ({
     const { 
       userProfile, meals, themeMode, steps, caloriesBurned, lastStepDate, 
       workouts, activeWorkout, weightHistory, notifications, notificationPrefs,       waterData, streak, lastStreakDate, todayMood, todaySleep, lastActiveDate,
-      activityHistory, waterHistory, reminderStatuses
+      activityHistory, waterHistory, reminderStatuses, reminders
     } = get();
     await storage.saveData('userProfile', userProfile);
     await storage.saveData('meals', meals);
@@ -815,6 +732,7 @@ const useAppStore = create((set, get) => ({
     await storage.saveData('activityHistory', activityHistory);
     await storage.saveData('waterHistory', waterHistory);
     await storage.saveData('reminderStatuses', reminderStatuses);
+    await storage.saveData('reminders', reminders);
   }
 }));
 

@@ -16,7 +16,7 @@ from pydantic import BaseModel
 import httpx
 from dotenv import load_dotenv
 import models, database
-from routes import auth_routes, profile_routes, meal_routes, tracking_routes, chat_routes, sync_routes
+from routes import auth_routes, profile_routes, meal_routes, tracking_routes, chat_routes, sync_routes, reminder_routes
 
 # Create database tables
 models.Base.metadata.create_all(bind=database.engine)
@@ -150,6 +150,7 @@ app.include_router(meal_routes.router)
 app.include_router(tracking_routes.router)
 app.include_router(chat_routes.router)
 app.include_router(sync_routes.router)
+app.include_router(reminder_routes.router)
 
 # FatSecret Configuration
 CLIENT_ID = os.getenv("FATSECRET_CLIENT_ID", "").strip()

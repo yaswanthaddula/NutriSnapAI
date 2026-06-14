@@ -267,6 +267,28 @@ export const apiService = {
     return response.data;
   },
 
+  // Reminders
+  createReminder: async (data) => {
+    const response = await api.post('/reminders', data);
+    return response.data;
+  },
+  getReminders: async () => {
+    const response = await api.get('/reminders');
+    return response.data;
+  },
+  getTodayReminders: async () => {
+    const response = await api.get('/reminders/today');
+    return response.data;
+  },
+  updateReminder: async (id, data) => {
+    const response = await api.put(`/reminders/${id}`, data);
+    return response.data;
+  },
+  deleteReminder: async (id) => {
+    const response = await api.delete(`/reminders/${id}`);
+    return response.data;
+  },
+
   // Sync
   syncReminderStatuses: async (statuses) => {
     if (!statuses) {

@@ -107,22 +107,20 @@ export default function LoginScreen() {
 
         // 4. Fire off async sync requests without blocking navigation
         Promise.allSettled([
-          apiService.syncReminderStatuses(),
+          apiService.getReminders(),
           apiService.syncNotifications(),
           apiService.syncSteps()
         ]).then(async ([remindersRespResult, notifsRespResult, stepsRespResult]) => {
           const storeUpdates: any = {};
-          if (remindersRespResult.status === 'fulfilled' && remindersRespResult.value?.length > 0) {
-            const rs = remindersRespResult.value[0]; 
-            storeUpdates.reminderStatuses = {
-              breakfast: rs.breakfast || 'Upcoming',
-              lunch: rs.lunch || 'Upcoming',
-              dinner: rs.dinner || 'Upcoming',
-              snack: rs.snack || 'Upcoming',
-              workout: rs.workout || 'Upcoming',
-              sleep: rs.sleep || 'Upcoming',
-              water: rs.water || 'Upcoming'
-            };
+          if (remindersRespResult.status === 'fulfilled' && Array.isArray(remindersRespResult.value)) {
+            const actualReminders = remindersRespResult.value;
+            storeUpdates.reminders = actualReminders;
+            
+            const dynamicStatuses: any = {};
+            actualReminders.forEach((r: any) => {
+               dynamicStatuses[r.reminder_type] = r.notification_status === 'missed' ? 'Missed' : (r.notification_status === 'completed' ? 'Completed' : 'Upcoming');
+            });
+            storeUpdates.reminderStatuses = dynamicStatuses;
           }
           if (notifsRespResult.status === 'fulfilled' && notifsRespResult.value) {
             storeUpdates.notifications = notifsRespResult.value.map((n: any) => ({
