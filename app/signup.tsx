@@ -188,14 +188,7 @@ export default function SignUpScreen() {
             <Text style={styles.signUpBtnText}>{isLoading ? "Registering..." : "Continue"}</Text>
           </TouchableOpacity>
 
-          <View style={styles.divider}>
-            <View style={styles.line} /><Text style={styles.orText}>or</Text><View style={styles.line} />
-          </View>
 
-          <TouchableOpacity style={styles.googleBtn}>
-            <AntDesign name="google" size={20} color="#DB4437" />
-            <Text style={styles.googleBtnText}>Continue with Google</Text>
-          </TouchableOpacity>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account? </Text>
