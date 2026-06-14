@@ -29,7 +29,7 @@ export default function ProfileScreen() {
   const handleLogout = async () => {
     const doLogout = async () => {
       await apiService.logout();
-      await useAppStore.getState().resetStore();
+      await useAppStore.getState().logout();
       try {
         await AsyncStorage.removeItem('gym_chat_session');
         await AsyncStorage.removeItem('health_chat_session');

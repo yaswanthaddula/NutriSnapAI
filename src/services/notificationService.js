@@ -828,6 +828,9 @@ export const notificationService = {
       if (typeof window !== 'undefined' && 'Notification' in window) {
         if (window.Notification.permission !== 'granted' && window.Notification.permission !== 'denied') {
           const permission = await window.Notification.requestPermission();
+          if (permission === 'granted') {
+             alert('Notifications enabled! Note: Depending on your browser, you may need to keep this tab running in the background for exact timing.');
+          }
           return permission === 'granted';
         }
         return window.Notification.permission === 'granted';
@@ -848,6 +851,8 @@ export const notificationService = {
           lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
           bypassDnd: true,
           showBadge: true,
+          sound: 'default',
+          enableVibrate: true,
         });
       }
 

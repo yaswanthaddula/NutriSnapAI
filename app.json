@@ -27,7 +27,15 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.nutrisnap.ai"
+      "package": "com.nutrisnap.ai",
+      "permissions": [
+        "NOTIFICATIONS",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "SCHEDULE_EXACT_ALARM",
+        "USE_EXACT_ALARM",
+        "WAKE_LOCK"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
