@@ -2,6 +2,8 @@ import { Platform, LogBox } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { router } from 'expo-router';
 import useAppStore from '../store/useAppStore';
+import { api } from './apiService';
+import apiService from './apiService';
 
 // Helper to parse AM/PM or 24h times
 const parseTime = (timeStr) => {
