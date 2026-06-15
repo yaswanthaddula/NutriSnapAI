@@ -35,7 +35,7 @@ export default function GymHomeScreen() {
   const { 
     userProfile, meals, steps, caloriesBurned, workouts, activeWorkout, notifications, 
     notificationPrefs, waterData, updateSteps, loadStoredData, saveStoredData, setMeals, 
-    addWater, setWaterIntake, recalculateWaterGoal, reminderStatuses, fetchAndSyncReminders, reminders
+    addWater, setWaterIntake, recalculateWaterGoal, fetchTodayReminders, todayReminders, reminders
   } = useAppStore();
   
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'gym')).length;
@@ -87,7 +87,7 @@ export default function GymHomeScreen() {
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchAndSyncReminders();
+      fetchTodayReminders();
     }, [])
   );
 
@@ -577,14 +577,30 @@ export default function GymHomeScreen() {
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Reminder Status</Text>
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 5 }}>
-            {(() => {
+             {(() => {
                const counts = { Upcoming: 0, Active: 0, Completed: 0, Missed: 0 };
-               reminders?.forEach((r: any) => {
+               
+               const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+               const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
+               const isWeekend = ['Sat', 'Sun'].includes(todayDay);
+               
+               todayReminders?.forEach((r: any) => {
                  if (!r.is_enabled) return;
                  // Mode filtering for Gym Reminder Status summary
                  const type = r.reminder_type?.toLowerCase() || '';
                  const isGymRelevant = ['workout', 'water'].includes(type);
                  if (!isGymRelevant) return;
+                 
+                 // Date filtering
+                 const repeat = r.repeat_type || 'Daily';
+                 let validToday = false;
+                 if (repeat === 'Daily') validToday = true;
+                 else if (repeat === 'Weekdays') validToday = isWeekday;
+                 else if (repeat === 'Weekends') validToday = isWeekend;
+                 else if (repeat === 'Custom' && r.repeat_days) validToday = r.repeat_days.includes(todayDay);
+                 else validToday = true;
+                 
+                 if (!validToday) return;
 
                  let stat = (r.notification_status || 'Upcoming').toLowerCase();
                  if (stat === 'upcoming') counts.Upcoming++;
@@ -644,7 +660,7 @@ export default function GymHomeScreen() {
             const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
             const isWeekend = ['Sat', 'Sun'].includes(todayDay);
             
-            const filteredReminders = reminders?.filter((r: any) => {
+            const filteredReminders = todayReminders?.filter((r: any) => {
               if (!r.is_enabled) return false;
               
               // Mode filtering for Gym Dashboard
@@ -699,11 +715,11 @@ export default function GymHomeScreen() {
             });
           })()}
 
-          {(!reminders || (() => {
+          {(!todayReminders || (() => {
             const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'short' });
             const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
             const isWeekend = ['Sat', 'Sun'].includes(todayDay);
-            return reminders.filter((r: any) => {
+            return todayReminders.filter((r: any) => {
               if (!r.is_enabled) return false;
               const type = r.reminder_type?.toLowerCase() || '';
               if (!['workout', 'water'].includes(type)) return false;

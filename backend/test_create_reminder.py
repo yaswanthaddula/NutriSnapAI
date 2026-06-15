@@ -31,9 +31,6 @@ def test():
         "reminder_type": "workout",
         "title": "Workout Reminder",
         "reminder_time": "06:25 PM",
-        "repeat_type": "Daily",
-        "repeat_days": None,
-        "is_enabled": True,
         "notification_status": "Upcoming"
     }
     

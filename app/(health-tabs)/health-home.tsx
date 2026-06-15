@@ -45,7 +45,7 @@ export default function HealthHomeScreen() {
     userProfile, meals, steps, caloriesBurned, updateSteps, 
     loadStoredData, saveStoredData, waterData, addWater,
     streak, todayMood, setMood, todaySleep, setSleep, updateStreak,
-    notifications, notificationPrefs, reminderStatuses, fetchAndSyncReminders, reminders
+    notifications, notificationPrefs, reminderStatuses, fetchTodayReminders, todayReminders, reminders
   } = useAppStore();
 
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'health')).length;
@@ -103,7 +103,7 @@ export default function HealthHomeScreen() {
       console.log("Health Home Focused - Refreshing data...");
       syncBackendMeals();
       loadChatHistory();
-      if (fetchAndSyncReminders) fetchAndSyncReminders();
+      if (fetchTodayReminders) fetchTodayReminders();
     }, [])
   );
 
@@ -705,12 +705,28 @@ export default function HealthHomeScreen() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {(() => {
                const counts = { Upcoming: 0, Active: 0, Completed: 0, Missed: 0 };
-               reminders?.forEach((r: any) => {
+               
+               const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+               const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
+               const isWeekend = ['Sat', 'Sun'].includes(todayDay);
+               
+               todayReminders?.forEach((r: any) => {
                  if (!r.is_enabled) return;
                  // Mode filtering for Reminder Status summary too
                  const type = r.reminder_type?.toLowerCase() || '';
                  const isHealthRelevant = ['breakfast', 'lunch', 'dinner', 'snack', 'sleep', 'water'].includes(type);
                  if (!isHealthRelevant) return;
+
+                 // Date filtering
+                 const repeat = r.repeat_type || 'Daily';
+                 let validToday = false;
+                 if (repeat === 'Daily') validToday = true;
+                 else if (repeat === 'Weekdays') validToday = isWeekday;
+                 else if (repeat === 'Weekends') validToday = isWeekend;
+                 else if (repeat === 'Custom' && r.repeat_days) validToday = r.repeat_days.includes(todayDay);
+                 else validToday = true;
+                 
+                 if (!validToday) return;
 
                  let stat = (r.notification_status || 'Upcoming').toLowerCase();
                  if (stat === 'upcoming') counts.Upcoming++;
@@ -771,7 +787,7 @@ export default function HealthHomeScreen() {
             const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
             const isWeekend = ['Sat', 'Sun'].includes(todayDay);
             
-            const filteredReminders = reminders?.filter((r: any) => {
+            const filteredReminders = todayReminders?.filter((r: any) => {
               if (!r.is_enabled) return false;
               
               // Mode filtering for Health Dashboard
@@ -829,11 +845,11 @@ export default function HealthHomeScreen() {
             });
           })()}
 
-          {(!reminders || (() => {
+          {(!todayReminders || (() => {
             const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'short' });
             const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
             const isWeekend = ['Sat', 'Sun'].includes(todayDay);
-            return reminders.filter((r: any) => {
+            return todayReminders.filter((r: any) => {
               if (!r.is_enabled) return false;
               const type = r.reminder_type?.toLowerCase() || '';
               if (!['breakfast', 'lunch', 'dinner', 'snack', 'sleep', 'water'].includes(type)) return false;

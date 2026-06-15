@@ -65,9 +65,19 @@ const useAppStore = create((set, get) => ({
   activityHistory: [], // [{ date: '2023-01-01', steps: 5000, caloriesBurned: 200 }]
   waterHistory: [], // [{ date: '2023-01-01', amount: 2000 }]
   reminders: [], // Array of Reminder objects from backend
+  todayReminders: [], // Reminders explicitly for today
   reminderStatuses: {}, // Dynamic mapping of type to status
   activePopup: null,
   setActivePopup: (popup) => set({ activePopup: popup }),
+  
+  fetchTodayReminders: async () => {
+    try {
+      const todayReminders = await apiService.getTodayReminders();
+      set({ todayReminders });
+    } catch (error) {
+      console.log('Error fetching today reminders:', error);
+    }
+  },
   
   markReminderCompleted: async (type) => {
     const statuses = { ...get().reminderStatuses };
@@ -199,6 +209,7 @@ const useAppStore = create((set, get) => ({
       set({ reminders: currentReminders });
       // Re-fetch to ensure sync and update statuses
       await get().fetchAndSyncReminders();
+      if (get().fetchTodayReminders) await get().fetchTodayReminders();
     } catch (e) {
       console.log("Error deleting reminder:", e);
     }
@@ -748,6 +759,7 @@ const useAppStore = create((set, get) => ({
       activityHistory: [],
       waterHistory: [],
       reminders: [],
+      todayReminders: [],
       reminderStatuses: {},
       notifications: [],
     });

@@ -686,16 +686,20 @@ export const notificationService = {
 
   scheduleReminderNotifications: async () => {
     try {
-      if (!Notifications) return;
-
       const state = useAppStore.getState();
       const profile = state.userProfile;
       const currentMode = profile.selected_mode?.toLowerCase() || 'health';
       const prefs = state.notificationPrefs;
 
-      // Clear existing scheduled notifications to avoid duplicates
-      await Notifications.cancelAllScheduledNotificationsAsync();
-      console.log("Cancelled all existing scheduled notifications.");
+      // Clear existing scheduled native notifications (if supported)
+      if (Notifications) {
+        try {
+          await Notifications.cancelAllScheduledNotificationsAsync();
+          console.log("Cancelled all existing scheduled notifications.");
+        } catch (e) {
+          console.log("Could not cancel native notifications:", e);
+        }
+      }
 
       // Sync to Backend Reminders Table seamlessly
       try {
@@ -744,12 +748,20 @@ export const notificationService = {
           
           // Trigger strict fetch right after save
           await useAppStore.getState().fetchAndSyncReminders();
+          if (useAppStore.getState().fetchTodayReminders) {
+             await useAppStore.getState().fetchTodayReminders();
+          }
         });
       } catch (e) {
         console.log('Error initiating reminder backend sync:', e);
       }
 
       const channelId = Platform.OS === 'android' ? 'nutrisnap-reminders' : undefined;
+
+      if (!Notifications) {
+        console.log("Skipping native push notifications scheduling on Web or unsupported platform.");
+        return;
+      }
 
       // 1. Meals Reminders
       if (prefs.meals) {
