@@ -45,7 +45,7 @@ export default function HealthHomeScreen() {
     userProfile, meals, steps, caloriesBurned, updateSteps, 
     loadStoredData, saveStoredData, waterData, addWater,
     streak, todayMood, setMood, todaySleep, setSleep, updateStreak,
-    notifications, notificationPrefs, reminderStatuses
+    notifications, notificationPrefs, reminderStatuses, fetchAndSyncReminders, reminders
   } = useAppStore();
 
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'health')).length;
@@ -103,6 +103,7 @@ export default function HealthHomeScreen() {
       console.log("Health Home Focused - Refreshing data...");
       syncBackendMeals();
       loadChatHistory();
+      if (fetchAndSyncReminders) fetchAndSyncReminders();
     }, [])
   );
 

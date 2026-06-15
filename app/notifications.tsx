@@ -351,7 +351,7 @@ const RepeatPicker = ({ value, onChange, theme }: any) => {
 };
 
 // Reminder Preview Component
-const ReminderPreview = ({ title, time, repeat, theme }: any) => (
+const ReminderPreview = ({ title, time, repeat, theme, onDelete }: any) => (
   <View style={{ marginTop: 10, padding: 15, borderRadius: 12, backgroundColor: theme.cardBg, borderWidth: 1, borderColor: theme.border }}>
     <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.subText, textTransform: 'uppercase', marginBottom: 8 }}>Preview Before Save</Text>
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
