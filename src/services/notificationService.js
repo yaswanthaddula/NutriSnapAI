@@ -657,14 +657,14 @@ export const notificationService = {
 
   scheduleWithRepeat: async (content, parsed, repeatType) => {
     if (!Notifications) return;
-    const channelId = Platform.OS === 'android' ? 'high_priority_v2' : undefined;
+    const channelId = Platform.OS === 'android' ? 'nutrisnap-reminders' : undefined;
     
     if (repeatType === 'Weekdays') {
       const days = [2, 3, 4, 5, 6]; // Monday to Friday
       for (const day of days) {
         await Notifications.scheduleNotificationAsync({
           content,
-          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'high_priority_v2' }
+          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'nutrisnap-reminders' }
         });
       }
     } else if (repeatType === 'Weekends') {
@@ -672,14 +672,14 @@ export const notificationService = {
       for (const day of days) {
         await Notifications.scheduleNotificationAsync({
           content,
-          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'high_priority_v2' }
+          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'nutrisnap-reminders' }
         });
       }
     } else {
       // Daily or Custom Days (fallback to daily)
       await Notifications.scheduleNotificationAsync({
         content,
-        trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'high_priority_v2' }
+        trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'nutrisnap-reminders' }
       });
     }
   },
@@ -747,15 +747,15 @@ export const notificationService = {
         console.log('Error initiating reminder backend sync:', e);
       }
 
-      const channelId = Platform.OS === 'android' ? 'high_priority_v2' : undefined;
+      const channelId = Platform.OS === 'android' ? 'nutrisnap-reminders' : undefined;
 
       // 1. Meals Reminders
       if (prefs.meals) {
         const mealReminders = [
-          { time: profile.breakfastReminderTime, repeat: prefs.breakfastRepeat, title: 'NutriSnap AI', body: '🍳 Time for Breakfast', type: 'breakfast' },
-          { time: profile.lunchReminderTime, repeat: prefs.lunchRepeat, title: 'NutriSnap AI', body: '🍽️ Time for Lunch', type: 'lunch' },
-          { time: profile.dinnerReminderTime, repeat: prefs.dinnerRepeat, title: 'NutriSnap AI', body: '🌙 Time for Dinner', type: 'dinner' },
-          { time: profile.snackReminderTime, repeat: prefs.snackRepeat, title: 'NutriSnap AI', body: '🥗 Time for Snack', type: 'snack' },
+          { time: profile.breakfastReminderTime, repeat: prefs.breakfastRepeat, title: 'NutriSnap AI', body: '🍳 Meal Reminder - Time to log your meal.', type: 'breakfast' },
+          { time: profile.lunchReminderTime, repeat: prefs.lunchRepeat, title: 'NutriSnap AI', body: '🍳 Meal Reminder - Time to log your meal.', type: 'lunch' },
+          { time: profile.dinnerReminderTime, repeat: prefs.dinnerRepeat, title: 'NutriSnap AI', body: '🍳 Meal Reminder - Time to log your meal.', type: 'dinner' },
+          { time: profile.snackReminderTime, repeat: prefs.snackRepeat, title: 'NutriSnap AI', body: '🍳 Meal Reminder - Time to log your meal.', type: 'snack' },
         ];
 
         for (const item of mealReminders) {
@@ -767,14 +767,14 @@ export const notificationService = {
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
-            channelId: channelId || 'high_priority_v2',
+              channelId: channelId || 'nutrisnap-reminders',
               data: { 
                 screen: currentMode === 'gym' ? '/food-selection' : '/health-food-selection',
                 type: `meal-${item.type}`
               },
             };
             await notificationService.scheduleWithRepeat(content, parsed, item.repeat);
-            console.log(`[DEBUG] Reminder Scheduled: ${item.type} at ${parsed.hour}:${parsed.minute} (${item.repeat || 'Daily'})`);
+            console.log(`[DEBUG] Notification Scheduled: ${item.type} at ${parsed.hour}:${parsed.minute} (${item.repeat || 'Daily'})`);
           }
         }
       }
@@ -786,19 +786,19 @@ export const notificationService = {
           await Notifications.scheduleNotificationAsync({
             content: {
               title: 'NutriSnap AI',
-              body: "💧 Time to drink water.",
+              body: "💧 Water Reminder - Time to drink water.",
               sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
-            channelId: channelId || 'high_priority_v2',
+              channelId: channelId || 'nutrisnap-reminders',
               data: { 
                 screen: currentMode === 'gym' ? '/(tabs)/gym-home' : '/(health-tabs)/health-home',
                 type: 'water-reminder'
               },
             },
-            trigger: { seconds: intervalSeconds, repeats: true, channelId: channelId || 'high_priority_v2' },
+            trigger: { seconds: intervalSeconds, repeats: true, channelId: channelId || 'nutrisnap-reminders' },
           });
-          console.log(`[DEBUG] Reminder Scheduled: water-reminder every ${intervalSeconds}s`);
+          console.log(`[DEBUG] Notification Scheduled: water-reminder every ${intervalSeconds}s`);
         }
       }
 
@@ -808,18 +808,18 @@ export const notificationService = {
         if (parsed) {
           const content = {
             title: 'NutriSnap AI',
-            body: '🏋️ Workout session starts now.',
+            body: '🏋️ Workout Reminder - Time for your workout session.',
             sound: true,
             vibrate: [0, 250, 250, 250],
             priority: Notifications.AndroidNotificationPriority.MAX,
-            channelId: channelId || 'high_priority_v2',
+            channelId: channelId || 'nutrisnap-reminders',
             data: { 
               screen: currentMode === 'gym' ? '/(tabs)/plans' : '/(health-tabs)/plans',
               type: 'workout-reminder'
             },
           };
           await notificationService.scheduleWithRepeat(content, parsed, prefs.workoutRepeat);
-          console.log(`[DEBUG] Reminder Scheduled: workout-reminder at ${parsed.hour}:${parsed.minute} (${prefs.workoutRepeat || 'Daily'})`);
+          console.log(`[DEBUG] Notification Scheduled: workout-reminder at ${parsed.hour}:${parsed.minute} (${prefs.workoutRepeat || 'Daily'})`);
         }
       }
 
@@ -829,18 +829,18 @@ export const notificationService = {
         if (parsed) {
           const content = {
             title: 'NutriSnap AI',
-            body: '😴 Time to sleep and recover.',
+            body: '😴 Sleep Reminder - Time to sleep and recover.',
             sound: true,
             vibrate: [0, 250, 250, 250],
             priority: Notifications.AndroidNotificationPriority.MAX,
-            channelId: channelId || 'high_priority_v2',
+            channelId: channelId || 'nutrisnap-reminders',
             data: { 
               screen: currentMode === 'gym' ? '/(tabs)/gym-home' : '/(health-tabs)/health-home',
               type: 'sleep-reminder'
             },
           };
           await notificationService.scheduleWithRepeat(content, parsed, prefs.sleepRepeat);
-          console.log(`[DEBUG] Reminder Scheduled: sleep-reminder at ${parsed.hour}:${parsed.minute} (${prefs.sleepRepeat || 'Daily'})`);
+          console.log(`[DEBUG] Notification Scheduled: sleep-reminder at ${parsed.hour}:${parsed.minute} (${prefs.sleepRepeat || 'Daily'})`);
         }
       }
     } catch (e) {
@@ -881,9 +881,9 @@ export const notificationService = {
       let token;
       
       if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('high_priority_v2', {
-          name: 'High Priority Reminders',
-          importance: Notifications.AndroidImportance.MAX,
+        await Notifications.setNotificationChannelAsync('nutrisnap-reminders', {
+          name: 'NutriSnap Reminders',
+          importance: Notifications.AndroidImportance.HIGH,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: '#FF231F7C',
           lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
@@ -901,6 +901,8 @@ export const notificationService = {
         finalStatus = status;
       }
       
+      console.log("[DEBUG] Notification Permission Status:", finalStatus);
+
       if (finalStatus !== 'granted') {
         return false;
       }
@@ -937,15 +939,7 @@ export const notificationService = {
     // Listener for when a user interacts with a notification (clicked)
     const responseSubscription = Notifications ? Notifications.addNotificationResponseReceivedListener(response => {
       const data = response.notification?.request?.content?.data;
-      console.log("[DEBUG] Reminder Completed / Notification Triggered (Mobile Click):", data);
-      
-      if (data?.type) {
-        let reminderType = data.type.replace('-reminder', ''); // e.g. workout-reminder -> workout
-        if (data.type.includes('meal-')) reminderType = data.type.replace('meal-', ''); // meal-breakfast -> breakfast
-        if (['breakfast', 'lunch', 'dinner', 'snack', 'workout', 'sleep', 'water'].includes(reminderType)) {
-          useAppStore.getState().markReminderCompleted(reminderType);
-        }
-      }
+      console.log("[DEBUG] Notification Clicked:", data);
 
       if (data?.screen) {
         router.push(data.screen);

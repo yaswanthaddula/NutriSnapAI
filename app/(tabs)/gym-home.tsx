@@ -577,34 +577,56 @@ export default function GymHomeScreen() {
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Reminder Status</Text>
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 5 }}>
-            <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 18, marginRight: 8 }}>⏰</Text>
-              <View>
-                <Text style={{ color: theme.text, fontWeight: 'bold' }}>Upcoming</Text>
-                <Text style={{ color: theme.text, fontSize: 16 }}>{reminders?.filter((r: any) => r.is_enabled && r.notification_status === 'Upcoming').length || 0}</Text>
-              </View>
-            </View>
-            <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 18, marginRight: 8 }}>🔔</Text>
-              <View>
-                <Text style={{ color: theme.text, fontWeight: 'bold' }}>Active</Text>
-                <Text style={{ color: theme.text, fontSize: 16 }}>{reminders?.filter((r: any) => r.is_enabled && r.notification_status === 'Active').length || 0}</Text>
-              </View>
-            </View>
-            <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 18, marginRight: 8 }}>✅</Text>
-              <View>
-                <Text style={{ color: theme.text, fontWeight: 'bold' }}>Completed</Text>
-                <Text style={{ color: theme.text, fontSize: 16 }}>{reminders?.filter((r: any) => r.is_enabled && r.notification_status === 'Completed').length || 0}</Text>
-              </View>
-            </View>
-            <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 18, marginRight: 8 }}>❌</Text>
-              <View>
-                <Text style={{ color: theme.text, fontWeight: 'bold' }}>Missed</Text>
-                <Text style={{ color: theme.text, fontSize: 16 }}>{reminders?.filter((r: any) => r.is_enabled && r.notification_status === 'Missed').length || 0}</Text>
-              </View>
-            </View>
+            {(() => {
+               const counts = { Upcoming: 0, Active: 0, Completed: 0, Missed: 0 };
+               reminders?.forEach((r: any) => {
+                 if (!r.is_enabled) return;
+                 // Mode filtering for Gym Reminder Status summary
+                 const type = r.reminder_type?.toLowerCase() || '';
+                 const isGymRelevant = ['workout', 'water'].includes(type);
+                 if (!isGymRelevant) return;
+
+                 let stat = (r.notification_status || 'Upcoming').toLowerCase();
+                 if (stat === 'upcoming') counts.Upcoming++;
+                 else if (stat === 'active') counts.Active++;
+                 else if (stat === 'completed') counts.Completed++;
+                 else if (stat === 'missed') counts.Missed++;
+                 else counts.Upcoming++;
+               });
+               
+               return (
+                 <>
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 18, marginRight: 8 }}>⏰</Text>
+                    <View>
+                      <Text style={{ color: theme.text, fontWeight: 'bold' }}>Upcoming</Text>
+                      <Text style={{ color: theme.text, fontSize: 16 }}>{counts.Upcoming}</Text>
+                    </View>
+                  </View>
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 18, marginRight: 8 }}>🔔</Text>
+                    <View>
+                      <Text style={{ color: theme.text, fontWeight: 'bold' }}>Active</Text>
+                      <Text style={{ color: theme.text, fontSize: 16 }}>{counts.Active}</Text>
+                    </View>
+                  </View>
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 18, marginRight: 8 }}>✅</Text>
+                    <View>
+                      <Text style={{ color: theme.text, fontWeight: 'bold' }}>Completed</Text>
+                      <Text style={{ color: theme.text, fontSize: 16 }}>{counts.Completed}</Text>
+                    </View>
+                  </View>
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 18, marginRight: 8 }}>❌</Text>
+                    <View>
+                      <Text style={{ color: theme.text, fontWeight: 'bold' }}>Missed</Text>
+                      <Text style={{ color: theme.text, fontSize: 16 }}>{counts.Missed}</Text>
+                    </View>
+                  </View>
+                 </>
+               );
+            })()}
           </View>
         </View>
 

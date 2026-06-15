@@ -395,6 +395,9 @@ export default function NotificationsScreen() {
             else if (typeStr === 'sleep') updateNotificationPrefs('sleep', false);
             else updateNotificationPrefs('meals', false);
             
+            // Sync Native Notifications immediately
+            await notificationService.scheduleReminderNotifications();
+            
             Alert.alert("Success", "Reminder deleted successfully.");
           }
         }

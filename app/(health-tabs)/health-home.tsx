@@ -703,34 +703,56 @@ export default function HealthHomeScreen() {
         <View style={[styles.mainCard, { backgroundColor: themeColors.card, borderColor: themeColors.border, borderWidth: 1, marginBottom: 15 }]}>
           <Text style={[styles.cardTitle, { color: themeColors.text, marginBottom: 10 }]}>Reminder Status</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-            <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 18, marginRight: 8 }}>⏰</Text>
-              <View>
-                <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Upcoming</Text>
-                <Text style={{ color: themeColors.text, fontSize: 16 }}>{reminders?.filter((r: any) => r.is_enabled && r.notification_status === 'Upcoming').length || 0}</Text>
-              </View>
-            </View>
-            <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 18, marginRight: 8 }}>🔔</Text>
-              <View>
-                <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Active</Text>
-                <Text style={{ color: themeColors.text, fontSize: 16 }}>{reminders?.filter((r: any) => r.is_enabled && r.notification_status === 'Active').length || 0}</Text>
-              </View>
-            </View>
-            <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 18, marginRight: 8 }}>✅</Text>
-              <View>
-                <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Completed</Text>
-                <Text style={{ color: themeColors.text, fontSize: 16 }}>{reminders?.filter((r: any) => r.is_enabled && r.notification_status === 'Completed').length || 0}</Text>
-              </View>
-            </View>
-            <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 18, marginRight: 8 }}>❌</Text>
-              <View>
-                <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Missed</Text>
-                <Text style={{ color: themeColors.text, fontSize: 16 }}>{reminders?.filter((r: any) => r.is_enabled && r.notification_status === 'Missed').length || 0}</Text>
-              </View>
-            </View>
+            {(() => {
+               const counts = { Upcoming: 0, Active: 0, Completed: 0, Missed: 0 };
+               reminders?.forEach((r: any) => {
+                 if (!r.is_enabled) return;
+                 // Mode filtering for Reminder Status summary too
+                 const type = r.reminder_type?.toLowerCase() || '';
+                 const isHealthRelevant = ['breakfast', 'lunch', 'dinner', 'snack', 'sleep', 'water'].includes(type);
+                 if (!isHealthRelevant) return;
+
+                 let stat = (r.notification_status || 'Upcoming').toLowerCase();
+                 if (stat === 'upcoming') counts.Upcoming++;
+                 else if (stat === 'active') counts.Active++;
+                 else if (stat === 'completed') counts.Completed++;
+                 else if (stat === 'missed') counts.Missed++;
+                 else counts.Upcoming++;
+               });
+               
+               return (
+                 <>
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 18, marginRight: 8 }}>⏰</Text>
+                    <View>
+                      <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Upcoming</Text>
+                      <Text style={{ color: themeColors.text, fontSize: 16 }}>{counts.Upcoming}</Text>
+                    </View>
+                  </View>
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 18, marginRight: 8 }}>🔔</Text>
+                    <View>
+                      <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Active</Text>
+                      <Text style={{ color: themeColors.text, fontSize: 16 }}>{counts.Active}</Text>
+                    </View>
+                  </View>
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 18, marginRight: 8 }}>✅</Text>
+                    <View>
+                      <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Completed</Text>
+                      <Text style={{ color: themeColors.text, fontSize: 16 }}>{counts.Completed}</Text>
+                    </View>
+                  </View>
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 18, marginRight: 8 }}>❌</Text>
+                    <View>
+                      <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Missed</Text>
+                      <Text style={{ color: themeColors.text, fontSize: 16 }}>{counts.Missed}</Text>
+                    </View>
+                  </View>
+                 </>
+               );
+            })()}
           </View>
         </View>
 

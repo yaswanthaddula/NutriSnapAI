@@ -148,17 +148,39 @@ const useAppStore = create((set, get) => ({
     // Check local time against actual enabled reminders
     reminders.forEach(r => {
       if (!r.is_enabled) return;
+      
       const t = parseMinutes(r.reminder_time);
-      if (t !== null && t < currentTotalMinutes) {
+      if (t !== null) {
         const type = r.reminder_type;
-        if (newStatuses[type] === 'Upcoming') {
-           newStatuses[type] = 'Missed';
+        const currentStatus = r.notification_status?.toLowerCase();
+        
+        // Skip if user already completed it manually
+        if (currentStatus === 'completed') return;
+        
+        let targetStatus = 'Upcoming';
+        
+        if (currentTotalMinutes >= t && currentTotalMinutes <= t + 30) {
+          targetStatus = 'Active';
+        } else if (currentTotalMinutes > t + 30) {
+          targetStatus = 'Missed';
+        }
+        
+        // Only update if it actually changed
+        if (newStatuses[type]?.toLowerCase() !== targetStatus.toLowerCase()) {
+           newStatuses[type] = targetStatus;
            hasChanges = true;
-           // Optionally sync this missed status to backend
+           console.log(`[DEBUG] Status Updated: ${type} is now ${targetStatus}`);
+           
+           // Sync this status strictly to the backend
            apiService.updateReminder(r.id, {
               ...r,
-              notification_status: 'Missed'
-           }).then(() => get().fetchAndSyncReminders()).catch(() => {});
+              notification_status: targetStatus
+           }).then(() => {
+              console.log(`[DEBUG] Backend updated successfully to ${targetStatus}`);
+              get().fetchAndSyncReminders();
+           }).catch((err) => {
+              console.log("[DEBUG] Backend status sync failed:", err);
+           });
         }
       }
     });
