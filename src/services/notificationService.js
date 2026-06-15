@@ -700,36 +700,38 @@ export const notificationService = {
       // Sync to Backend Reminders Table seamlessly
       try {
         const mapping = [
-          { type: 'breakfast', timeKey: 'breakfastReminderTime', repeatKey: 'breakfastRepeat', enabled: prefs.meals, title: 'Breakfast Reminder' },
-          { type: 'lunch', timeKey: 'lunchReminderTime', repeatKey: 'lunchRepeat', enabled: prefs.meals, title: 'Lunch Reminder' },
-          { type: 'dinner', timeKey: 'dinnerReminderTime', repeatKey: 'dinnerRepeat', enabled: prefs.meals, title: 'Dinner Reminder' },
-          { type: 'snack', timeKey: 'snackReminderTime', repeatKey: 'snackRepeat', enabled: prefs.meals, title: 'Snack Reminder' },
-          { type: 'workout', timeKey: 'workoutReminderTime', repeatKey: 'workoutRepeat', enabled: prefs.workout, title: 'Workout Reminder' },
-          { type: 'sleep', timeKey: 'sleepReminderTime', repeatKey: 'sleepRepeat', enabled: prefs.sleep, title: 'Sleep Reminder' },
-          { type: 'water', timeKey: 'waterReminderInterval', repeatKey: null, enabled: prefs.water, title: 'Water Reminder' }
+          { type: 'breakfast', timeKey: 'breakfastReminderTime', repeatKey: 'breakfastRepeat', enabled: prefs?.meals, title: 'Breakfast Reminder' },
+          { type: 'lunch', timeKey: 'lunchReminderTime', repeatKey: 'lunchRepeat', enabled: prefs?.meals, title: 'Lunch Reminder' },
+          { type: 'dinner', timeKey: 'dinnerReminderTime', repeatKey: 'dinnerRepeat', enabled: prefs?.meals, title: 'Dinner Reminder' },
+          { type: 'snack', timeKey: 'snackReminderTime', repeatKey: 'snackRepeat', enabled: prefs?.meals, title: 'Snack Reminder' },
+          { type: 'workout', timeKey: 'workoutReminderTime', repeatKey: 'workoutRepeat', enabled: prefs?.workout, title: 'Workout Reminder' },
+          { type: 'sleep', timeKey: 'sleepReminderTime', repeatKey: 'sleepRepeat', enabled: prefs?.sleep, title: 'Sleep Reminder' },
+          { type: 'water', timeKey: 'waterReminderInterval', repeatKey: null, enabled: prefs?.water, title: 'Water Reminder' }
         ];
         
-        // Fire and forget
-        Promise.allSettled(
-          mapping.map(m => {
+        // Fire and forget but robustly handle each request
+        const promises = mapping.map(async m => {
+          try {
             const payload = {
               reminder_type: m.type,
               title: m.title,
-              reminder_time: profile[m.timeKey] || '08:00 AM',
-              repeat_type: m.repeatKey ? prefs[m.repeatKey] : null,
+              reminder_time: (profile && profile[m.timeKey]) || '08:00 AM',
+              repeat_type: (m.repeatKey && prefs) ? (prefs[m.repeatKey] || profile[m.repeatKey] || 'Daily') : null,
               repeat_days: null,
-              is_enabled: m.enabled,
+              is_enabled: !!m.enabled,
               notification_status: 'Upcoming'
             };
-            return apiService.createReminder(payload);
-          })
-        ).then(async results => {
-          // Update the local store array with the newly synced reminders
-          const newReminders = results
-            .filter(r => r.status === 'fulfilled' && r.value)
-            .map(r => r.value);
-            
-          console.log("Saved reminder response:", newReminders);
+            const res = await apiService.createReminder(payload);
+            return res;
+          } catch (e) {
+            console.error(`Error saving reminder ${m.type} to backend:`, e?.response?.data || e.message);
+            return null;
+          }
+        });
+        
+        Promise.all(promises).then(async (results) => {
+          const newReminders = results.filter(r => r !== null);
+          console.log("Successfully saved reminder responses:", newReminders.length);
           
           if (newReminders.length > 0) {
             const dynamicStatuses = {};
@@ -742,7 +744,7 @@ export const notificationService = {
           
           // Trigger strict fetch right after save
           await useAppStore.getState().fetchAndSyncReminders();
-        }).catch(err => console.log('Reminder backend sync err:', err));
+        });
       } catch (e) {
         console.log('Error initiating reminder backend sync:', e);
       }
