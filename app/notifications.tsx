@@ -358,8 +358,13 @@ const ReminderPreview = ({ title, time, repeat, theme }: any) => (
       <Ionicons name="notifications" size={20} color="#00C853" />
       <View style={{ marginLeft: 10 }}>
         <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.text }}>{title}</Text>
-        <Text style={{ fontSize: 14, color: theme.subText, marginTop: 2 }}>{time} • {repeat}</Text>
+        <Text style={{ fontSize: 14, color: theme.subText, marginTop: 2 }}>{time} • {repeat || 'Daily'}</Text>
       </View>
+      {onDelete && (
+        <TouchableOpacity style={{ marginLeft: 'auto', padding: 8 }} onPress={onDelete}>
+          <Ionicons name="trash-outline" size={20} color="#F44336" />
+        </TouchableOpacity>
+      )}
     </View>
   </View>
 );
@@ -367,7 +372,35 @@ const ReminderPreview = ({ title, time, repeat, theme }: any) => (
 export default function NotificationsScreen() {
   const { isDark } = useTheme();
 
-  const { notificationPrefs, updateNotificationPrefs, userProfile, setUserProfile } = useAppStore();
+  const { notificationPrefs, updateNotificationPrefs, userProfile, setUserProfile, reminders, deleteReminder } = useAppStore();
+
+  const handleDeleteReminder = (typeStr: string) => {
+    const activeReminder = reminders?.find((r: any) => r.reminder_type === typeStr && r.is_enabled);
+    if (!activeReminder) {
+      Alert.alert("Notice", "This reminder is not currently active on the server.", [{text: "OK"}]);
+      return;
+    }
+    Alert.alert(
+      "Delete Reminder",
+      "Are you sure you want to delete this reminder?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive", 
+          onPress: async () => {
+            await deleteReminder(activeReminder.id);
+            if (typeStr === 'workout') updateNotificationPrefs('workout', false);
+            else if (typeStr === 'water') updateNotificationPrefs('water', false);
+            else if (typeStr === 'sleep') updateNotificationPrefs('sleep', false);
+            else updateNotificationPrefs('meals', false);
+            
+            Alert.alert("Success", "Reminder deleted successfully.");
+          }
+        }
+      ]
+    );
+  };
 
   const theme = {
     background: isDark ? '#121212' : '#FFFFFF',
@@ -431,7 +464,7 @@ export default function NotificationsScreen() {
       if (!granted) {
         Alert.alert(
           "Permission Required",
-          "Notification permissions are disabled. Please enable them in your device settings to receive reminders.",
+          "Notifications are blocked. Please enable notifications from Chrome site settings.",
           [{ text: "OK" }]
         );
         return;
@@ -491,7 +524,7 @@ export default function NotificationsScreen() {
                 theme={theme}
               />
               <RepeatPicker value={localProfile.breakfastRepeat} onChange={(val: string) => handleAutoSave({ breakfastRepeat: val })} theme={theme} />
-              <ReminderPreview title="Breakfast Reminder" time={localProfile.breakfastReminderTime} repeat={localProfile.breakfastRepeat} theme={theme} />
+              <ReminderPreview title="Breakfast Reminder" time={localProfile.breakfastReminderTime} repeat={localProfile.breakfastRepeat} theme={theme} onDelete={() => handleDeleteReminder('breakfast')} />
               
               <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 20 }} />
 
@@ -502,7 +535,7 @@ export default function NotificationsScreen() {
                 theme={theme}
               />
               <RepeatPicker value={localProfile.lunchRepeat} onChange={(val: string) => handleAutoSave({ lunchRepeat: val })} theme={theme} />
-              <ReminderPreview title="Lunch Reminder" time={localProfile.lunchReminderTime} repeat={localProfile.lunchRepeat} theme={theme} />
+              <ReminderPreview title="Lunch Reminder" time={localProfile.lunchReminderTime} repeat={localProfile.lunchRepeat} theme={theme} onDelete={() => handleDeleteReminder('lunch')} />
 
               <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 20 }} />
 
@@ -513,7 +546,7 @@ export default function NotificationsScreen() {
                 theme={theme}
               />
               <RepeatPicker value={localProfile.dinnerRepeat} onChange={(val: string) => handleAutoSave({ dinnerRepeat: val })} theme={theme} />
-              <ReminderPreview title="Dinner Reminder" time={localProfile.dinnerReminderTime} repeat={localProfile.dinnerRepeat} theme={theme} />
+              <ReminderPreview title="Dinner Reminder" time={localProfile.dinnerReminderTime} repeat={localProfile.dinnerRepeat} theme={theme} onDelete={() => handleDeleteReminder('dinner')} />
             </View>
           )}
 
@@ -532,7 +565,7 @@ export default function NotificationsScreen() {
                 theme={theme}
               />
               <RepeatPicker value={localProfile.workoutRepeat} onChange={(val: string) => handleAutoSave({ workoutRepeat: val })} theme={theme} />
-              <ReminderPreview title="Workout Reminder" time={localProfile.workoutReminderTime} repeat={localProfile.workoutRepeat} theme={theme} />
+              <ReminderPreview title="Workout Reminder" time={localProfile.workoutReminderTime} repeat={localProfile.workoutRepeat} theme={theme} onDelete={() => handleDeleteReminder('workout')} />
             </View>
           )}
 
@@ -549,6 +582,7 @@ export default function NotificationsScreen() {
                 onChange={(val: string) => handleAutoSave({ waterReminderInterval: val })}
                 theme={theme}
               />
+              <ReminderPreview title="Water Reminder" time={localProfile.waterReminderInterval} repeat="Daily" theme={theme} onDelete={() => handleDeleteReminder('water')} />
             </View>
           )}
 
@@ -567,7 +601,7 @@ export default function NotificationsScreen() {
                 theme={theme}
               />
               <RepeatPicker value={localProfile.sleepRepeat} onChange={(val: string) => handleAutoSave({ sleepRepeat: val })} theme={theme} />
-              <ReminderPreview title="Sleep Reminder" time={localProfile.sleepReminderTime} repeat={localProfile.sleepRepeat} theme={theme} />
+              <ReminderPreview title="Sleep Reminder" time={localProfile.sleepReminderTime} repeat={localProfile.sleepRepeat} theme={theme} onDelete={() => handleDeleteReminder('sleep')} />
             </View>
           )}
 

@@ -64,6 +64,23 @@ def update_reminder(reminder_id: int, reminder_in: schemas.ReminderUpdate, db: S
     db.refresh(reminder)
     return reminder
 
+@router.put("/{reminder_id}/trigger", response_model=schemas.ReminderResponse)
+def trigger_reminder(reminder_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    reminder = db.query(models.Reminder).filter(
+        models.Reminder.id == reminder_id,
+        models.Reminder.user_id == current_user.id
+    ).first()
+
+    if not reminder:
+        raise HTTPException(status_code=404, detail="Reminder not found")
+
+    reminder.notification_status = "Active"
+    reminder.last_triggered_at = datetime.now(timezone.utc)
+    reminder.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(reminder)
+    return reminder
+
 @router.delete("/{reminder_id}")
 def delete_reminder(reminder_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     reminder = db.query(models.Reminder).filter(

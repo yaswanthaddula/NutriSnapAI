@@ -581,28 +581,28 @@ export default function GymHomeScreen() {
               <Text style={{ fontSize: 18, marginRight: 8 }}>⏰</Text>
               <View>
                 <Text style={{ color: theme.text, fontWeight: 'bold' }}>Upcoming</Text>
-                <Text style={{ color: theme.text, fontSize: 16 }}>{Object.values(reminderStatuses).filter(s => s === 'Upcoming').length}</Text>
+                <Text style={{ color: theme.text, fontSize: 16 }}>{reminders?.filter((r: any) => r.is_enabled && r.notification_status === 'Upcoming').length || 0}</Text>
               </View>
             </View>
             <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
               <Text style={{ fontSize: 18, marginRight: 8 }}>🔔</Text>
               <View>
                 <Text style={{ color: theme.text, fontWeight: 'bold' }}>Active</Text>
-                <Text style={{ color: theme.text, fontSize: 16 }}>{Object.values(reminderStatuses).filter(s => s === 'Active').length}</Text>
+                <Text style={{ color: theme.text, fontSize: 16 }}>{reminders?.filter((r: any) => r.is_enabled && r.notification_status === 'Active').length || 0}</Text>
               </View>
             </View>
             <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
               <Text style={{ fontSize: 18, marginRight: 8 }}>✅</Text>
               <View>
                 <Text style={{ color: theme.text, fontWeight: 'bold' }}>Completed</Text>
-                <Text style={{ color: theme.text, fontSize: 16 }}>{Object.values(reminderStatuses).filter(s => s === 'Completed').length}</Text>
+                <Text style={{ color: theme.text, fontSize: 16 }}>{reminders?.filter((r: any) => r.is_enabled && r.notification_status === 'Completed').length || 0}</Text>
               </View>
             </View>
             <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 18, marginRight: 8 }}>⚠️</Text>
+              <Text style={{ fontSize: 18, marginRight: 8 }}>❌</Text>
               <View>
                 <Text style={{ color: theme.text, fontWeight: 'bold' }}>Missed</Text>
-                <Text style={{ color: theme.text, fontSize: 16 }}>{Object.values(reminderStatuses).filter(s => s === 'Missed').length}</Text>
+                <Text style={{ color: theme.text, fontSize: 16 }}>{reminders?.filter((r: any) => r.is_enabled && r.notification_status === 'Missed').length || 0}</Text>
               </View>
             </View>
           </View>

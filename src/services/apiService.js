@@ -289,6 +289,11 @@ export const apiService = {
     return response.data;
   },
 
+  triggerReminder: async (id) => {
+    const response = await api.put(`/reminders/${id}/trigger`);
+    return response.data;
+  },
+
   // Sync
   syncReminderStatuses: async (statuses) => {
     if (!statuses) {

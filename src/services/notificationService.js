@@ -470,21 +470,42 @@ const playBeep = () => {
   }
 };
 
-const showWebNotification = (title, message, screen) => {
+const showWebNotification = (title, message, screen, ruleType) => {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     // 1. Play synthesized beep (guaranteed to not have CORS issues)
     playBeep();
 
     // 2. Try Native Web Notification
     if ('Notification' in window) {
-      const trigger = () => {
-        const notif = new window.Notification(title, {
-          body: message,
-          icon: '/favicon.ico' // Ensure an icon exists
-        });
-        console.log(`Notification Delivered (Web): ${title} - ${message}`);
-        
-        notif.onclick = () => {
+        const trigger = async () => {
+          const notif = new window.Notification(title, {
+            body: message,
+            icon: '/favicon.ico' // Ensure an icon exists
+          });
+          console.log(`Notification Delivered (Web): ${title} - ${message}`);
+          
+          // Try to trigger backend to update status to Active
+          try {
+            const state = useAppStore.getState();
+            const reminderTypeMap = {
+              'workout-reminder': 'workout',
+              'meal-breakfast': 'breakfast',
+              'meal-lunch': 'lunch',
+              'meal-dinner': 'dinner',
+              'meal-snack': 'snack',
+              'water-reminder': 'water',
+              'sleep-reminder': 'sleep'
+            };
+            const typeForBackend = reminderTypeMap[ruleType];
+            const activeReminder = state.reminders.find(r => r.reminder_type === typeForBackend && r.is_enabled);
+            if (activeReminder) {
+              await apiService.triggerReminder(activeReminder.id);
+              await state.fetchAndSyncReminders();
+              console.log(`[DEBUG] Reminder Status Updated to Active: ${typeForBackend}`);
+            }
+          } catch(e) { console.log("Failed to sync trigger status", e); }
+          
+          notif.onclick = () => {
           console.log(`Notification Triggered (Web Click): Routing to ${screen}`);
           window.focus();
           if (screen) router.push(screen);
@@ -545,7 +566,7 @@ export const notificationService = {
       });
 
       if (newNotif) {
-        showWebNotification(rule.title, message, screenRoute);
+        showWebNotification(rule.title, message, screenRoute, rule.type);
         try {
           await Notifications.scheduleNotificationAsync({
             content: {
@@ -608,7 +629,7 @@ export const notificationService = {
         });
 
         if (newNotif) {
-          showWebNotification(rule.title, message, screenRoute);
+          showWebNotification(rule.title, message, screenRoute, rule.type);
           try {
             await Notifications.scheduleNotificationAsync({
               content: {
@@ -826,14 +847,23 @@ export const notificationService = {
   registerForPushNotificationsAsync: async () => {
     if (Platform.OS === 'web') {
       if (typeof window !== 'undefined' && 'Notification' in window) {
-        if (window.Notification.permission !== 'granted' && window.Notification.permission !== 'denied') {
+        console.log(`[DEBUG] Notification Permission Status: ${window.Notification.permission}`);
+        if (window.Notification.permission === 'default') {
+          console.log("[DEBUG] Permission Requested");
           const permission = await window.Notification.requestPermission();
           if (permission === 'granted') {
+             console.log("[DEBUG] Permission Granted");
              alert('Notifications enabled! Note: Depending on your browser, you may need to keep this tab running in the background for exact timing.');
+          } else {
+             console.log("[DEBUG] Permission Denied");
           }
           return permission === 'granted';
+        } else if (window.Notification.permission === 'granted') {
+          return true;
+        } else {
+          console.log("[DEBUG] Permission Denied (Already Blocked)");
+          return false;
         }
-        return window.Notification.permission === 'granted';
       }
       return true; // Fallback to in-app alerts if Notification API is missing
     }

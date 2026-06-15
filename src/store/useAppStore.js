@@ -170,6 +170,19 @@ const useAppStore = create((set, get) => ({
     }
   },
 
+  deleteReminder: async (id) => {
+    try {
+      await apiService.deleteReminder(id);
+      // Remove from local array immediately for snappy UI
+      const currentReminders = get().reminders.filter(r => r.id !== id);
+      set({ reminders: currentReminders });
+      // Re-fetch to ensure sync and update statuses
+      await get().fetchAndSyncReminders();
+    } catch (e) {
+      console.log("Error deleting reminder:", e);
+    }
+  },
+
   setUserProfile: (profile) => {
     const current = get().userProfile;
     let updated = { ...current, ...profile };
