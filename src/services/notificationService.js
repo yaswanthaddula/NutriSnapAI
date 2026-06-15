@@ -723,19 +723,25 @@ export const notificationService = {
             };
             return apiService.createReminder(payload);
           })
-        ).then(results => {
+        ).then(async results => {
           // Update the local store array with the newly synced reminders
           const newReminders = results
             .filter(r => r.status === 'fulfilled' && r.value)
             .map(r => r.value);
+            
+          console.log("Saved reminder response:", newReminders);
+          
           if (newReminders.length > 0) {
             const dynamicStatuses = {};
             newReminders.forEach(r => {
                dynamicStatuses[r.reminder_type] = r.notification_status === 'missed' ? 'Missed' : (r.notification_status === 'completed' ? 'Completed' : 'Upcoming');
             });
-            useAppStore.setState({ reminders: newReminders, reminderStatuses: dynamicStatuses });
+            useAppStore.setState({ reminderStatuses: dynamicStatuses });
             useAppStore.getState().saveStoredData();
           }
+          
+          // Trigger strict fetch right after save
+          await useAppStore.getState().fetchAndSyncReminders();
         }).catch(err => console.log('Reminder backend sync err:', err));
       } catch (e) {
         console.log('Error initiating reminder backend sync:', e);

@@ -97,12 +97,11 @@ const useAppStore = create((set, get) => ({
   fetchAndSyncReminders: async () => {
     try {
       const user = get().userProfile;
-      console.log("Logged in user:", user.id || 'N/A', user.email);
-      console.log("Fetching reminders from backend");
+      console.log("Current logged in user:", user?.id, user?.email);
+      console.log("Fetching today's reminders after save...");
       
       const fetchedReminders = await apiService.getReminders();
-      console.log("Fetched reminders:", fetchedReminders);
-      console.log("Reminder statuses:", fetchedReminders.map(r => r.notification_status));
+      console.log("Today's reminders API response:", fetchedReminders);
       
       const dynamicStatuses = {};
       fetchedReminders.forEach(r => {

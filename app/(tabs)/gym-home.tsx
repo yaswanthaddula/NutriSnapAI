@@ -617,37 +617,84 @@ export default function GymHomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {reminders?.filter((r: any) => r.is_enabled).map((reminder: any, index: number) => {
-            let icon = '⏰';
-            let title = reminder.reminder_type || 'Reminder';
-            switch(reminder.reminder_type?.toLowerCase()) {
-              case 'workout': icon = '🏋️'; title = 'Workout'; break;
-              case 'breakfast': icon = '🍳'; title = 'Breakfast'; break;
-              case 'lunch': icon = '🍽️'; title = 'Lunch'; break;
-              case 'dinner': icon = '🌙'; title = 'Dinner'; break;
-              case 'snack': icon = '🍎'; title = 'Snack'; break;
-              case 'water': icon = '💧'; title = 'Water Reminder'; break;
-              case 'sleep': icon = '💤'; title = 'Sleep Reminder'; break;
-            }
-            const status = reminderStatuses[reminder.reminder_type] || 'Upcoming';
-            const statusColor = status === 'Missed' ? '#F44336' : status === 'Completed' ? '#4CAF50' : status === 'Active' ? '#FF9800' : '#2196F3';
+          {(() => {
+            const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'short' }); // e.g., 'Mon', 'Tue'
+            const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
+            const isWeekend = ['Sat', 'Sun'].includes(todayDay);
             
-            return (
-              <View key={index} style={styles.mealItem}>
-                <Text style={{fontSize: 24}}>{icon}</Text>
-                <View style={{flex: 1, marginLeft: 15}}>
-                  <Text style={[styles.mealName, {color: theme.text}]}>{title}</Text>
-                  <Text style={[styles.mealTime, { color: statusColor }]}>{reminder.reminder_time || reminder.title} • Status: {status}</Text>
+            const filteredReminders = reminders?.filter((r: any) => {
+              if (!r.is_enabled) return false;
+              
+              // Mode filtering for Gym Dashboard
+              const type = r.reminder_type?.toLowerCase() || '';
+              const isGymRelevant = ['workout', 'water'].includes(type);
+              if (!isGymRelevant) return false;
+              
+              // Date filtering
+              const repeat = r.repeat_type || 'Daily';
+              if (repeat === 'Daily') return true;
+              if (repeat === 'Weekdays') return isWeekday;
+              if (repeat === 'Weekends') return isWeekend;
+              if (repeat === 'Custom' && r.repeat_days) {
+                return r.repeat_days.includes(todayDay);
+              }
+              return true; // Fallback
+            }) || [];
+            
+            console.log("Filtered reminders for dashboard:", filteredReminders);
+            
+            return filteredReminders.map((reminder: any, index: number) => {
+              let icon = '⏰';
+              let title = reminder.reminder_type || 'Reminder';
+              switch(reminder.reminder_type?.toLowerCase()) {
+                case 'workout': icon = '🏋️'; title = 'Workout Reminder'; break;
+                case 'breakfast': icon = '🍳'; title = 'Breakfast Reminder'; break;
+                case 'lunch': icon = '🍽️'; title = 'Lunch Reminder'; break;
+                case 'dinner': icon = '🌙'; title = 'Dinner Reminder'; break;
+                case 'snack': icon = '🍎'; title = 'Snack Reminder'; break;
+                case 'water': icon = '💧'; title = 'Water Reminder'; break;
+                case 'sleep': icon = '💤'; title = 'Sleep Reminder'; break;
+              }
+              
+              let status = reminder.notification_status || reminderStatuses[reminder.reminder_type] || 'Upcoming';
+              if (!status || status.trim() === '') status = 'Upcoming';
+              
+              const statusColor = status === 'Missed' ? '#F44336' : status === 'Completed' ? '#4CAF50' : status === 'Active' ? '#FF9800' : '#2196F3';
+              
+              return (
+                <View key={index} style={styles.mealItem}>
+                  <Text style={{fontSize: 24}}>{icon}</Text>
+                  <View style={{flex: 1, marginLeft: 15}}>
+                    <Text style={[styles.mealName, {color: theme.text}]}>{title}</Text>
+                    <Text style={[styles.mealTime, { color: statusColor }]}>
+                      {reminder.reminder_time || reminder.title}
+                    </Text>
+                    <Text style={{ color: statusColor, fontSize: 12, marginTop: 2 }}>Status: {status}</Text>
+                  </View>
+                  <Ionicons name={status === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={status === 'Completed' ? "#4CAF50" : statusColor} />
                 </View>
-                <Ionicons name={status === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={status === 'Completed' ? "#4CAF50" : statusColor} />
-              </View>
-            );
-          })}
+              );
+            });
+          })()}
 
-          {(!reminders || reminders.filter((r: any) => r.is_enabled).length === 0) && (
+          {(!reminders || (() => {
+            const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+            const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
+            const isWeekend = ['Sat', 'Sun'].includes(todayDay);
+            return reminders.filter((r: any) => {
+              if (!r.is_enabled) return false;
+              const type = r.reminder_type?.toLowerCase() || '';
+              if (!['workout', 'water'].includes(type)) return false;
+              const repeat = r.repeat_type || 'Daily';
+              if (repeat === 'Daily') return true;
+              if (repeat === 'Weekdays') return isWeekday;
+              if (repeat === 'Weekends') return isWeekend;
+              if (repeat === 'Custom' && r.repeat_days) return r.repeat_days.includes(todayDay);
+              return true;
+            }).length === 0;
+          })()) && (
             <View style={{ alignItems: 'center', paddingVertical: 15 }}>
-              <Text style={{color: theme.subText, fontSize: 13, fontStyle: 'italic', textAlign: 'center'}}>No reminders scheduled yet.</Text>
-              <Text style={{color: theme.subText, fontSize: 12, marginTop: 5, textAlign: 'center'}}>Tap Edit to create reminders.</Text>
+              <Text style={{color: theme.subText, fontSize: 13, fontStyle: 'italic', textAlign: 'center'}}>No reminders for today</Text>
             </View>
           )}
         </View>
