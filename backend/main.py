@@ -85,6 +85,11 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 env_path = os.path.join(basedir, ".env")
 load_dotenv(env_path, override=True)
 
+# Add startup logs
+print("Starting NutriSnap backend...")
+db_url = os.getenv("DATABASE_URL")
+print("DATABASE_URL exists:", bool(db_url))
+
 app = FastAPI(title="NutriSnap FatSecret Backend")
 
 # Enable CORS for Expo and Vercel frontends (allow any origin via regex for robust cross-platform web support)
@@ -113,6 +118,7 @@ def list_users_on_startup():
         import models
         db = SessionLocal()
         users = db.query(models.User).all()
+        print("Backend started successfully")
         print(f"--- STARTUP DATABASE CHECK: {len(users)} registered users found ---")
         for u in users:
             print(f"User ID: {u.id}, Name: {u.name}, Email: {u.email}, Verified: {u.is_verified}")

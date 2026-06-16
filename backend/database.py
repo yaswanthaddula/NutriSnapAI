@@ -12,10 +12,19 @@ SQLALCHEMY_DATABASE_URL = os.getenv(
     "postgresql://postgres:password@localhost:5432/nutrisnap"
 )
 
-# Neon PostgreSQL requires SSL — add connect_args for cloud deployment
+# Render Postgres often uses postgres:// instead of postgresql:// which SQLAlchemy 1.4+ rejects
+if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Neon PostgreSQL requires SSL
 connect_args = {}
 if "neon.tech" in SQLALCHEMY_DATABASE_URL:
     connect_args = {"sslmode": "require"}
+    if "sslmode=require" not in SQLALCHEMY_DATABASE_URL:
+        if "?" in SQLALCHEMY_DATABASE_URL:
+            SQLALCHEMY_DATABASE_URL += "&sslmode=require"
+        else:
+            SQLALCHEMY_DATABASE_URL += "?sslmode=require"
 
 # Create engine
 engine = create_engine(
