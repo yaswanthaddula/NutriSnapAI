@@ -22,7 +22,7 @@ def create_reminder(reminder_in: schemas.ReminderCreate, db: Session = Depends(g
     # A robust calculation would need the user's timezone, but for now we set it basically
     # Frontend handles robust scheduling via native. This is for DB status.
     if existing:
-        for key, value in reminder_in.dict(exclude_unset=True).items():
+        for key, value in reminder_in.model_dump(exclude_unset=True).items():
             setattr(existing, key, value)
         existing.updated_at = now
         existing.status = "Upcoming"
@@ -31,7 +31,7 @@ def create_reminder(reminder_in: schemas.ReminderCreate, db: Session = Depends(g
         return existing
 
     new_reminder = models.Reminder(
-        **reminder_in.dict(),
+        **reminder_in.model_dump(),
         user_id=current_user.id,
         status="Upcoming",
         created_at=now,

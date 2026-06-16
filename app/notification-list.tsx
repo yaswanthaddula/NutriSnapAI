@@ -63,14 +63,14 @@ export default function NotificationList() {
   const getTimeAgo = (dateStr: string) => {
     const now = new Date();
     const past = new Date(dateStr);
-    const diffMs = now.getTime() - past.getTime();
+    const diffMs = Math.max(0, now.getTime() - past.getTime());
     const diffMins = Math.floor(diffMs / 60000);
     const diffHrs = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHrs / 24);
 
     if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHrs < 24) return `${diffHrs}h ago`;
+    if (diffHrs < 1) return `${diffMins}m ago`;
+    if (diffDays < 1) return `${diffHrs}h ago`;
     return `${diffDays}d ago`;
   };
 
