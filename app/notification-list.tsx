@@ -17,27 +17,25 @@ import { notificationService } from '../src/services/notificationService';
 
 export default function NotificationList() {
   const { isDark } = useTheme();
-  const { notifications, userProfile, markAllAsRead, clearNotifications, clearNotification } = useAppStore();
+  const { notificationEvents, userProfile, markAllNotificationsRead, clearAllNotifications, clearNotification, fetchNotifications } = useAppStore();
   
   const currentMode = (userProfile.selected_mode || 'gym').toLowerCase();
-  // Show notifications for current mode, or those without a mode, EXCLUDING cleared ones
-  const filteredNotifications = notifications.filter((n: any) => 
-    (!n.mode || n.mode === currentMode) && n.status !== 'cleared'
-  );
+  
+  // Exclude cleared ones, though API already does this, but good for local cache state
+  const filteredNotifications = notificationEvents?.filter((n: any) => n.status !== 'Cleared') || [];
 
   useEffect(() => {
-    // Generate fresh notifications when opening the list
-    notificationService.checkAndGenerate();
+    fetchNotifications();
   }, []);
 
   const handleMarkAllRead = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    markAllAsRead();
+    markAllNotificationsRead();
   };
 
   const handleClear = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    clearNotifications();
+    clearAllNotifications();
   };
 
   const theme = {
@@ -89,26 +87,26 @@ export default function NotificationList() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {filteredNotifications.length > 0 ? (
           filteredNotifications.map((item: any) => (
-            <TouchableOpacity 
-              key={item.id} 
-              onPress={() => useAppStore.getState().markAsRead(item.id)}
-              style={[
-                styles.card, 
-                { backgroundColor: theme.card, borderColor: theme.border },
-                !item.isRead && { borderLeftWidth: 4, borderLeftColor: '#00C853' }
-              ]}
-            >
-              <View style={[styles.iconBox, { backgroundColor: isDark ? '#333' : '#F9FAFB' }]}>
-                <MaterialCommunityIcons name={(item as any).icon || 'bell'} size={28} color={(item as any).color || '#00C853'} />
-              </View>
-              <View style={styles.textContent}>
-                <View style={styles.notifHeader}>
-                  <Text style={[styles.notifTitle, { color: theme.text, flex: 1 }]} numberOfLines={1}>{item.title}</Text>
-                  {!item.isRead && <View style={styles.unreadDot} />}
+              <TouchableOpacity 
+                key={item.id} 
+                onPress={() => useAppStore.getState().markNotificationRead(item.id)}
+                style={[
+                  styles.card, 
+                  { backgroundColor: theme.card, borderColor: theme.border },
+                  item.status !== 'Read' && { borderLeftWidth: 4, borderLeftColor: '#00C853' }
+                ]}
+              >
+                <View style={[styles.iconBox, { backgroundColor: isDark ? '#333' : '#F9FAFB' }]}>
+                  <MaterialCommunityIcons name={(item as any).icon || 'bell'} size={28} color={(item as any).color || '#00C853'} />
                 </View>
-                <Text style={[styles.notifDesc, { color: theme.subText }]}>{item.message}</Text>
-                <Text style={styles.notifTime}>{getTimeAgo(item.createdAt)}</Text>
-              </View>
+                <View style={styles.textContent}>
+                  <View style={styles.notifHeader}>
+                    <Text style={[styles.notifTitle, { color: theme.text, flex: 1 }]} numberOfLines={1}>{item.title}</Text>
+                    {item.status !== 'Read' && <View style={styles.unreadDot} />}
+                  </View>
+                  <Text style={[styles.notifDesc, { color: theme.subText }]}>{item.message}</Text>
+                  <Text style={styles.notifTime}>{getTimeAgo(item.created_at || item.createdAt)}</Text>
+                </View>
               <TouchableOpacity 
                 style={styles.clearBtn} 
                 onPress={() => {

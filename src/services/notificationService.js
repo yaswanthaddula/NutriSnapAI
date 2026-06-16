@@ -716,14 +716,21 @@ export const notificationService = {
         // Fire and forget but robustly handle each request
         const promises = mapping.map(async m => {
           try {
+            const bodyMessage = m.type === 'water' ? '💧 Water Reminder - Time to drink water.' 
+              : m.type === 'workout' ? '🏋️ Workout Reminder - Time for your workout session.'
+              : m.type === 'sleep' ? '😴 Sleep Reminder - Time to sleep and recover.'
+              : '🍳 Meal Reminder - Time to log your meal.';
+
             const payload = {
+              mode: currentMode,
               reminder_type: m.type,
               title: m.title,
+              message: bodyMessage,
               reminder_time: (profile && profile[m.timeKey]) || '08:00 AM',
               repeat_type: (m.repeatKey && prefs) ? (prefs[m.repeatKey] || profile[m.repeatKey] || 'Daily') : null,
               repeat_days: null,
               is_enabled: !!m.enabled,
-              notification_status: 'Upcoming'
+              status: 'Upcoming'
             };
             const res = await apiService.createReminder(payload);
             return res;
@@ -738,12 +745,7 @@ export const notificationService = {
           console.log("Successfully saved reminder responses:", newReminders.length);
           
           if (newReminders.length > 0) {
-            const dynamicStatuses = {};
-            newReminders.forEach(r => {
-               dynamicStatuses[r.reminder_type] = r.notification_status === 'missed' ? 'Missed' : (r.notification_status === 'completed' ? 'Completed' : 'Upcoming');
-            });
-            useAppStore.setState({ reminderStatuses: dynamicStatuses });
-            useAppStore.getState().saveStoredData();
+            // Backend handles statuses directly now.
           }
           
           // Trigger strict fetch right after save

@@ -3,6 +3,8 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime, date as dt_date, time as dt_time, timezone
 from typing import Optional, List
+import uuid
+from sqlalchemy.dialects.postgresql import UUID
 from database import Base
 
 class User(Base):
@@ -130,48 +132,43 @@ class PendingVerification(Base):
     code: Mapped[str] = mapped_column(String)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
-class ReminderStatus(Base):
-    __tablename__ = "reminder_statuses"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
-    date: Mapped[dt_date] = mapped_column(Date, default=lambda: datetime.now(timezone.utc).date())
-    breakfast: Mapped[str] = mapped_column(String, default="Upcoming")
-    lunch: Mapped[str] = mapped_column(String, default="Upcoming")
-    dinner: Mapped[str] = mapped_column(String, default="Upcoming")
-    snack: Mapped[str] = mapped_column(String, default="Upcoming")
-    workout: Mapped[str] = mapped_column(String, default="Upcoming")
-    sleep: Mapped[str] = mapped_column(String, default="Upcoming")
-    water: Mapped[str] = mapped_column(String, default="Upcoming")
-
 class Reminder(Base):
     __tablename__ = "reminders"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    mode: Mapped[str] = mapped_column(String, default="health")
     reminder_type: Mapped[str] = mapped_column(String)
     title: Mapped[str] = mapped_column(String)
+    message: Mapped[str] = mapped_column(String)
     reminder_time: Mapped[str] = mapped_column(String)
     repeat_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     repeat_days: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    notification_status: Mapped[str] = mapped_column(String, default="upcoming")
-    last_triggered_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(String, default="Upcoming")
     next_trigger_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    last_triggered_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    missed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    snooze_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    scheduled_notification_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
-class NotificationHistory(Base):
-    __tablename__ = "notification_history"
+class NotificationEvent(Base):
+    __tablename__ = "notification_events"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
-    date: Mapped[dt_date] = mapped_column(Date, default=lambda: datetime.now(timezone.utc).date())
-    message: Mapped[str] = mapped_column(String)
+    reminder_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("reminders.id", ondelete="CASCADE"), nullable=True)
     title: Mapped[str] = mapped_column(String)
+    message: Mapped[str] = mapped_column(String)
     type: Mapped[str] = mapped_column(String)
-    mode: Mapped[str] = mapped_column(String)
-    color: Mapped[str] = mapped_column(String)
-    icon: Mapped[str] = mapped_column(String)
-    key: Mapped[str] = mapped_column(String, unique=True)
+    status: Mapped[str] = mapped_column(String, default="Unread")
+    action_taken: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    delivered_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    read_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    cleared_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 class DailyStep(Base):

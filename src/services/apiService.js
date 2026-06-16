@@ -289,8 +289,46 @@ export const apiService = {
     return response.data;
   },
 
+  updateReminderStatus: async (id, status) => {
+    const response = await api.put(`/reminders/${id}/status?status=${status}`);
+    return response.data;
+  },
   triggerReminder: async (id) => {
-    const response = await api.put(`/reminders/${id}/trigger`);
+    const response = await api.post(`/reminders/${id}/trigger`);
+    return response.data;
+  },
+  markReminderDone: async (id) => {
+    const response = await api.post(`/reminders/${id}/done`);
+    return response.data;
+  },
+  snoozeReminder: async (id, minutes = 10) => {
+    const response = await api.post(`/reminders/${id}/snooze?minutes=${minutes}`);
+    return response.data;
+  },
+  dismissReminder: async (id) => {
+    const response = await api.post(`/reminders/${id}/dismiss`);
+    return response.data;
+  },
+
+  // Notification Events
+  getNotifications: async () => {
+    const response = await api.get('/notifications');
+    return response.data;
+  },
+  markNotificationRead: async (id) => {
+    const response = await api.put(`/notifications/${id}/read`);
+    return response.data;
+  },
+  markAllNotificationsRead: async () => {
+    const response = await api.put('/notifications/mark-all-read');
+    return response.data;
+  },
+  clearNotification: async (id) => {
+    const response = await api.put(`/notifications/${id}/clear`);
+    return response.data;
+  },
+  clearAllNotifications: async () => {
+    const response = await api.put('/notifications/clear-all');
     return response.data;
   },
 

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional, List, Any
+import uuid
 from datetime import datetime, date, time
 
 # Auth Schemas
@@ -224,104 +225,63 @@ class AIChatHistoryResponse(AIChatHistoryBase):
 
 # Reminder Schemas
 class ReminderBase(BaseModel):
+    mode: str = "health"
     reminder_type: str
     title: str
+    message: str
     reminder_time: str
     repeat_type: Optional[str] = None
     repeat_days: Optional[str] = None
     is_enabled: bool = True
-    notification_status: str = "upcoming"
+    status: str = "Upcoming"
+    scheduled_notification_id: Optional[str] = None
 
 class ReminderCreate(ReminderBase):
     pass
 
-class ReminderUpdate(ReminderBase):
-    pass
+class ReminderUpdate(BaseModel):
+    mode: Optional[str] = None
+    reminder_type: Optional[str] = None
+    title: Optional[str] = None
+    message: Optional[str] = None
+    reminder_time: Optional[str] = None
+    repeat_type: Optional[str] = None
+    repeat_days: Optional[str] = None
+    is_enabled: Optional[bool] = None
+    status: Optional[str] = None
+    scheduled_notification_id: Optional[str] = None
 
 class ReminderResponse(ReminderBase):
-    id: int
+    id: uuid.UUID
     user_id: int
-    last_triggered_at: Optional[datetime] = None
     next_trigger_at: Optional[datetime] = None
+    last_triggered_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    missed_at: Optional[datetime] = None
+    snooze_until: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 
     class Config:
         from_attributes = True
 
-# ReminderStatus Schemas
-class ReminderStatusBase(BaseModel):
-    date: Optional[Any] = None
-    breakfast: str = "Upcoming"
-    lunch: str = "Upcoming"
-    dinner: str = "Upcoming"
-    snack: str = "Upcoming"
-    workout: str = "Upcoming"
-    sleep: str = "Upcoming"
-    water: str = "Upcoming"
-
-    @field_validator('date', mode='before')
-    @classmethod
-    def parse_date(cls, v):
-        if v is None:
-            return v
-        if isinstance(v, datetime):
-            return v.date()
-        if isinstance(v, date):
-            return v
-        if isinstance(v, str):
-            try:
-                if 'T' in v:
-                    return datetime.fromisoformat(v.replace('Z', '+00:00')).date()
-                return date.fromisoformat(v)
-            except:
-                return v
-        return v
-
-class ReminderStatusCreate(ReminderStatusBase):
-    pass
-
-class ReminderStatusResponse(ReminderStatusBase):
-    id: int
-    user_id: int
-
-    class Config:
-        from_attributes = True
-
-# NotificationHistory Schemas
-class NotificationHistoryBase(BaseModel):
-    date: Optional[Any] = None
-    message: str
+# NotificationEvent Schemas
+class NotificationEventBase(BaseModel):
+    reminder_id: Optional[uuid.UUID] = None
     title: str
+    message: str
     type: str
-    mode: str
-    color: str
-    icon: str
-    key: str
+    status: str = "Unread"
+    action_taken: Optional[str] = None
+    delivered_at: Optional[datetime] = None
+    read_at: Optional[datetime] = None
+    cleared_at: Optional[datetime] = None
 
-    @field_validator('date', mode='before')
-    @classmethod
-    def parse_date(cls, v):
-        if v is None:
-            return v
-        if isinstance(v, datetime):
-            return v.date()
-        if isinstance(v, date):
-            return v
-        if isinstance(v, str):
-            try:
-                if 'T' in v:
-                    return datetime.fromisoformat(v.replace('Z', '+00:00')).date()
-                return date.fromisoformat(v)
-            except:
-                return v
-        return v
-
-class NotificationHistoryCreate(NotificationHistoryBase):
+class NotificationEventCreate(NotificationEventBase):
     pass
 
-class NotificationHistoryResponse(NotificationHistoryBase):
-    id: int
+class NotificationEventResponse(NotificationEventBase):
+    id: uuid.UUID
     user_id: int
     created_at: datetime
 

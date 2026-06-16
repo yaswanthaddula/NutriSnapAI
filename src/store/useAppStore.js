@@ -66,9 +66,6 @@ const useAppStore = create((set, get) => ({
   waterHistory: [], // [{ date: '2023-01-01', amount: 2000 }]
   reminders: [], // Array of Reminder objects from backend
   todayReminders: [], // Reminders explicitly for today
-  reminderStatuses: {}, // Dynamic mapping of type to status
-  activePopup: null,
-  setActivePopup: (popup) => set({ activePopup: popup }),
   
   fetchTodayReminders: async () => {
     try {
@@ -79,65 +76,52 @@ const useAppStore = create((set, get) => ({
     }
   },
   
-  markReminderCompleted: async (type) => {
-    const statuses = { ...get().reminderStatuses };
-    if (statuses[type]) {
-      statuses[type] = 'Completed';
-      set({ reminderStatuses: statuses });
-      get().saveStoredData();
-      
-      // Sync to backend reminders table
-      try {
-        const reminders = get().reminders;
-        const targetReminder = reminders.find(r => r.reminder_type === type);
-        if (targetReminder) {
-          await apiService.updateReminder(targetReminder.id, {
-            ...targetReminder,
-            notification_status: 'Completed'
-          });
-          // Refresh from backend to ensure strict consistency
-          await get().fetchAndSyncReminders();
-        }
-      } catch (e) {
-        console.log('Failed to sync reminder status:', e);
-      }
-    }
-  },
-
   fetchAndSyncReminders: async () => {
     try {
-      const user = get().userProfile;
-      console.log("Current logged in user:", user?.id, user?.email);
-      console.log("Fetching today's reminders after save...");
-      
       const fetchedReminders = await apiService.getReminders();
-      console.log("Today's reminders API response:", fetchedReminders);
-      
-      const dynamicStatuses = {};
-      fetchedReminders.forEach(r => {
-        let st = r.notification_status;
-        if (!st || st.trim() === '') st = 'Upcoming';
-        st = st.charAt(0).toUpperCase() + st.slice(1).toLowerCase();
-        dynamicStatuses[r.reminder_type] = st;
-        // Normalize the object property so components receive capitalized version
-        r.notification_status = st;
-      });
-      
-      set({ reminders: fetchedReminders, reminderStatuses: dynamicStatuses });
+      set({ reminders: fetchedReminders });
       get().saveStoredData();
     } catch (e) {
       console.log("Error fetching reminders:", e);
     }
   },
 
-  evaluateReminderStatuses: () => {
-    // Rely on backend-driven reminderStatuses instead of hardcoded recalculations.
-    // If we need to mark missed locally based on time, we can still do that.
-    const { reminderStatuses, reminders } = get();
-    const now = new Date();
-    const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+  markReminderDone: async (id) => {
+    try {
+      await apiService.markReminderDone(id);
+      await get().fetchAndSyncReminders();
+      await get().fetchTodayReminders();
+      await get().fetchNotifications();
+    } catch (e) { console.log('Error marking reminder done', e); }
+  },
 
-    const newStatuses = { ...reminderStatuses };
+  snoozeReminder: async (id, minutes) => {
+    try {
+      await apiService.snoozeReminder(id, minutes);
+      await get().fetchAndSyncReminders();
+      await get().fetchTodayReminders();
+      await get().fetchNotifications();
+    } catch (e) { console.log('Error snoozing reminder', e); }
+  },
+
+  dismissReminder: async (id) => {
+    try {
+      await apiService.dismissReminder(id);
+      await get().fetchAndSyncReminders();
+      await get().fetchTodayReminders();
+      await get().fetchNotifications();
+    } catch (e) { console.log('Error dismissing reminder', e); }
+  },
+
+  deleteReminder: async (id) => {
+    try {
+      await apiService.deleteReminder(id);
+      await get().fetchAndSyncReminders();
+      await get().fetchTodayReminders();
+    } catch (e) {
+      console.log("Error deleting reminder:", e);
+    }
+  },
 
     const parseMinutes = (timeStr) => {
       if (!timeStr) return null;
@@ -201,19 +185,7 @@ const useAppStore = create((set, get) => ({
     }
   },
 
-  deleteReminder: async (id) => {
-    try {
-      await apiService.deleteReminder(id);
-      // Remove from local array immediately for snappy UI
-      const currentReminders = get().reminders.filter(r => r.id !== id);
-      set({ reminders: currentReminders });
-      // Re-fetch to ensure sync and update statuses
-      await get().fetchAndSyncReminders();
-      if (get().fetchTodayReminders) await get().fetchTodayReminders();
-    } catch (e) {
-      console.log("Error deleting reminder:", e);
-    }
-  },
+
 
   setUserProfile: (profile) => {
     const current = get().userProfile;

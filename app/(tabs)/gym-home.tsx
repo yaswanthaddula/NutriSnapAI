@@ -602,7 +602,7 @@ export default function GymHomeScreen() {
                  
                  if (!validToday) return;
 
-                 let stat = (r.notification_status || 'Upcoming').toLowerCase();
+                 let stat = (r.status || 'Upcoming').toLowerCase();
                  if (stat === 'upcoming') counts.Upcoming++;
                  else if (stat === 'active') counts.Active++;
                  else if (stat === 'completed') counts.Completed++;
@@ -694,22 +694,49 @@ export default function GymHomeScreen() {
                 case 'sleep': icon = '💤'; title = 'Sleep Reminder'; break;
               }
               
-              let status = reminder.notification_status || reminderStatuses[reminder.reminder_type] || 'Upcoming';
+              let status = reminder.status || 'Upcoming';
               if (!status || status.trim() === '') status = 'Upcoming';
               
               const statusColor = status === 'Missed' ? '#F44336' : status === 'Completed' ? '#4CAF50' : status === 'Active' ? '#FF9800' : '#2196F3';
               
               return (
-                <View key={index} style={styles.mealItem}>
-                  <Text style={{fontSize: 24}}>{icon}</Text>
-                  <View style={{flex: 1, marginLeft: 15}}>
-                    <Text style={[styles.mealName, {color: theme.text}]}>{title}</Text>
-                    <Text style={[styles.mealTime, { color: statusColor }]}>
-                      {reminder.reminder_time || reminder.title}
-                    </Text>
-                    <Text style={{ color: statusColor, fontSize: 12, marginTop: 2 }}>Status: {status}</Text>
+                <View key={index} style={[styles.mealItem, { flexDirection: 'column', alignItems: 'stretch' }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{fontSize: 24}}>{icon}</Text>
+                    <View style={{flex: 1, marginLeft: 15}}>
+                      <Text style={[styles.mealName, {color: theme.text}]}>{title}</Text>
+                      <Text style={[styles.mealTime, { color: statusColor }]}>
+                        {reminder.reminder_time || reminder.title}
+                      </Text>
+                      <Text style={{ color: statusColor, fontSize: 12, marginTop: 2 }}>Status: {status}</Text>
+                    </View>
+                    <Ionicons name={status === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={status === 'Completed' ? "#4CAF50" : statusColor} />
                   </View>
-                  <Ionicons name={status === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={status === 'Completed' ? "#4CAF50" : statusColor} />
+                  
+                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10, gap: 10 }}>
+                    {status !== 'Completed' && (
+                      <TouchableOpacity 
+                        style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#4CAF50', borderRadius: 4 }}
+                        onPress={() => useAppStore.getState().markReminderDone(reminder.id)}
+                      >
+                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>Done</Text>
+                      </TouchableOpacity>
+                    )}
+                    {(status === 'Active' || status === 'Upcoming' || status === 'Snoozed') && (
+                      <TouchableOpacity 
+                        style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#FF9800', borderRadius: 4 }}
+                        onPress={() => useAppStore.getState().snoozeReminder(reminder.id, 10)}
+                      >
+                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>Remind Later</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity 
+                      style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#757575', borderRadius: 4 }}
+                      onPress={() => useAppStore.getState().dismissReminder(reminder.id)}
+                    >
+                      <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>Dismiss</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               );
             });
