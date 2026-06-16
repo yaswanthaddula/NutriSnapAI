@@ -23,7 +23,7 @@ try:
     inspector = inspect(database.engine)
     if inspector.has_table('reminders'):
         id_col = next((c for c in inspector.get_columns('reminders') if c['name'] == 'id'), None)
-        if id_col and 'integer' in str(id_col['type']).lower() or 'int' in str(id_col['type']).lower():
+        if id_col and ('integer' in str(id_col['type']).lower() or 'int' in str(id_col['type']).lower()):
             print("Dropping old reminder tables for UUID migration...")
             with database.engine.connect() as conn:
                 conn.execute(text("DROP TABLE IF EXISTS reminder_statuses CASCADE;"))
