@@ -663,11 +663,6 @@ export default function GymHomeScreen() {
             const filteredReminders = todayReminders?.filter((r: any) => {
               if (!r.is_enabled) return false;
               
-              // Mode filtering for Gym Dashboard
-              const type = r.reminder_type?.toLowerCase() || '';
-              const isGymRelevant = ['workout', 'water'].includes(type);
-              if (!isGymRelevant) return false;
-              
               // Date filtering
               const repeat = r.repeat_type || 'Daily';
               if (repeat === 'Daily') return true;
@@ -748,8 +743,6 @@ export default function GymHomeScreen() {
             const isWeekend = ['Sat', 'Sun'].includes(todayDay);
             return todayReminders.filter((r: any) => {
               if (!r.is_enabled) return false;
-              const type = r.reminder_type?.toLowerCase() || '';
-              if (!['workout', 'water'].includes(type)) return false;
               const repeat = r.repeat_type || 'Daily';
               if (repeat === 'Daily') return true;
               if (repeat === 'Weekdays') return isWeekday;

@@ -80,6 +80,16 @@ const useAppStore = create((set, get) => ({
     try {
       const fetchedReminders = await apiService.getReminders();
       set({ reminders: fetchedReminders });
+      
+      // Sync local UI toggles (notificationPrefs) with actual backend state
+      const prefs = get().notificationPrefs || {};
+      const updatedPrefs = { ...prefs };
+      updatedPrefs.meals = fetchedReminders.some((r: any) => ['breakfast','lunch','dinner','snack'].includes(r.reminder_type) && r.is_enabled);
+      updatedPrefs.workout = fetchedReminders.some((r: any) => r.reminder_type === 'workout' && r.is_enabled);
+      updatedPrefs.water = fetchedReminders.some((r: any) => r.reminder_type === 'water' && r.is_enabled);
+      updatedPrefs.sleep = fetchedReminders.some((r: any) => r.reminder_type === 'sleep' && r.is_enabled);
+      set({ notificationPrefs: updatedPrefs });
+
       get().saveStoredData();
     } catch (e) {
       console.log("Error fetching reminders:", e);

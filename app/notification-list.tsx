@@ -17,12 +17,12 @@ import { notificationService } from '../src/services/notificationService';
 
 export default function NotificationList() {
   const { isDark } = useTheme();
-  const { notificationEvents, userProfile, markAllNotificationsRead, clearAllNotifications, clearNotification, fetchNotifications } = useAppStore();
+  const { notifications, userProfile, markAllAsRead, clearNotifications, clearNotification, fetchNotifications, markAsRead } = useAppStore();
   
   const currentMode = (userProfile.selected_mode || 'gym').toLowerCase();
   
   // Exclude cleared ones, though API already does this, but good for local cache state
-  const filteredNotifications = notificationEvents?.filter((n: any) => n.status !== 'Cleared') || [];
+  const filteredNotifications = notifications?.filter((n: any) => n.status !== 'Cleared' && n.status !== 'cleared') || [];
 
   useEffect(() => {
     fetchNotifications();
@@ -30,12 +30,12 @@ export default function NotificationList() {
 
   const handleMarkAllRead = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    markAllNotificationsRead();
+    markAllAsRead();
   };
 
   const handleClear = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    clearAllNotifications();
+    clearNotifications();
   };
 
   const theme = {
@@ -89,11 +89,11 @@ export default function NotificationList() {
           filteredNotifications.map((item: any) => (
               <TouchableOpacity 
                 key={item.id} 
-                onPress={() => useAppStore.getState().markNotificationRead(item.id)}
+                onPress={() => markAsRead(item.id)}
                 style={[
                   styles.card, 
                   { backgroundColor: theme.card, borderColor: theme.border },
-                  item.status !== 'Read' && { borderLeftWidth: 4, borderLeftColor: '#00C853' }
+                  item.status !== 'Read' && item.status !== 'read' && { borderLeftWidth: 4, borderLeftColor: '#00C853' }
                 ]}
               >
                 <View style={[styles.iconBox, { backgroundColor: isDark ? '#333' : '#F9FAFB' }]}>
@@ -102,7 +102,7 @@ export default function NotificationList() {
                 <View style={styles.textContent}>
                   <View style={styles.notifHeader}>
                     <Text style={[styles.notifTitle, { color: theme.text, flex: 1 }]} numberOfLines={1}>{item.title}</Text>
-                    {item.status !== 'Read' && <View style={styles.unreadDot} />}
+                    {item.status !== 'Read' && item.status !== 'read' && <View style={styles.unreadDot} />}
                   </View>
                   <Text style={[styles.notifDesc, { color: theme.subText }]}>{item.message}</Text>
                   <Text style={styles.notifTime}>{getTimeAgo(item.created_at || item.createdAt)}</Text>

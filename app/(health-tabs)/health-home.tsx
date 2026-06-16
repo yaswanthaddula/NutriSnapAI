@@ -790,11 +790,6 @@ export default function HealthHomeScreen() {
             const filteredReminders = todayReminders?.filter((r: any) => {
               if (!r.is_enabled) return false;
               
-              // Mode filtering for Health Dashboard
-              const type = r.reminder_type?.toLowerCase() || '';
-              const isHealthRelevant = ['breakfast', 'lunch', 'dinner', 'snack', 'sleep', 'water'].includes(type);
-              if (!isHealthRelevant) return false;
-              
               // Date filtering
               const repeat = r.repeat_type || 'Daily';
               if (repeat === 'Daily') return true;
@@ -875,8 +870,6 @@ export default function HealthHomeScreen() {
             const isWeekend = ['Sat', 'Sun'].includes(todayDay);
             return todayReminders.filter((r: any) => {
               if (!r.is_enabled) return false;
-              const type = r.reminder_type?.toLowerCase() || '';
-              if (!['breakfast', 'lunch', 'dinner', 'snack', 'sleep', 'water'].includes(type)) return false;
               const repeat = r.repeat_type || 'Daily';
               if (repeat === 'Daily') return true;
               if (repeat === 'Weekdays') return isWeekday;
