@@ -123,67 +123,7 @@ const useAppStore = create((set, get) => ({
     }
   },
 
-    const parseMinutes = (timeStr) => {
-      if (!timeStr) return null;
-      const match = timeStr.match(/^(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?\s*(AM|PM)$/i);
-      if (match) {
-        let h = parseInt(match[1], 10);
-        const m = parseInt(match[2], 10);
-        const ampm = match[3].toUpperCase();
-        if (ampm === 'PM' && h < 12) h += 12;
-        if (ampm === 'AM' && h === 12) h = 0;
-        return h * 60 + m;
-      }
-      return null;
-    };
 
-    let hasChanges = false;
-    
-    // Check local time against actual enabled reminders
-    reminders.forEach(r => {
-      if (!r.is_enabled) return;
-      
-      const t = parseMinutes(r.reminder_time);
-      if (t !== null) {
-        const type = r.reminder_type;
-        const currentStatus = r.notification_status?.toLowerCase();
-        
-        // Skip if user already completed it manually
-        if (currentStatus === 'completed') return;
-        
-        let targetStatus = 'Upcoming';
-        
-        if (currentTotalMinutes >= t && currentTotalMinutes <= t + 30) {
-          targetStatus = 'Active';
-        } else if (currentTotalMinutes > t + 30) {
-          targetStatus = 'Missed';
-        }
-        
-        // Only update if it actually changed
-        if (newStatuses[type]?.toLowerCase() !== targetStatus.toLowerCase()) {
-           newStatuses[type] = targetStatus;
-           hasChanges = true;
-           console.log(`[DEBUG] Status Updated: ${type} is now ${targetStatus}`);
-           
-           // Sync this status strictly to the backend
-           apiService.updateReminder(r.id, {
-              ...r,
-              notification_status: targetStatus
-           }).then(() => {
-              console.log(`[DEBUG] Backend updated successfully to ${targetStatus}`);
-              get().fetchAndSyncReminders();
-           }).catch((err) => {
-              console.log("[DEBUG] Backend status sync failed:", err);
-           });
-        }
-      }
-    });
-
-    if (hasChanges) {
-      set({ reminderStatuses: newStatuses });
-      get().saveStoredData();
-    }
-  },
 
 
 
