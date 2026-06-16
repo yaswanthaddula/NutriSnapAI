@@ -121,30 +121,23 @@ def trigger_smart_notifications(req: schemas.SmartTriggerRequest, db: Session = 
         logged_types.append(n_type)
         logs.append(new_log)
 
+    today_meals = db.query(models.Meal).filter(
+        models.Meal.user_id == current_user.id,
+        models.Meal.date == today_date
+    ).all()
+
     if 7.0 <= time_float <= 9.5:
-        breakfast_count = db.query(models.Meal).filter(
-            models.Meal.user_id == current_user.id,
-            models.Meal.meal_type.ilike('breakfast'),
-            func.date(models.Meal.created_at) == today_date
-        ).count()
+        breakfast_count = sum(1 for m in today_meals if m.time and m.time.hour < 11)
         if breakfast_count == 0:
             add_smart_notif('breakfast', '🍳 Time for breakfast', 'Log your healthy breakfast.', 'food-apple')
 
     if 12.5 <= time_float <= 14.5:
-        lunch_count = db.query(models.Meal).filter(
-            models.Meal.user_id == current_user.id,
-            models.Meal.meal_type.ilike('lunch'),
-            func.date(models.Meal.created_at) == today_date
-        ).count()
+        lunch_count = sum(1 for m in today_meals if m.time and 11 <= m.time.hour < 16)
         if lunch_count == 0:
             add_smart_notif('lunch', '🍽️ Lunch time', "Don't forget your meal.", 'silverware-fork-knife')
 
     if 19.0 <= time_float <= 21.5:
-        dinner_count = db.query(models.Meal).filter(
-            models.Meal.user_id == current_user.id,
-            models.Meal.meal_type.ilike('dinner'),
-            func.date(models.Meal.created_at) == today_date
-        ).count()
+        dinner_count = sum(1 for m in today_meals if m.time and m.time.hour >= 16)
         if dinner_count == 0:
             add_smart_notif('dinner', '🌙 Dinner time', 'Track your dinner.', 'weather-night')
 
@@ -152,9 +145,10 @@ def trigger_smart_notifications(req: schemas.SmartTriggerRequest, db: Session = 
         add_smart_notif('sleep', '😴 Time to sleep', 'Recover well for tomorrow.', 'bed')
 
     if time_float >= 18.0:
-        workout_count = db.query(models.Workout).filter(
-            models.Workout.user_id == current_user.id,
-            func.date(models.Workout.created_at) == today_date
+        workout_count = db.query(models.GymLog).filter(
+            models.GymLog.user_id == current_user.id,
+            models.GymLog.date == today_date,
+            models.GymLog.workout_status == 'completed'
         ).count()
         if workout_count == 0:
             add_smart_notif('workout', '🏋️ Your workout is pending', "Complete today's session.", 'dumbbell')
