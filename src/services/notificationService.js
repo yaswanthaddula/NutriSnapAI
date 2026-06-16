@@ -732,30 +732,35 @@ export const notificationService = {
               is_enabled: !!m.enabled,
               status: 'Upcoming'
             };
+            console.log("Saving reminder payload:", payload);
             const res = await apiService.createReminder(payload);
+            console.log("Save reminder response:", res);
             return res;
           } catch (e) {
-            console.error(`Error saving reminder ${m.type} to backend:`, e?.response?.data || e.message);
+            console.log("Reminder save failed:", e);
             return null;
           }
         });
         
-        Promise.all(promises).then(async (results) => {
-          const newReminders = results.filter(r => r !== null);
-          console.log("Successfully saved reminder responses:", newReminders.length);
-          
-          if (newReminders.length > 0) {
-            // Backend handles statuses directly now.
-          }
-          
-          // Trigger strict fetch right after save
-          await useAppStore.getState().fetchAndSyncReminders();
-          if (useAppStore.getState().fetchTodayReminders) {
-             await useAppStore.getState().fetchTodayReminders();
-          }
+        return new Promise((resolve) => {
+          Promise.all(promises).then(async (results) => {
+            const hasFailure = results.some(r => r === null);
+            const newReminders = results.filter(r => r !== null);
+            console.log("Successfully saved reminder responses:", newReminders.length);
+            
+            // Trigger strict fetch right after save
+            await useAppStore.getState().fetchAndSyncReminders();
+            if (useAppStore.getState().fetchTodayReminders) {
+               await useAppStore.getState().fetchTodayReminders();
+            }
+            
+            if (hasFailure) resolve(false);
+            else resolve(true);
+          });
         });
       } catch (e) {
         console.log('Error initiating reminder backend sync:', e);
+        return false;
       }
 
       const channelId = Platform.OS === 'android' ? 'nutrisnap-reminders' : undefined;

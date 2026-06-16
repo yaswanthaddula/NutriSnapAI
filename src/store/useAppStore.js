@@ -79,6 +79,7 @@ const useAppStore = create((set, get) => ({
   fetchAndSyncReminders: async () => {
     try {
       const fetchedReminders = await apiService.getReminders();
+      console.log("Refetched reminders:", fetchedReminders);
       set({ reminders: fetchedReminders });
       
       // Sync local UI toggles (notificationPrefs) with actual backend state
@@ -513,36 +514,82 @@ const useAppStore = create((set, get) => ({
     return newNotif;
   },
 
-  markAsRead: (id) => {
-    const { notifications, saveStoredData } = get();
-    set({ 
-      notifications: notifications.map(n => n.id === id ? { ...n, isRead: true, status: 'read' } : n) 
-    });
-    saveStoredData();
+  fetchNotifications: async () => {
+    try {
+      const fetched = await apiService.getNotifications();
+      console.log("Notification bell response:", fetched);
+      // Map backend fields to frontend fields if needed, but if backend matches, just set it
+      // Backend returns: id, title, message, status, type, created_at, delivered_at
+      const mapped = fetched.map((n: any) => ({
+        ...n,
+        isRead: n.status === 'Read' || n.status === 'read',
+        createdAt: n.created_at || n.createdAt
+      }));
+      set({ notifications: mapped });
+      get().saveStoredData();
+    } catch (e) {
+      console.log('Error fetching notifications:', e);
+    }
   },
 
-  markAllAsRead: () => {
-    const { notifications, saveStoredData } = get();
-    set({ 
-      notifications: notifications.map(n => ({ ...n, isRead: true, status: n.status === 'cleared' ? 'cleared' : 'read' })) 
-    });
-    saveStoredData();
+  markAsRead: async (id) => {
+    try {
+      await apiService.markNotificationRead(id);
+      await get().fetchNotifications();
+    } catch (e) {
+      console.log('Error marking notification read:', e);
+      // Fallback to local
+      const { notifications, saveStoredData } = get();
+      set({ 
+        notifications: notifications.map(n => n.id === id ? { ...n, isRead: true, status: 'read' } : n) 
+      });
+      saveStoredData();
+    }
   },
 
-  clearNotifications: () => {
-    const { notifications, saveStoredData } = get();
-    set({ 
-      notifications: notifications.map(n => ({ ...n, status: 'cleared', clearedAt: new Date().toISOString() })) 
-    });
-    saveStoredData();
+  markAllAsRead: async () => {
+    try {
+      await apiService.markAllNotificationsRead();
+      await get().fetchNotifications();
+    } catch (e) {
+      console.log('Error marking all read:', e);
+      // Fallback
+      const { notifications, saveStoredData } = get();
+      set({ 
+        notifications: notifications.map(n => ({ ...n, isRead: true, status: n.status === 'cleared' ? 'cleared' : 'read' })) 
+      });
+      saveStoredData();
+    }
   },
 
-  clearNotification: (id) => {
-    const { notifications, saveStoredData } = get();
-    set({ 
-      notifications: notifications.map(n => n.id === id ? { ...n, status: 'cleared', clearedAt: new Date().toISOString() } : n) 
-    });
-    saveStoredData();
+  clearNotifications: async () => {
+    try {
+      await apiService.clearAllNotifications();
+      await get().fetchNotifications();
+    } catch (e) {
+      console.log('Error clearing all notifications:', e);
+      // Fallback
+      const { notifications, saveStoredData } = get();
+      set({ 
+        notifications: notifications.map(n => ({ ...n, status: 'cleared', clearedAt: new Date().toISOString() })) 
+      });
+      saveStoredData();
+    }
+  },
+
+  clearNotification: async (id) => {
+    try {
+      await apiService.clearNotification(id);
+      await get().fetchNotifications();
+    } catch (e) {
+      console.log('Error clearing notification:', e);
+      // Fallback
+      const { notifications, saveStoredData } = get();
+      set({ 
+        notifications: notifications.map(n => n.id === id ? { ...n, status: 'cleared', clearedAt: new Date().toISOString() } : n) 
+      });
+      saveStoredData();
+    }
   },
 
   loadStoredData: async () => {
@@ -684,13 +731,19 @@ const useAppStore = create((set, get) => ({
       todayReminders: [],
       reminderStatuses: {},
       notifications: [],
+      notificationPrefs: {
+        meals: false, workout: false, water: false, sleep: false,
+        goals: true, reports: true, quotes: true,
+        breakfastRepeat: 'Daily', lunchRepeat: 'Daily', dinnerRepeat: 'Daily',
+        snackRepeat: 'Daily', workoutRepeat: 'Daily', sleepRepeat: 'Daily'
+      },
     });
 
     const keys = [
       'userProfile', 'meals', 'themeMode', 'steps', 'caloriesBurned', 'lastStepDate', 
       'workouts', 'activeWorkout', 'weightHistory', 'notifications', 'notificationPrefs',
       'waterData', 'streak', 'lastStreakDate', 'todayMood', 'todaySleep', 'lastActiveDate',
-      'activityHistory', 'waterHistory', 'reminderStatuses', 'reminders'
+      'activityHistory', 'waterHistory', 'reminderStatuses', 'reminders', 'todayReminders'
     ];
     for (const key of keys) {
       await storage.removeData(key);
@@ -724,6 +777,7 @@ const useAppStore = create((set, get) => ({
     await storage.saveData('waterHistory', waterHistory);
     await storage.saveData('reminderStatuses', reminderStatuses);
     await storage.saveData('reminders', reminders);
+    await storage.saveData('todayReminders', get().todayReminders);
   }
 }));
 

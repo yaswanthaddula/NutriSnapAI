@@ -462,21 +462,46 @@ export default function NotificationsScreen() {
   };
 
   const handleTogglePref = async (key: string, val: boolean) => {
+    console.log("Toggle clicked:", key, val);
+    
+    // Set local toggle ON optimistically
+    updateNotificationPrefs(key, val);
+
     if (val) {
+      let permission = 'granted';
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        permission = window.Notification.permission;
+      }
+      
+      console.log("Notification permission:", permission);
+      
       const granted = await notificationService.registerForPushNotificationsAsync();
       if (!granted) {
         Alert.alert(
           "Permission Required",
-          "Notifications are blocked. Please enable notifications from Chrome site settings.",
+          "Notifications are blocked. Please enable them in browser/app settings.",
           [{ text: "OK" }]
         );
+        // Revert toggle
+        updateNotificationPrefs(key, false);
         return;
       }
     }
-    updateNotificationPrefs(key, val);
-    setTimeout(async () => {
-      await notificationService.scheduleReminderNotifications();
-    }, 100);
+    
+    try {
+      // Fire scheduleReminderNotifications which maps and posts to backend
+      // But we will catch any failure and revert
+      const result = await notificationService.scheduleReminderNotifications();
+      if (result === false) {
+        throw new Error("Backend save failed");
+      }
+      // If success, fetchAndSyncReminders is already called inside scheduleReminderNotifications
+      // which will log "Refetched reminders:" inside useAppStore
+    } catch (error) {
+      console.log("Reminder save failed:", error);
+      Alert.alert("Error", "Failed to save reminder. Please try again.");
+      updateNotificationPrefs(key, !val); // revert toggle
+    }
   };
 
   // Helper to render each notification row

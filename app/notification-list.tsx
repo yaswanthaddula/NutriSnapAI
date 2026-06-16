@@ -24,8 +24,22 @@ export default function NotificationList() {
   // Exclude cleared ones, though API already does this, but good for local cache state
   const filteredNotifications = notifications?.filter((n: any) => n.status !== 'Cleared' && n.status !== 'cleared') || [];
 
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
   useEffect(() => {
-    fetchNotifications();
+    const loadNotifs = async () => {
+      try {
+        setLoading(true);
+        await fetchNotifications();
+        setError(null);
+      } catch (err) {
+        setError('Failed to load notifications');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadNotifs();
   }, []);
 
   const handleMarkAllRead = () => {
@@ -85,7 +99,15 @@ export default function NotificationList() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {filteredNotifications.length > 0 ? (
+        {loading ? (
+          <View style={styles.emptyContainer}>
+            <Text style={[styles.emptyText, { color: theme.subText }]}>Loading notifications...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.emptyContainer}>
+            <Text style={[styles.emptyText, { color: '#FF5252' }]}>{error}</Text>
+          </View>
+        ) : filteredNotifications.length > 0 ? (
           filteredNotifications.map((item: any) => (
               <TouchableOpacity 
                 key={item.id} 
@@ -121,7 +143,7 @@ export default function NotificationList() {
         ) : (
           <View style={styles.emptyContainer}>
             <MaterialCommunityIcons name="bell-off-outline" size={80} color="#CCC" />
-            <Text style={[styles.emptyText, { color: theme.subText }]}>All caught up!</Text>
+            <Text style={[styles.emptyText, { color: theme.subText }]}>No notifications yet</Text>
           </View>
         )}
       </ScrollView>
