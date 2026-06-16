@@ -277,6 +277,12 @@ class NotificationEventBase(BaseModel):
     read_at: Optional[datetime] = None
     cleared_at: Optional[datetime] = None
 
+class SmartTriggerRequest(BaseModel):
+    client_time: str
+    client_hour: int
+    client_minute: int
+    mode: str
+
 class NotificationEventCreate(NotificationEventBase):
     pass
 

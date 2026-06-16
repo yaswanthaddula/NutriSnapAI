@@ -331,6 +331,10 @@ export const apiService = {
     const response = await api.put('/notifications/clear-all');
     return response.data;
   },
+  triggerSmartNotifications: async (payload) => {
+    const response = await api.post('/notifications/smart/trigger', payload);
+    return response.data;
+  },
 
   // Sync
   syncReminderStatuses: async (statuses) => {

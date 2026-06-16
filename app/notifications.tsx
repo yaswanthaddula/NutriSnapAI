@@ -495,6 +495,10 @@ export default function NotificationsScreen() {
       if (result === false) {
         throw new Error("Backend save failed");
       }
+      
+      if (val) {
+        Alert.alert("Success", "Reminder Saved Successfully");
+      }
       // If success, fetchAndSyncReminders is already called inside scheduleReminderNotifications
       // which will log "Refetched reminders:" inside useAppStore
     } catch (error) {

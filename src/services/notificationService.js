@@ -73,6 +73,25 @@ if (Notifications) {
       shouldVibrate: true,
     }),
   });
+
+  // Set up categories for actionable notifications
+  Notifications.setNotificationCategoryAsync('REMINDER_ACTIONS', [
+    {
+      identifier: 'ACTION_DONE',
+      buttonTitle: 'Done',
+      options: { opensAppToForeground: false },
+    },
+    {
+      identifier: 'ACTION_LATER',
+      buttonTitle: 'Remind Later',
+      options: { opensAppToForeground: false },
+    },
+    {
+      identifier: 'ACTION_DISMISS',
+      buttonTitle: 'Dismiss',
+      options: { isDestructive: true, opensAppToForeground: false },
+    },
+  ]);
 }
 
 const getDayName = () => {
@@ -594,64 +613,19 @@ export const notificationService = {
   },
 
   checkAndGenerate: async () => {
-    const state = useAppStore.getState();
-    const prefs = state.notificationPrefs;
-    const currentMode = state.userProfile.selected_mode?.toLowerCase() || 'health';
-    const today = new Date().toISOString().split('T')[0];
-    
-    // In bulk check, only check passive or summary rules
-    // Avoid triggering event-based ones all at once
-    const passiveTypes = ['daily-greeting', 'gym-daily', 'quote', 'weekly-report', 'mood-reminder', 'sleep-reminder'];
-
-    for (const rule of NOTIFICATION_RULES) {
-      if (rule.mode !== currentMode) continue;
-      if (!passiveTypes.includes(rule.type)) continue;
-
-      let isEnabled = true;
-      if (rule.type === 'quote') isEnabled = prefs.quotes;
-      else if (rule.type === 'weekly-report') isEnabled = prefs.reports;
-      else isEnabled = true;
-
-      if (!isEnabled) continue;
-
-      const checkResult = rule.check(state);
-      if (checkResult) {
-        const message = typeof checkResult === 'object' ? checkResult.message : rule.message;
-        const uniqueKey = `${rule.type}-${today}`;
-        const screenRoute = rule.mode === 'gym' ? '/gym-home' : '/health-home';
-
-        const newNotif = state.addNotification({
-          title: rule.title,
-          message: message,
-          type: rule.type,
-          mode: rule.mode,
-          key: uniqueKey,
-          icon: rule.type.includes('mood') ? 'emoticon-outline' : 'bell-outline',
-          color: '#00C853'
-        });
-
-        if (newNotif) {
-          showWebNotification(rule.title, message, screenRoute, rule.type);
-          try {
-            await Notifications.scheduleNotificationAsync({
-              content: {
-                title: `NutriSnap AI: ${rule.title}`,
-                body: message,
-                data: { 
-                  type: rule.type,
-                  mode: rule.mode,
-                  screen: screenRoute
-                },
-                sound: true,
-                channelId: 'high_priority_v2',
-              },
-              trigger: { seconds: 1, channelId: 'high_priority_v2' },
-            });
-          } catch (e) {
-            console.log("Passive notification failed:", e.message);
-          }
-        }
-      }
+    try {
+      const now = new Date();
+      const payload = {
+        client_time: now.toISOString(),
+        client_hour: now.getHours(),
+        client_minute: now.getMinutes(),
+        mode: useAppStore.getState().userProfile.selected_mode?.toLowerCase() || 'health'
+      };
+      await apiService.triggerSmartNotifications(payload);
+      // After backend evaluated and generated them into the database, refetch the bell
+      await useAppStore.getState().fetchNotifications();
+    } catch (e) {
+      console.log("Failed to trigger smart notifications:", e);
     }
   },
 
@@ -782,6 +756,7 @@ export const notificationService = {
         for (const item of mealReminders) {
           const parsed = parseTime(item.time);
           if (parsed) {
+            const dbReminder = state.reminders?.find(r => r.reminder_type === item.type);
             const content = {
               title: item.title,
               body: item.body,
@@ -789,9 +764,11 @@ export const notificationService = {
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
               channelId: channelId || 'nutrisnap-reminders',
+              categoryId: 'REMINDER_ACTIONS',
               data: { 
                 screen: currentMode === 'gym' ? '/food-selection' : '/health-food-selection',
-                type: `meal-${item.type}`
+                type: `meal-${item.type}`,
+                reminderId: dbReminder ? dbReminder.id : null
               },
             };
             await notificationService.scheduleWithRepeat(content, parsed, item.repeat);
@@ -804,6 +781,7 @@ export const notificationService = {
       if (prefs.water && profile.waterReminderInterval) {
         const intervalSeconds = getWaterIntervalSeconds(profile.waterReminderInterval);
         if (intervalSeconds) {
+          const dbReminder = state.reminders?.find(r => r.reminder_type === 'water');
           await Notifications.scheduleNotificationAsync({
             content: {
               title: 'NutriSnap AI',
@@ -812,9 +790,11 @@ export const notificationService = {
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
               channelId: channelId || 'nutrisnap-reminders',
+              categoryId: 'REMINDER_ACTIONS',
               data: { 
                 screen: currentMode === 'gym' ? '/(tabs)/gym-home' : '/(health-tabs)/health-home',
-                type: 'water-reminder'
+                type: 'water-reminder',
+                reminderId: dbReminder ? dbReminder.id : null
               },
             },
             trigger: { seconds: intervalSeconds, repeats: true, channelId: channelId || 'nutrisnap-reminders' },
@@ -827,6 +807,7 @@ export const notificationService = {
       if (prefs.workout && profile.workoutReminderTime) {
         const parsed = parseTime(profile.workoutReminderTime);
         if (parsed) {
+          const dbReminder = state.reminders?.find(r => r.reminder_type === 'workout');
           const content = {
             title: 'NutriSnap AI',
             body: '🏋️ Workout Reminder - Time for your workout session.',
@@ -834,9 +815,11 @@ export const notificationService = {
             vibrate: [0, 250, 250, 250],
             priority: Notifications.AndroidNotificationPriority.MAX,
             channelId: channelId || 'nutrisnap-reminders',
+            categoryId: 'REMINDER_ACTIONS',
             data: { 
               screen: currentMode === 'gym' ? '/(tabs)/plans' : '/(health-tabs)/plans',
-              type: 'workout-reminder'
+              type: 'workout-reminder',
+              reminderId: dbReminder ? dbReminder.id : null
             },
           };
           await notificationService.scheduleWithRepeat(content, parsed, prefs.workoutRepeat);
@@ -848,6 +831,7 @@ export const notificationService = {
       if (prefs.sleep && profile.sleepReminderTime) {
         const parsed = parseTime(profile.sleepReminderTime);
         if (parsed) {
+          const dbReminder = state.reminders?.find(r => r.reminder_type === 'sleep');
           const content = {
             title: 'NutriSnap AI',
             body: '😴 Sleep Reminder - Time to sleep and recover.',
@@ -855,9 +839,11 @@ export const notificationService = {
             vibrate: [0, 250, 250, 250],
             priority: Notifications.AndroidNotificationPriority.MAX,
             channelId: channelId || 'nutrisnap-reminders',
+            categoryId: 'REMINDER_ACTIONS',
             data: { 
               screen: currentMode === 'gym' ? '/(tabs)/gym-home' : '/(health-tabs)/health-home',
-              type: 'sleep-reminder'
+              type: 'sleep-reminder',
+              reminderId: dbReminder ? dbReminder.id : null
             },
           };
           await notificationService.scheduleWithRepeat(content, parsed, prefs.sleepRepeat);
@@ -960,9 +946,16 @@ export const notificationService = {
     // Listener for when a user interacts with a notification (clicked)
     const responseSubscription = Notifications ? Notifications.addNotificationResponseReceivedListener(response => {
       const data = response.notification?.request?.content?.data;
-      console.log("[DEBUG] Notification Clicked:", data);
+      const actionId = response.actionIdentifier;
+      console.log("[DEBUG] Notification Clicked/Action:", actionId, data);
 
-      if (data?.screen) {
+      if (actionId === 'ACTION_DONE') {
+        if (data?.reminderId) useAppStore.getState().markReminderDone(data.reminderId);
+      } else if (actionId === 'ACTION_LATER') {
+        if (data?.reminderId) useAppStore.getState().snoozeReminder(data.reminderId, 10);
+      } else if (actionId === 'ACTION_DISMISS') {
+        if (data?.reminderId) useAppStore.getState().dismissReminder(data.reminderId);
+      } else if (data?.screen) {
         router.push(data.screen);
       }
     }) : { remove: () => {} };

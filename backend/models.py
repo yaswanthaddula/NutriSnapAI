@@ -180,3 +180,14 @@ class DailyStep(Base):
     steps: Mapped[int] = mapped_column(Integer, default=0)
     calories_burned: Mapped[int] = mapped_column(Integer, default=0)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+class SmartNotificationLog(Base):
+    __tablename__ = "smart_notification_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    notification_type: Mapped[str] = mapped_column(String)
+    date: Mapped[dt_date] = mapped_column(Date, default=lambda: datetime.now(timezone.utc).date())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    user: Mapped["User"] = relationship("User")

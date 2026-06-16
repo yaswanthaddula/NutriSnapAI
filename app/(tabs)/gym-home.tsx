@@ -586,11 +586,6 @@ export default function GymHomeScreen() {
                
                todayReminders?.forEach((r: any) => {
                  if (!r.is_enabled) return;
-                 // Mode filtering for Gym Reminder Status summary
-                 const type = r.reminder_type?.toLowerCase() || '';
-                 const isGymRelevant = ['workout', 'water'].includes(type);
-                 if (!isGymRelevant) return;
-                 
                  // Date filtering
                  const repeat = r.repeat_type || 'Daily';
                  let validToday = false;
@@ -706,6 +701,20 @@ export default function GymHomeScreen() {
                       <Text style={{ color: statusColor, fontSize: 12, marginTop: 2 }}>Status: {status}</Text>
                     </View>
                     <Ionicons name={status === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={status === 'Completed' ? "#4CAF50" : statusColor} />
+                    <TouchableOpacity 
+                      style={{ marginLeft: 10 }}
+                      onPress={() => {
+                        Alert.alert("Delete Reminder", "Are you sure?", [
+                          { text: "Cancel", style: "cancel" },
+                          { text: "Delete", style: "destructive", onPress: async () => {
+                              await useAppStore.getState().deleteReminder(reminder.id);
+                              Alert.alert("Success", "Reminder deleted.");
+                          }}
+                        ]);
+                      }}
+                    >
+                      <Ionicons name="trash-outline" size={20} color="#FF5252" />
+                    </TouchableOpacity>
                   </View>
                   
                   <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10, gap: 10 }}>
