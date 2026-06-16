@@ -17,6 +17,21 @@ import httpx
 from dotenv import load_dotenv
 import models, database
 from routes import auth_routes, profile_routes, meal_routes, tracking_routes, chat_routes, sync_routes, reminder_routes, notification_routes
+# Check and drop old reminder tables if id is integer (to support UUID migration)
+try:
+    from sqlalchemy import inspect, text
+    inspector = inspect(database.engine)
+    if inspector.has_table('reminders'):
+        id_col = next((c for c in inspector.get_columns('reminders') if c['name'] == 'id'), None)
+        if id_col and 'integer' in str(id_col['type']).lower() or 'int' in str(id_col['type']).lower():
+            print("Dropping old reminder tables for UUID migration...")
+            with database.engine.connect() as conn:
+                conn.execute(text("DROP TABLE IF EXISTS reminder_statuses CASCADE;"))
+                conn.execute(text("DROP TABLE IF EXISTS notification_history CASCADE;"))
+                conn.execute(text("DROP TABLE IF EXISTS reminders CASCADE;"))
+                conn.commit()
+except Exception as e:
+    print(f"Pre-migration notice: {e}")
 
 # Create database tables
 models.Base.metadata.create_all(bind=database.engine)
