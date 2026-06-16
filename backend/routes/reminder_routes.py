@@ -33,7 +33,6 @@ def create_reminder(reminder_in: schemas.ReminderCreate, db: Session = Depends(g
     new_reminder = models.Reminder(
         **reminder_in.model_dump(),
         user_id=current_user.id,
-        status="Upcoming",
         created_at=now,
         updated_at=now
     )
