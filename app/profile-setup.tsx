@@ -13,9 +13,24 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons'; // Ensure you have vector-icons installed
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from './_layout';
 
 export default function ProfileSetUp() {
+  const { isDark } = useTheme();
+  const themeColors = {
+    gradient: isDark ? ['#121212', '#1B281E', '#0A120D'] as const : ['#E8F5E9', '#C8E6C9', '#A5D6A7'] as const,
+    glass: isDark ? 'rgba(30, 30, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+    text: isDark ? '#E8F5E9' : '#1B5E20',
+    subText: isDark ? '#A5D6A7' : '#388E3C',
+    inputBg: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.9)',
+    inputBorder: isDark ? '#333' : '#C8E6C9',
+    btnDisabled: isDark ? '#333' : '#A5D6A7',
+    backBtnBg: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)',
+    iconColor: isDark ? '#FFF' : '#000',
+    placeholder: isDark ? '#666' : '#999',
+  };
+
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState(''); 
@@ -49,7 +64,7 @@ export default function ProfileSetUp() {
   };
 
   return (
-    <LinearGradient colors={['#E8F5E9', '#4CAF50']} style={styles.gradientBg}>
+    <LinearGradient colors={themeColors.gradient} style={styles.gradientBg}>
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
@@ -57,41 +72,41 @@ export default function ProfileSetUp() {
         >
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
             
-            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-              <Ionicons name="arrow-back" size={28} color="#000" />
+            <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: themeColors.backBtnBg }]} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+              <Ionicons name="arrow-back" size={28} color={themeColors.iconColor} />
             </TouchableOpacity>
 
-            <View style={styles.glassContainer}>
+            <View style={[styles.glassContainer, { backgroundColor: themeColors.glass }]}>
               <View style={styles.progressContainer}>
                 <View style={[styles.progressDash, styles.dashActive]} />
-                <View style={styles.progressDash} />
-                <View style={styles.progressDash} />
-                <View style={styles.progressDash} />
+                <View style={[styles.progressDash, { backgroundColor: themeColors.inputBorder }]} />
+                <View style={[styles.progressDash, { backgroundColor: themeColors.inputBorder }]} />
+                <View style={[styles.progressDash, { backgroundColor: themeColors.inputBorder }]} />
               </View>
 
               <View style={styles.header}>
-                <Text style={styles.title}>Complete Your Profile</Text>
-                <Text style={styles.subtitle}>Tell us about yourself</Text>
+                <Text style={[styles.title, { color: themeColors.text }]}>Complete Your Profile</Text>
+                <Text style={[styles.subtitle, { color: themeColors.subText }]}>Tell us about yourself</Text>
               </View>
 
               <View style={styles.card}>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Name</Text>
+                  <Text style={[styles.label, { color: themeColors.subText }]}>Name</Text>
                   <TextInput 
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: themeColors.inputBg, borderColor: themeColors.inputBorder, color: themeColors.iconColor }]}
                     placeholder="Enter your name"
-                    placeholderTextColor="#999"
+                    placeholderTextColor={themeColors.placeholder}
                     value={name}
                     onChangeText={setName}
                   />
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Age</Text>
+                  <Text style={[styles.label, { color: themeColors.subText }]}>Age</Text>
                   <TextInput 
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: themeColors.inputBg, borderColor: themeColors.inputBorder, color: themeColors.iconColor }]}
                     placeholder="Enter your age"
-                    placeholderTextColor="#999"
+                    placeholderTextColor={themeColors.placeholder}
                     keyboardType="numeric"
                     value={age}
                     onChangeText={setAge}
@@ -99,20 +114,20 @@ export default function ProfileSetUp() {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Gender</Text>
+                  <Text style={[styles.label, { color: themeColors.subText }]}>Gender</Text>
                   <View style={styles.genderRow}>
                     <TouchableOpacity 
-                      style={[styles.genderBtn, gender === 'Male' && styles.genderBtnActive]} 
+                      style={[styles.genderBtn, { backgroundColor: themeColors.inputBg, borderColor: themeColors.inputBorder }, gender === 'Male' && styles.genderBtnActive]} 
                       onPress={() => setGender('Male')}
                     >
-                      <Text style={[styles.genderText, gender === 'Male' && styles.genderTextActive]}>Male</Text>
+                      <Text style={[styles.genderText, { color: themeColors.subText }, gender === 'Male' && styles.genderTextActive]}>Male</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity 
-                      style={[styles.genderBtn, gender === 'Female' && styles.genderBtnActive]} 
+                      style={[styles.genderBtn, { backgroundColor: themeColors.inputBg, borderColor: themeColors.inputBorder }, gender === 'Female' && styles.genderBtnActive]} 
                       onPress={() => setGender('Female')}
                     >
-                      <Text style={[styles.genderText, gender === 'Female' && styles.genderTextActive]}>Female</Text>
+                      <Text style={[styles.genderText, { color: themeColors.subText }, gender === 'Female' && styles.genderTextActive]}>Female</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -125,7 +140,7 @@ export default function ProfileSetUp() {
                 onPress={handleContinue}
                 disabled={!isFormValid}
               >
-                <View style={[styles.continueBtn, !isFormValid && styles.btnDisabled]}>
+                <View style={[styles.continueBtn, !isFormValid && { backgroundColor: themeColors.btnDisabled }]}>
                   <Text style={styles.continueBtnText}>Continue</Text>
                 </View>
               </TouchableOpacity>

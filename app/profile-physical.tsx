@@ -13,8 +13,23 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from './_layout';
 
 export default function ProfilePhysical() {
+  const { isDark } = useTheme();
+  const themeColors = {
+    gradient: isDark ? ['#121212', '#1B281E', '#0A120D'] as const : ['#E8F5E9', '#C8E6C9', '#A5D6A7'] as const,
+    glass: isDark ? 'rgba(30, 30, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+    text: isDark ? '#E8F5E9' : '#1B5E20',
+    subText: isDark ? '#A5D6A7' : '#388E3C',
+    inputBg: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.9)',
+    inputBorder: isDark ? '#333' : '#C8E6C9',
+    btnDisabled: isDark ? '#333' : '#A5D6A7',
+    backBtnBg: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)',
+    iconColor: isDark ? '#FFF' : '#000',
+    placeholder: isDark ? '#666' : '#999',
+  };
+
   const params = useLocalSearchParams(); 
 
   const [weight, setWeight] = useState('');
@@ -43,32 +58,32 @@ export default function ProfilePhysical() {
   };
 
   return (
-    <LinearGradient colors={['#E8F5E9', '#4CAF50']} style={styles.gradientBg}>
+    <LinearGradient colors={themeColors.gradient} style={styles.gradientBg}>
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
             
-            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-              <Ionicons name="arrow-back" size={28} color="#000" />
+            <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: themeColors.backBtnBg }]} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+              <Ionicons name="arrow-back" size={28} color={themeColors.iconColor} />
             </TouchableOpacity>
 
-            <View style={styles.glassContainer}>
+            <View style={[styles.glassContainer, { backgroundColor: themeColors.glass }]}>
               <View style={styles.progressContainer}>
                 <View style={[styles.progressDash, styles.dashActive]} />
                 <View style={[styles.progressDash, styles.dashActive]} />
-                <View style={styles.progressDash} />
-                <View style={styles.progressDash} />
+                <View style={[styles.progressDash, { backgroundColor: themeColors.inputBorder }]} />
+                <View style={[styles.progressDash, { backgroundColor: themeColors.inputBorder }]} />
               </View>
 
-              <Text style={styles.title}>Body Details</Text>
-              <Text style={styles.subtitle}>Help us personalize your plan</Text>
+              <Text style={[styles.title, { color: themeColors.text }]}>Body Details</Text>
+              <Text style={[styles.subtitle, { color: themeColors.subText }]}>Help us personalize your plan</Text>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Height (cm)</Text>
+                <Text style={[styles.label, { color: themeColors.subText }]}>Height (cm)</Text>
                 <TextInput 
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: themeColors.inputBg, borderColor: themeColors.inputBorder, color: themeColors.iconColor }]}
                   placeholder="e.g., 173"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={themeColors.placeholder}
                   keyboardType="numeric"
                   value={height}
                   onChangeText={setHeight}
@@ -76,11 +91,11 @@ export default function ProfilePhysical() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Weight (kg)</Text>
+                <Text style={[styles.label, { color: themeColors.subText }]}>Weight (kg)</Text>
                 <TextInput 
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: themeColors.inputBg, borderColor: themeColors.inputBorder, color: themeColors.iconColor }]}
                   placeholder="e.g., 88"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={themeColors.placeholder}
                   keyboardType="numeric"
                   value={weight}
                   onChangeText={setWeight}
@@ -94,7 +109,7 @@ export default function ProfilePhysical() {
                 onPress={handleContinue}
                 disabled={!isFormValid}
               >
-                <View style={[styles.continueBtn, !isFormValid && styles.btnDisabled]}>
+                <View style={[styles.continueBtn, !isFormValid && { backgroundColor: themeColors.btnDisabled }]}>
                   <Text style={styles.continueBtnText}>Continue</Text>
                 </View>
               </TouchableOpacity>

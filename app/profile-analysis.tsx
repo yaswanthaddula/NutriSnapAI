@@ -10,8 +10,22 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from './_layout';
 
 export default function SmartAnalysis() {
+  const { isDark } = useTheme();
+  const themeColors = {
+    gradient: isDark ? ['#121212', '#1B281E', '#0A120D'] as const : ['#E8F5E9', '#C8E6C9', '#A5D6A7'] as const,
+    glass: isDark ? 'rgba(30, 30, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+    text: isDark ? '#E8F5E9' : '#1B5E20',
+    subText: isDark ? '#A5D6A7' : '#388E3C',
+    cardBg: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.9)',
+    cardBorder: isDark ? '#333' : '#C8E6C9',
+    heroBg: isDark ? 'rgba(76, 175, 80, 0.1)' : '#E8F5E9',
+    backBtnBg: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)',
+    iconColor: isDark ? '#FFF' : '#000',
+  };
+
   const params = useLocalSearchParams();
 
   const results = useMemo(() => {
@@ -68,15 +82,15 @@ export default function SmartAnalysis() {
   }, [params]);
 
   return (
-    <LinearGradient colors={['#E8F5E9', '#4CAF50']} style={styles.gradientBg}>
+    <LinearGradient colors={themeColors.gradient} style={styles.gradientBg}>
       <SafeAreaView style={styles.safe}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-            <Ionicons name="arrow-back" size={28} color="#000" />
+          <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: themeColors.backBtnBg }]} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+            <Ionicons name="arrow-back" size={28} color={themeColors.iconColor} />
           </TouchableOpacity>
 
-          <View style={styles.glassContainer}>
+          <View style={[styles.glassContainer, { backgroundColor: themeColors.glass }]}>
             <View style={styles.progressContainer}>
               <View style={[styles.progressDash, styles.dashActive]} />
               <View style={[styles.progressDash, styles.dashActive]} />
@@ -84,32 +98,32 @@ export default function SmartAnalysis() {
               <View style={[styles.progressDash, styles.dashActive]} />
             </View>
 
-            <Text style={styles.title}>Smart Analysis</Text>
-            <Text style={styles.subtitle}>AI is analyzing your profile</Text>
+            <Text style={[styles.title, { color: themeColors.text }]}>Smart Analysis</Text>
+            <Text style={[styles.subtitle, { color: themeColors.subText }]}>AI is analyzing your profile</Text>
 
-            <View style={styles.bmiHero}>
+            <View style={[styles.bmiHero, { backgroundColor: themeColors.heroBg, borderColor: themeColors.cardBorder }]}>
               <Text style={styles.bmiBigVal}>{results.bmi}</Text>
-              <Text style={styles.bmiSubLabel}>Body Mass Index</Text>
+              <Text style={[styles.bmiSubLabel, { color: themeColors.subText }]}>Body Mass Index</Text>
             </View>
 
-            <View style={styles.card}>
-              <Text style={styles.cardLabel}>Body Status</Text>
-              <Text style={styles.cardMainVal}>{results.status}</Text>
+            <View style={[styles.card, { backgroundColor: themeColors.cardBg, borderColor: themeColors.cardBorder }]}>
+              <Text style={[styles.cardLabel, { color: themeColors.subText }]}>Body Status</Text>
+              <Text style={[styles.cardMainVal, { color: themeColors.text }]}>{results.status}</Text>
             </View>
 
-            <View style={styles.card}>
-              <Text style={styles.cardLabel}>Suggested Goal</Text>
+            <View style={[styles.card, { backgroundColor: themeColors.cardBg, borderColor: themeColors.cardBorder }]}>
+              <Text style={[styles.cardLabel, { color: themeColors.subText }]}>Suggested Goal</Text>
               <Text style={[styles.cardMainVal, { color: '#00C853' }]}>{results.goal}</Text>
             </View>
 
             <View style={styles.statsRow}>
-              <View style={[styles.card, { flex: 1, marginRight: 12 }]}>
-                <Text style={styles.cardLabel}>Daily Calories</Text>
-                <Text style={styles.cardMainVal}>{results.calories} kcal</Text>
+              <View style={[styles.card, { flex: 1, marginRight: 12, backgroundColor: themeColors.cardBg, borderColor: themeColors.cardBorder }]}>
+                <Text style={[styles.cardLabel, { color: themeColors.subText }]}>Daily Calories</Text>
+                <Text style={[styles.cardMainVal, { color: themeColors.text }]}>{results.calories} kcal</Text>
               </View>
-              <View style={[styles.card, { flex: 1 }]}>
-                <Text style={styles.cardLabel}>Daily Protein</Text>
-                <Text style={styles.cardMainVal}>{results.protein}g</Text>
+              <View style={[styles.card, { flex: 1, backgroundColor: themeColors.cardBg, borderColor: themeColors.cardBorder }]}>
+                <Text style={[styles.cardLabel, { color: themeColors.subText }]}>Daily Protein</Text>
+                <Text style={[styles.cardMainVal, { color: themeColors.text }]}>{results.protein}g</Text>
               </View>
             </View>
 

@@ -11,8 +11,23 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from './_layout';
 
 export default function AIRecommendation() {
+  const { isDark } = useTheme();
+  const themeColors = {
+    gradient: isDark ? ['#121212', '#1B281E', '#0A120D'] as const : ['#E8F5E9', '#C8E6C9', '#A5D6A7'] as const,
+    glass: isDark ? 'rgba(30, 30, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+    text: isDark ? '#E8F5E9' : '#1B5E20',
+    subText: isDark ? '#A5D6A7' : '#388E3C',
+    cardBg: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.9)',
+    cardBorder: isDark ? '#333' : '#C8E6C9',
+    outerCircle: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(232, 245, 233, 0.8)',
+    innerCircle: isDark ? '#333' : '#FFF',
+    backBtnBg: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)',
+    iconColor: isDark ? '#FFF' : '#000',
+  };
+
   const params = useLocalSearchParams();
   const [loading, setLoading] = useState(true);
 
@@ -104,17 +119,17 @@ export default function AIRecommendation() {
 
   if (loading) {
     return (
-      <LinearGradient colors={['#E8F5E9', '#4CAF50']} style={styles.gradientBg}>
+      <LinearGradient colors={themeColors.gradient} style={styles.gradientBg}>
         <SafeAreaView style={styles.loadingSafe}>
-          <View style={styles.glassContainer}>
+          <View style={[styles.glassContainer, { backgroundColor: themeColors.glass }]}>
             <View style={styles.progressContainer}>
                <View style={[styles.progressDash, styles.dashActive]} />
                <View style={[styles.progressDash, styles.dashActive]} />
                <View style={[styles.progressDash, styles.dashActive]} />
                <View style={[styles.progressDash, styles.dashActive]} />
             </View>
-            <Text style={styles.title}>Smart Analysis</Text>
-            <Text style={styles.subtitle}>AI is analyzing your profile</Text>
+            <Text style={[styles.title, { color: themeColors.text }]}>Smart Analysis</Text>
+            <Text style={[styles.subtitle, { color: themeColors.subText }]}>AI is analyzing your profile</Text>
             <View style={styles.loaderContainer}>
               <ActivityIndicator size="large" color="#4CAF50" />
               <Text style={styles.loaderText}>Predicting the best mode for your BMI...</Text>
@@ -126,27 +141,27 @@ export default function AIRecommendation() {
   }
 
   return (
-    <LinearGradient colors={['#E8F5E9', '#4CAF50']} style={styles.gradientBg}>
+    <LinearGradient colors={themeColors.gradient} style={styles.gradientBg}>
       <SafeAreaView style={styles.safe}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-            <Ionicons name="arrow-back" size={28} color="#000" />
+          <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: themeColors.backBtnBg }]} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+            <Ionicons name="arrow-back" size={28} color={themeColors.iconColor} />
           </TouchableOpacity>
 
-          <View style={styles.glassContainer}>
-            <Text style={styles.title}>AI Recommendation</Text>
-            <Text style={styles.subtitle}>We've analyzed your profile</Text>
+          <View style={[styles.glassContainer, { backgroundColor: themeColors.glass }]}>
+            <Text style={[styles.title, { color: themeColors.text }]}>AI Recommendation</Text>
+            <Text style={[styles.subtitle, { color: themeColors.subText }]}>We've analyzed your profile</Text>
 
             <View style={styles.checkContainer}>
-              <View style={styles.outerCircle}>
-                <View style={styles.innerCircle}>
+              <View style={[styles.outerCircle, { backgroundColor: themeColors.outerCircle }]}>
+                <View style={[styles.innerCircle, { backgroundColor: themeColors.innerCircle }]}>
                   <Ionicons name="checkmark-sharp" size={45} color="#4CAF50" />
                 </View>
               </View>
             </View>
 
-            <LinearGradient colors={['#4CAF50', '#2E7D32']} style={styles.recommendationCard}>
+            <LinearGradient colors={isDark ? ['#1B281E', '#0A120D'] : ['#4CAF50', '#2E7D32']} style={styles.recommendationCard}>
               <Text style={styles.recLabel}>AI Suggested Mode</Text>
               <Text style={styles.recValue}>{recommendedMode}</Text>
               <Text style={styles.recDesc}>
@@ -154,26 +169,26 @@ export default function AIRecommendation() {
               </Text>
             </LinearGradient>
 
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryTitle}>Your Profile Summary:</Text>
+            <View style={[styles.summaryCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.cardBorder }]}>
+              <Text style={[styles.summaryTitle, { color: themeColors.subText }]}>Your Profile Summary:</Text>
               
               <View style={styles.summaryRow}>
-                <Text style={styles.sumLabel}>Age:</Text>
-                <Text style={styles.sumValue}>{params.userAge} years</Text>
+                <Text style={[styles.sumLabel, { color: themeColors.subText }]}>Age:</Text>
+                <Text style={[styles.sumValue, { color: themeColors.text }]}>{params.userAge} years</Text>
               </View>
 
               <View style={styles.summaryRow}>
-                <Text style={styles.sumLabel}>BMI:</Text>
-                <Text style={styles.sumValue}>{params.bmi}</Text>
+                <Text style={[styles.sumLabel, { color: themeColors.subText }]}>BMI:</Text>
+                <Text style={[styles.sumValue, { color: themeColors.text }]}>{params.bmi}</Text>
               </View>
 
               <View style={styles.summaryRow}>
-                <Text style={styles.sumLabel}>Activity:</Text>
-                <Text style={styles.sumValue}>{params.activityLevel || "Moderate Active"}</Text>
+                <Text style={[styles.sumLabel, { color: themeColors.subText }]}>Activity:</Text>
+                <Text style={[styles.sumValue, { color: themeColors.text }]}>{params.activityLevel || "Moderate Active"}</Text>
               </View>
 
               <View style={styles.summaryRow}>
-                <Text style={styles.sumLabel}>Goal:</Text>
+                <Text style={[styles.sumLabel, { color: themeColors.subText }]}>Goal:</Text>
                 <Text style={[styles.sumValue, { color: '#4CAF50' }]}>{params.goal}</Text>
               </View>
             </View>

@@ -11,8 +11,24 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from './_layout';
 
 export default function DailyActivity() {
+  const { isDark } = useTheme();
+  const themeColors = {
+    gradient: isDark ? ['#121212', '#1B281E', '#0A120D'] as const : ['#E8F5E9', '#C8E6C9', '#A5D6A7'] as const,
+    glass: isDark ? 'rgba(30, 30, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+    text: isDark ? '#E8F5E9' : '#1B5E20',
+    subText: isDark ? '#A5D6A7' : '#388E3C',
+    inputBg: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.9)',
+    inputBorder: isDark ? '#333' : '#C8E6C9',
+    cardActiveBorder: isDark ? '#4CAF50' : '#4CAF50',
+    cardActiveBg: isDark ? 'rgba(76, 175, 80, 0.1)' : '#E8F5E9',
+    btnDisabled: isDark ? '#333' : '#A5D6A7',
+    backBtnBg: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)',
+    iconColor: isDark ? '#FFF' : '#000',
+  };
+
   const params = useLocalSearchParams();
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
 
@@ -42,24 +58,24 @@ export default function DailyActivity() {
   };
 
   return (
-    <LinearGradient colors={['#E8F5E9', '#4CAF50']} style={styles.gradientBg}>
+    <LinearGradient colors={themeColors.gradient} style={styles.gradientBg}>
       <SafeAreaView style={styles.safe}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-            <Ionicons name="arrow-back" size={28} color="#000" />
+          <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: themeColors.backBtnBg }]} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+            <Ionicons name="arrow-back" size={28} color={themeColors.iconColor} />
           </TouchableOpacity>
 
-          <View style={styles.glassContainer}>
+          <View style={[styles.glassContainer, { backgroundColor: themeColors.glass }]}>
             <View style={styles.progressContainer}>
               <View style={[styles.progressDash, styles.dashActive]} />
               <View style={[styles.progressDash, styles.dashActive]} />
               <View style={[styles.progressDash, styles.dashActive]} />
-              <View style={styles.progressDash} />
+              <View style={[styles.progressDash, { backgroundColor: themeColors.inputBorder }]} />
             </View>
 
-            <Text style={styles.title}>Daily Activity</Text>
-            <Text style={styles.subtitle}>How active are you?</Text>
+            <Text style={[styles.title, { color: themeColors.text }]}>Daily Activity</Text>
+            <Text style={[styles.subtitle, { color: themeColors.subText }]}>How active are you?</Text>
 
             <View style={styles.list}>
               {activityOptions.map((item) => (
@@ -68,17 +84,18 @@ export default function DailyActivity() {
                   activeOpacity={0.7}
                   style={[
                     styles.card, 
-                    selectedLevel === item.id && styles.cardActive
+                    { backgroundColor: themeColors.inputBg, borderColor: themeColors.inputBorder },
+                    selectedLevel === item.id && { borderColor: themeColors.cardActiveBorder, backgroundColor: themeColors.cardActiveBg, borderWidth: 2 }
                   ]}
                   onPress={() => setSelectedLevel(item.id)}
                 >
                   <View style={styles.cardContent}>
                     <Text style={styles.emojiIcon}>{item.icon}</Text>
                     <View style={styles.textGroup}>
-                      <Text style={[styles.label, selectedLevel === item.id && styles.labelActive]}>
+                      <Text style={[styles.label, { color: themeColors.subText }, selectedLevel === item.id && styles.labelActive]}>
                         {item.title}
                       </Text>
-                      <Text style={[styles.subText, selectedLevel === item.id && styles.subTextActive]}>{item.desc}</Text>
+                      <Text style={[styles.subText, { color: themeColors.subText }, selectedLevel === item.id && styles.subTextActive]}>{item.desc}</Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -90,7 +107,7 @@ export default function DailyActivity() {
               onPress={handleContinue}
               disabled={!isFormValid}
             >
-              <View style={[styles.continueBtn, !isFormValid && styles.btnDisabled]}>
+              <View style={[styles.continueBtn, !isFormValid && { backgroundColor: themeColors.btnDisabled }]}>
                 <Text style={styles.continueBtnText}>Continue</Text>
               </View>
             </TouchableOpacity>

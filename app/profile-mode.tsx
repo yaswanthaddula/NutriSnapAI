@@ -12,8 +12,29 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import useAppStore from '../src/store/useAppStore';
 import apiService from '../src/services/apiService';
+import { useTheme } from './_layout';
 
 export default function ProfileMode() {
+  const { isDark } = useTheme();
+  const themeColors = {
+    gradient: isDark ? ['#121212', '#1B281E', '#0A120D'] as const : ['#E8F5E9', '#C8E6C9', '#A5D6A7'] as const,
+    glass: isDark ? 'rgba(30, 30, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+    text: isDark ? '#E8F5E9' : '#1B5E20',
+    subText: isDark ? '#A5D6A7' : '#388E3C',
+    cardBg: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.9)',
+    cardBorder: isDark ? '#333' : '#C8E6C9',
+    cardActiveBorder: isDark ? '#4CAF50' : '#4CAF50',
+    cardActiveBg: isDark ? 'rgba(76, 175, 80, 0.1)' : '#E8F5E9',
+    btnDisabled: isDark ? '#333' : '#A5D6A7',
+    backBtnBg: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)',
+    iconColor: isDark ? '#FFF' : '#000',
+    tagBg: isDark ? '#333' : '#FFF',
+    tagActiveBg: isDark ? '#1B5E20' : '#C8E6C9',
+    tagActiveBorder: isDark ? '#4CAF50' : '#81C784',
+    iconContainerHealth: isDark ? 'rgba(76, 175, 80, 0.2)' : '#E8F5E9',
+    iconContainerGym: isDark ? 'rgba(33, 150, 243, 0.2)' : '#E3F2FD',
+  };
+
   const params = useLocalSearchParams();
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
   const { userProfile, setUserProfile, saveStoredData } = useAppStore();
@@ -60,57 +81,65 @@ const handleGetStarted = async () => {
 };
 
   return (
-    <LinearGradient colors={['#E8F5E9', '#4CAF50']} style={styles.gradientBg}>
+    <LinearGradient colors={themeColors.gradient} style={styles.gradientBg}>
       <SafeAreaView style={styles.safe}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-            <Ionicons name="arrow-back" size={28} color="#000" />
+          <TouchableOpacity onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: themeColors.backBtnBg }]} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+            <Ionicons name="arrow-back" size={28} color={themeColors.iconColor} />
           </TouchableOpacity>
 
-          <View style={styles.glassContainer}>
-            <Text style={styles.title}>Choose Your Mode</Text>
-            <Text style={styles.subtitle}>You can change this anytime</Text>
+          <View style={[styles.glassContainer, { backgroundColor: themeColors.glass }]}>
+            <Text style={[styles.title, { color: themeColors.text }]}>Choose Your Mode</Text>
+            <Text style={[styles.subtitle, { color: themeColors.subText }]}>You can change this anytime</Text>
 
             <TouchableOpacity 
               activeOpacity={0.8}
-              style={[styles.card, selectedMode === 'Health' && styles.cardActive]}
+              style={[
+                styles.card, 
+                { backgroundColor: themeColors.cardBg, borderColor: themeColors.cardBorder },
+                selectedMode === 'Health' && { borderColor: themeColors.cardActiveBorder, backgroundColor: themeColors.cardActiveBg, borderWidth: 2 }
+              ]}
               onPress={() => setSelectedMode('Health')}
             >
               <View style={styles.cardHeader}>
-                <View style={[styles.iconContainer, { backgroundColor: '#E8F5E9' }]}>
+                <View style={[styles.iconContainer, { backgroundColor: themeColors.iconContainerHealth }]}>
                   <Ionicons name="heart-outline" size={24} color="#4CAF50" />
                 </View>
                 <View style={styles.headerText}>
-                  <Text style={[styles.modeTitle, selectedMode === 'Health' && styles.modeTitleActive]}>Health Mode</Text>
-                  <Text style={[styles.modeDesc, selectedMode === 'Health' && styles.modeDescActive]}>Focus on wellness, nutrition, and sustainable fitness</Text>
+                  <Text style={[styles.modeTitle, { color: themeColors.subText }, selectedMode === 'Health' && styles.modeTitleActive]}>Health Mode</Text>
+                  <Text style={[styles.modeDesc, { color: themeColors.subText }, selectedMode === 'Health' && styles.modeDescActive]}>Focus on wellness, nutrition, and sustainable fitness</Text>
                 </View>
               </View>
               <View style={styles.tagRow}>
-                <View style={[styles.tag, selectedMode === 'Health' && styles.tagActive]}><Text style={[styles.tagText, selectedMode === 'Health' && styles.tagTextActive]}>Calorie tracking</Text></View>
-                <View style={[styles.tag, selectedMode === 'Health' && styles.tagActive]}><Text style={[styles.tagText, selectedMode === 'Health' && styles.tagTextActive]}>Wellness tips</Text></View>
-                <View style={[styles.tag, selectedMode === 'Health' && styles.tagActive]}><Text style={[styles.tagText, selectedMode === 'Health' && styles.tagTextActive]}>Meal balance</Text></View>
+                <View style={[styles.tag, { backgroundColor: themeColors.tagBg, borderColor: themeColors.cardBorder }, selectedMode === 'Health' && { backgroundColor: themeColors.tagActiveBg, borderColor: themeColors.tagActiveBorder }]}><Text style={[styles.tagText, { color: themeColors.subText }, selectedMode === 'Health' && styles.tagTextActive]}>Calorie tracking</Text></View>
+                <View style={[styles.tag, { backgroundColor: themeColors.tagBg, borderColor: themeColors.cardBorder }, selectedMode === 'Health' && { backgroundColor: themeColors.tagActiveBg, borderColor: themeColors.tagActiveBorder }]}><Text style={[styles.tagText, { color: themeColors.subText }, selectedMode === 'Health' && styles.tagTextActive]}>Wellness tips</Text></View>
+                <View style={[styles.tag, { backgroundColor: themeColors.tagBg, borderColor: themeColors.cardBorder }, selectedMode === 'Health' && { backgroundColor: themeColors.tagActiveBg, borderColor: themeColors.tagActiveBorder }]}><Text style={[styles.tagText, { color: themeColors.subText }, selectedMode === 'Health' && styles.tagTextActive]}>Meal balance</Text></View>
               </View>
             </TouchableOpacity>
 
             <TouchableOpacity 
               activeOpacity={0.8}
-              style={[styles.card, selectedMode === 'Gym' && styles.cardActive]}
+              style={[
+                styles.card, 
+                { backgroundColor: themeColors.cardBg, borderColor: themeColors.cardBorder },
+                selectedMode === 'Gym' && { borderColor: themeColors.cardActiveBorder, backgroundColor: themeColors.cardActiveBg, borderWidth: 2 }
+              ]}
               onPress={() => setSelectedMode('Gym')}
             >
               <View style={styles.cardHeader}>
-                <View style={[styles.iconContainer, { backgroundColor: '#E3F2FD' }]}>
+                <View style={[styles.iconContainer, { backgroundColor: themeColors.iconContainerGym }]}>
                   <MaterialCommunityIcons name="flash-outline" size={24} color="#2196F3" />
                 </View>
                 <View style={styles.headerText}>
-                  <Text style={[styles.modeTitle, selectedMode === 'Gym' && styles.modeTitleActive]}>Gym Mode</Text>
-                  <Text style={[styles.modeDesc, selectedMode === 'Gym' && styles.modeDescActive]}>Build muscle, track workouts, and transform your body</Text>
+                  <Text style={[styles.modeTitle, { color: themeColors.subText }, selectedMode === 'Gym' && styles.modeTitleActive]}>Gym Mode</Text>
+                  <Text style={[styles.modeDesc, { color: themeColors.subText }, selectedMode === 'Gym' && styles.modeDescActive]}>Build muscle, track workouts, and transform your body</Text>
                 </View>
               </View>
               <View style={styles.tagRow}>
-                <View style={[styles.tag, selectedMode === 'Gym' && styles.tagActive]}><Text style={[styles.tagText, selectedMode === 'Gym' && styles.tagTextActive]}>Weekly plans</Text></View>
-                <View style={[styles.tag, selectedMode === 'Gym' && styles.tagActive]}><Text style={[styles.tagText, selectedMode === 'Gym' && styles.tagTextActive]}>Protein tracking</Text></View>
-                <View style={[styles.tag, selectedMode === 'Gym' && styles.tagActive]}><Text style={[styles.tagText, selectedMode === 'Gym' && styles.tagTextActive]}>Progress stats</Text></View>
+                <View style={[styles.tag, { backgroundColor: themeColors.tagBg, borderColor: themeColors.cardBorder }, selectedMode === 'Gym' && { backgroundColor: themeColors.tagActiveBg, borderColor: themeColors.tagActiveBorder }]}><Text style={[styles.tagText, { color: themeColors.subText }, selectedMode === 'Gym' && styles.tagTextActive]}>Weekly plans</Text></View>
+                <View style={[styles.tag, { backgroundColor: themeColors.tagBg, borderColor: themeColors.cardBorder }, selectedMode === 'Gym' && { backgroundColor: themeColors.tagActiveBg, borderColor: themeColors.tagActiveBorder }]}><Text style={[styles.tagText, { color: themeColors.subText }, selectedMode === 'Gym' && styles.tagTextActive]}>Protein tracking</Text></View>
+                <View style={[styles.tag, { backgroundColor: themeColors.tagBg, borderColor: themeColors.cardBorder }, selectedMode === 'Gym' && { backgroundColor: themeColors.tagActiveBg, borderColor: themeColors.tagActiveBorder }]}><Text style={[styles.tagText, { color: themeColors.subText }, selectedMode === 'Gym' && styles.tagTextActive]}>Progress stats</Text></View>
               </View>
             </TouchableOpacity>
 
@@ -121,7 +150,7 @@ const handleGetStarted = async () => {
               onPress={handleGetStarted}
               disabled={!selectedMode}
             >
-              <View style={[styles.startBtn, !selectedMode && styles.btnDisabled]}>
+              <View style={[styles.startBtn, !selectedMode && { backgroundColor: themeColors.btnDisabled }]}>
                 <Text style={styles.startBtnText}>Get Started</Text>
               </View>
             </TouchableOpacity>

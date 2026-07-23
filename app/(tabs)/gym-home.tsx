@@ -119,6 +119,7 @@ export default function GymHomeScreen() {
   // Animation values
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const scaleAnim = React.useRef(new Animated.Value(0.95)).current;
+  const bellShakeAnim = React.useRef(new Animated.Value(0)).current;
 
   // 2. EFFECTS
   useEffect(() => {
@@ -135,6 +136,19 @@ export default function GymHomeScreen() {
         useNativeDriver: true,
       })
     ]).start();
+
+    if (unreadCount > 0 || (todayReminders && todayReminders.length > 0)) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(bellShakeAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+          Animated.timing(bellShakeAnim, { toValue: -1, duration: 100, useNativeDriver: true }),
+          Animated.timing(bellShakeAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+          Animated.timing(bellShakeAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
+          Animated.delay(2000)
+        ])
+      ).start();
+    }
+
     const init = async () => {
       await loadStoredData();
       await syncBackendMeals();
@@ -575,15 +589,28 @@ export default function GymHomeScreen() {
           </View>
         </View>
         
-        <TouchableOpacity style={[styles.bellPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)', borderColor: theme.border }]} onPress={() => router.push('/notification-list')}>
-          {badgeText === '' ? (
-            <MaterialCommunityIcons name="bell-outline" size={20} color={theme.iconColor} />
-          ) : (
-            <Text style={{ color: theme.iconColor, fontWeight: 'bold', fontSize: 13 }}>
-              🔔 {badgeText}
-            </Text>
+        <TouchableOpacity 
+          style={styles.notifBtn} 
+          onPress={() => router.push('/notifications')}
+          activeOpacity={0.7}
+        >
+          <Animated.View style={[
+            styles.premiumBellContainer,
+            { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' },
+            { transform: [{
+              rotate: bellShakeAnim.interpolate({
+                inputRange: [-1, 1],
+                outputRange: ['-15deg', '15deg']
+              })
+            }] }
+          ]}>
+            <MaterialCommunityIcons name="bell-outline" size={24} color={isDark ? '#FFF' : '#2E7D32'} />
+          </Animated.View>
+          {(unreadCount > 0 || badgeText !== '') && (
+            <View style={styles.badgePremium}>
+               <Text style={styles.badgePremiumText}>{unreadCount > 0 ? unreadCount : '!'}</Text>
+            </View>
           )}
-          {unreadCount > 0 && <View style={styles.notifDotPill} />}
         </TouchableOpacity>
       </View>
 
@@ -1372,6 +1399,9 @@ const styles = StyleSheet.create({
   welcomeTextColumn: { justifyContent: 'center' },
   welcomeSmall: { fontSize: 13, fontWeight: '500' },
   userNameBold: { fontSize: 22, fontWeight: '900' },
+  badgePremium: { position: 'absolute', top: -4, right: -4, backgroundColor: '#FF5252', borderRadius: 10, minWidth: 20, height: 20, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#FFF', paddingHorizontal: 4, elevation: 4, shadowColor: '#FF5252', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3 },
+  badgePremiumText: { color: '#FFF', fontSize: 10, fontWeight: '900' },
+  premiumBellContainer: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)' },
   bellPill: { flexDirection: 'row', alignItems: 'center', height: 42, paddingHorizontal: 15, borderRadius: 21, borderWidth: 1, position: 'relative' },
   notifDotPill: { position: 'absolute', top: 10, right: 10, width: 8, height: 8, borderRadius: 4, backgroundColor: '#FF5252' },
 
