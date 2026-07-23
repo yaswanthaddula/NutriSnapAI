@@ -897,6 +897,7 @@ export default function GymHomeScreen() {
                 </View>
               ))}
             </ScrollView>
+          ) : (
             <View style={{ alignItems: 'center', paddingVertical: 15 }}>
               <Text style={{color: theme.subText, fontSize: 13, fontStyle: 'italic', textAlign: 'center'}}>No meals logged today</Text>
             </View>
