@@ -20,24 +20,31 @@ export const clearTempCapturedImageWeb = () => {
   tempCapturedImageWeb = null;
 };
 
-const SCANNER_PROMPT = `Analyze this food image and identify the primary food item.
-Return ONLY valid JSON in this exact format:
+const SCANNER_PROMPT = `
+You are a professional food analyzer for a health app.
+Analyze the image and return a strict JSON response.
+
+CRITICAL RULES:
+1. Extract ONLY the food name in "food_name" (e.g., "Hard Boiled Egg", "Apple"). DO NOT include quantities like "5" or "bowl" in the food name!
+2. Extract the estimated quantity in "quantity" (number only, e.g., 5, 1.5, 100).
+3. Extract the unit of measurement in "unit" (e.g., "pieces", "bowl", "plate", "grams", "ml", "packet").
+4. "confidence" must be 0-100.
+5. Provide "estimated_nutrition" for the given quantity as a fallback.
+
+Format:
 {
-  "food_name": "name of the food",
-  "confidence": 95,
-  "unit_type": "count" or "grams" or "ml",
-  "quantity": 1,
+  "food_name": "string (food name only)",
+  "quantity": number,
+  "unit": "string",
+  "confidence": number,
   "estimated_nutrition": {
-    "calories": 150,
-    "protein": 5.5,
-    "carbs": 12.0,
-    "fat": 8.0
+    "calories": number,
+    "protein": number,
+    "carbs": number,
+    "fat": number
   }
 }
-Choose "count" for discrete items (eggs, apples, slices), "grams" for solid/loose food (rice, chicken breast, pasta), and "ml" for liquids (milk, soup, juice).
-Quantity should be the estimated number of units or portions.
-Estimated nutrition should be per quantity shown.
-Do NOT include any other text or markdown formatting.`;
+`;
 
 /**
  * Converts an image URI to base64.
@@ -159,13 +166,16 @@ export const analyzeImage = async (imageUri) => {
                 console.log("AI Response Received");
                 startCooldown();
                 isScanning = false;
-                return {
-                  food_name: parsed.food_name,
+                const result = {
+                  food_name: parsed.food_name || 'Unknown Food',
+                  quantity: parsed.quantity || null,
+                  unit: parsed.unit || null,
                   confidence: parsed.confidence || 0,
-                  unit_type: parsed.unit_type || 'grams',
-                  quantity: parsed.quantity || 1,
-                  estimated_nutrition: parsed.estimated_nutrition || { calories: 0, protein: 0, carbs: 0, fat: 0 }
+                  estimated_nutrition: parsed.estimated_nutrition || null
                 };
+
+                console.log("Scanner Result:", result);
+                return result;
               }
             }
           } else {

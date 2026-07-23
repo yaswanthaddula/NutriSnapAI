@@ -35,7 +35,7 @@ export default function GymHomeScreen() {
   const { 
     userProfile, meals, steps, caloriesBurned, workouts, activeWorkout, notifications, 
     notificationPrefs, waterData, updateSteps, loadStoredData, saveStoredData, setMeals, 
-    addWater, setWaterIntake, recalculateWaterGoal, fetchTodayReminders, todayReminders, reminders
+    addWater, setWaterIntake, recalculateWaterGoal, fetchTodayReminders, todayReminders, reminders, checkNewDay
   } = useAppStore();
   
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'gym')).length;
@@ -87,6 +87,7 @@ export default function GymHomeScreen() {
 
   useFocusEffect(
     React.useCallback(() => {
+      checkNewDay();
       fetchTodayReminders();
     }, [])
   );
@@ -607,29 +608,37 @@ export default function GymHomeScreen() {
                
                return (
                  <>
-                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 18, marginRight: 8 }}>⏰</Text>
+                  <View style={[styles.reminderStatusBox, { backgroundColor: isDark ? 'rgba(33, 150, 243, 0.1)' : '#E3F2FD' }]}>
+                    <View style={[styles.statusIconCircle, { backgroundColor: '#2196F3' }]}>
+                      <Ionicons name="time-outline" size={20} color="#FFF" />
+                    </View>
                     <View>
                       <Text style={{ color: theme.text, fontWeight: 'bold' }}>Upcoming</Text>
                       <Text style={{ color: theme.text, fontSize: 16 }}>{counts.Upcoming}</Text>
                     </View>
                   </View>
-                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 18, marginRight: 8 }}>🔔</Text>
+                  <View style={[styles.reminderStatusBox, { backgroundColor: isDark ? 'rgba(255, 152, 0, 0.1)' : '#FFF3E0' }]}>
+                    <View style={[styles.statusIconCircle, { backgroundColor: '#FF9800' }]}>
+                      <Ionicons name="notifications-outline" size={20} color="#FFF" />
+                    </View>
                     <View>
                       <Text style={{ color: theme.text, fontWeight: 'bold' }}>Active</Text>
                       <Text style={{ color: theme.text, fontSize: 16 }}>{counts.Active}</Text>
                     </View>
                   </View>
-                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 18, marginRight: 8 }}>✅</Text>
+                  <View style={[styles.reminderStatusBox, { backgroundColor: isDark ? 'rgba(76, 175, 80, 0.1)' : '#E8F5E9' }]}>
+                    <View style={[styles.statusIconCircle, { backgroundColor: '#4CAF50' }]}>
+                      <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" />
+                    </View>
                     <View>
                       <Text style={{ color: theme.text, fontWeight: 'bold' }}>Completed</Text>
                       <Text style={{ color: theme.text, fontSize: 16 }}>{counts.Completed}</Text>
                     </View>
                   </View>
-                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 18, marginRight: 8 }}>❌</Text>
+                  <View style={[styles.reminderStatusBox, { backgroundColor: isDark ? 'rgba(244, 67, 54, 0.1)' : '#FFEBEE' }]}>
+                    <View style={[styles.statusIconCircle, { backgroundColor: '#F44336' }]}>
+                      <Ionicons name="warning-outline" size={20} color="#FFF" />
+                    </View>
                     <View>
                       <Text style={{ color: theme.text, fontWeight: 'bold' }}>Missed</Text>
                       <Text style={{ color: theme.text, fontSize: 16 }}>{counts.Missed}</Text>
@@ -672,16 +681,18 @@ export default function GymHomeScreen() {
             console.log("Filtered reminders for dashboard:", filteredReminders);
             
             return filteredReminders.map((reminder: any, index: number) => {
-              let icon = '⏰';
+              let iconName: any = 'clock-outline';
+              let iconColor = '#2196F3';
               let title = reminder.reminder_type || 'Reminder';
+              
               switch(reminder.reminder_type?.toLowerCase()) {
-                case 'workout': icon = '🏋️'; title = 'Workout Reminder'; break;
-                case 'breakfast': icon = '🍳'; title = 'Breakfast Reminder'; break;
-                case 'lunch': icon = '🍽️'; title = 'Lunch Reminder'; break;
-                case 'dinner': icon = '🌙'; title = 'Dinner Reminder'; break;
-                case 'snack': icon = '🍎'; title = 'Snack Reminder'; break;
-                case 'water': icon = '💧'; title = 'Water Reminder'; break;
-                case 'sleep': icon = '💤'; title = 'Sleep Reminder'; break;
+                case 'workout': iconName = 'dumbbell'; iconColor = '#9C27B0'; title = 'Workout Reminder'; break;
+                case 'breakfast': iconName = 'food-croissant'; iconColor = '#FF9800'; title = 'Breakfast Reminder'; break;
+                case 'lunch': iconName = 'silverware-fork-knife'; iconColor = '#4CAF50'; title = 'Lunch Reminder'; break;
+                case 'dinner': iconName = 'food-steak'; iconColor = '#F44336'; title = 'Dinner Reminder'; break;
+                case 'snack': iconName = 'food-apple'; iconColor = '#FF5252'; title = 'Snack Reminder'; break;
+                case 'water': iconName = 'water-drop'; iconColor = '#00BCD4'; title = 'Water Reminder'; break;
+                case 'sleep': iconName = 'moon-waning-crescent'; iconColor = '#3F51B5'; title = 'Sleep Reminder'; break;
               }
               
               let status = reminder.status || 'Upcoming';
@@ -692,7 +703,9 @@ export default function GymHomeScreen() {
               return (
                 <View key={index} style={[styles.mealItem, { flexDirection: 'column', alignItems: 'stretch' }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{fontSize: 24}}>{icon}</Text>
+                    <View style={[styles.reminderIconBox, { backgroundColor: iconColor + '20' }]}>
+                      <MaterialCommunityIcons name={iconName} size={24} color={iconColor} />
+                    </View>
                     <View style={{flex: 1, marginLeft: 15}}>
                       <Text style={[styles.mealName, {color: theme.text}]}>{title}</Text>
                       <Text style={[styles.mealTime, { color: statusColor }]}>
@@ -766,21 +779,24 @@ export default function GymHomeScreen() {
           )}
         </View>
 
-        {/* STEPS & ACTIVITY ROW (COMPACT) */}
         <View style={styles.statRowCompact}>
           <TouchableOpacity 
             style={[styles.compactStat, { backgroundColor: isDark ? '#1E1E1E' : '#FFF', borderColor: theme.border, borderWidth: 1 }]}
             onPress={handleStepsPress}
           >
-            <Ionicons name="footsteps" size={20} color="#FF9800" />
-            <View style={{ marginLeft: 10 }}>
+            <View style={[styles.iconCircle, { backgroundColor: 'rgba(255, 152, 0, 0.1)' }]}>
+              <Ionicons name="footsteps" size={20} color="#FF9800" />
+            </View>
+            <View style={{ marginLeft: 12 }}>
               <Text style={[styles.compactVal, { color: theme.text }]}>{steps}</Text>
               <Text style={[styles.compactLabel, { color: theme.subText }]}>Steps</Text>
             </View>
           </TouchableOpacity>
           <View style={[styles.compactStat, { backgroundColor: isDark ? '#1E1E1E' : '#FFF', borderColor: theme.border, borderWidth: 1 }]}>
-            <Ionicons name="flame" size={20} color="#F44336" />
-            <View style={{ marginLeft: 10 }}>
+            <View style={[styles.iconCircle, { backgroundColor: 'rgba(244, 67, 54, 0.1)' }]}>
+              <Ionicons name="flame" size={20} color="#F44336" />
+            </View>
+            <View style={{ marginLeft: 12 }}>
               <Text style={[styles.compactVal, { color: theme.text }]}>{totalCaloriesBurned}</Text>
               <Text style={[styles.compactLabel, { color: theme.subText }]}>Burned</Text>
             </View>
@@ -1144,6 +1160,9 @@ export default function GymHomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  reminderIconBox: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  reminderStatusBox: { flex: 1, minWidth: '45%', padding: 15, borderRadius: 16, flexDirection: 'row', alignItems: 'center' },
+  statusIconCircle: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
   container: { flex: 1 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: Platform.OS === 'android' ? 50 : 20, paddingBottom: 10 },
   greeting: { fontSize: 26, fontWeight: 'bold' },
@@ -1262,9 +1281,9 @@ const styles = StyleSheet.create({
   macroLabel: { fontSize: 10, opacity: 0.7, marginTop: 2 },
 
   statRowCompact: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-  compactStat: { width: '48%', borderRadius: 22, padding: 15, flexDirection: 'row', alignItems: 'center' },
-  compactVal: { fontSize: 18, fontWeight: 'bold' },
-  compactLabel: { fontSize: 12, opacity: 0.7 },
+  compactStat: { width: '48%', borderRadius: 22, padding: 20, flexDirection: 'row', alignItems: 'center', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 5 },
+  compactVal: { fontSize: 20, fontWeight: 'bold' },
+  compactLabel: { fontSize: 13, opacity: 0.7, marginTop: 4 },
 
   waterCard: { width: '100%', borderRadius: 25, padding: 20, marginBottom: 20 },
   waterHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },

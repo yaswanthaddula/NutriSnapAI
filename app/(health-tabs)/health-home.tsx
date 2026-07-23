@@ -45,7 +45,7 @@ export default function HealthHomeScreen() {
     userProfile, meals, steps, caloriesBurned, updateSteps, 
     loadStoredData, saveStoredData, waterData, addWater,
     streak, todayMood, setMood, todaySleep, setSleep, updateStreak,
-    notifications, notificationPrefs, reminderStatuses, fetchTodayReminders, todayReminders, reminders
+    notifications, notificationPrefs, reminderStatuses, fetchTodayReminders, todayReminders, reminders, checkNewDay
   } = useAppStore();
 
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'health')).length;
@@ -101,6 +101,7 @@ export default function HealthHomeScreen() {
   useFocusEffect(
     useCallback(() => {
       console.log("Health Home Focused - Refreshing data...");
+      checkNewDay(); // <--- ADDED: Check and reset daily stats automatically
       syncBackendMeals();
       loadChatHistory();
       if (fetchTodayReminders) fetchTodayReminders();
@@ -640,10 +641,12 @@ export default function HealthHomeScreen() {
           }}
           >
             <View style={styles.cardTop}>
-              <Ionicons name="water" size={18} color="#2196F3" />
+              <View style={[styles.iconCircle, { backgroundColor: 'rgba(33, 150, 243, 0.1)' }]}>
+                <Ionicons name="water" size={20} color="#2196F3" />
+              </View>
               <Text style={[styles.statLabel, { color: themeColors.subText }]}>Water</Text>
             </View>
-            <Text style={[styles.statValue, { color: themeColors.text }]}>{Math.floor(waterData.waterIntake / 250)}/{Math.round(waterData.waterGoal / 250)}</Text>
+            <Text style={[styles.statValue, { color: themeColors.text }]}>{Math.floor(waterData.waterIntake / 250)}<Text style={{fontSize:16, color:themeColors.subText}}>/{Math.round(waterData.waterGoal / 250)}</Text></Text>
             <Text style={[styles.statSub, { color: themeColors.subText }]}>glasses today</Text>
           </TouchableOpacity>
 
@@ -652,7 +655,9 @@ export default function HealthHomeScreen() {
             onPress={handleStepsPress}
           >
             <View style={styles.cardTop}>
-              <MaterialCommunityIcons name="shoe-print" size={18} color="#FF9800" />
+              <View style={[styles.iconCircle, { backgroundColor: 'rgba(255, 152, 0, 0.1)' }]}>
+                <MaterialCommunityIcons name="shoe-print" size={20} color="#FF9800" />
+              </View>
               <Text style={[styles.statLabel, { color: themeColors.subText }]}>Steps</Text>
             </View>
             <Text style={[styles.statValue, { color: themeColors.text }]}>{steps}</Text>
@@ -663,7 +668,9 @@ export default function HealthHomeScreen() {
         <View style={styles.row}>
           <View style={[styles.statCard, { backgroundColor: themeColors.card, borderColor: themeColors.border, borderWidth: 1 }]}>
             <View style={styles.cardTop}>
-              <Ionicons name="flame" size={18} color="#FF5252" />
+              <View style={[styles.iconCircle, { backgroundColor: 'rgba(255, 82, 82, 0.1)' }]}>
+                <Ionicons name="flame" size={20} color="#FF5252" />
+              </View>
               <Text style={[styles.statLabel, { color: themeColors.subText }]}>Burned</Text>
             </View>
             <Text style={[styles.statValue, { color: themeColors.text }]}>{caloriesBurned}</Text>
@@ -675,7 +682,9 @@ export default function HealthHomeScreen() {
             onPress={() => router.push('/progress')}
           >
             <View style={styles.cardTop}>
-              <MaterialCommunityIcons name="scale-bathroom" size={18} color="#9C27B0" />
+              <View style={[styles.iconCircle, { backgroundColor: 'rgba(156, 39, 176, 0.1)' }]}>
+                <MaterialCommunityIcons name="scale-bathroom" size={20} color="#9C27B0" />
+              </View>
               <Text style={[styles.statLabel, { color: themeColors.subText }]}>BMI</Text>
             </View>
             <Text style={[styles.statValue, { color: themeColors.text }]}>{realBmi}</Text>
@@ -733,29 +742,37 @@ export default function HealthHomeScreen() {
                
                return (
                  <>
-                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 18, marginRight: 8 }}>⏰</Text>
+                  <View style={[styles.reminderStatusBox, { backgroundColor: isDark ? 'rgba(33, 150, 243, 0.1)' : '#E3F2FD' }]}>
+                    <View style={[styles.statusIconCircle, { backgroundColor: '#2196F3' }]}>
+                      <Ionicons name="time-outline" size={20} color="#FFF" />
+                    </View>
                     <View>
                       <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Upcoming</Text>
                       <Text style={{ color: themeColors.text, fontSize: 16 }}>{counts.Upcoming}</Text>
                     </View>
                   </View>
-                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 18, marginRight: 8 }}>🔔</Text>
+                  <View style={[styles.reminderStatusBox, { backgroundColor: isDark ? 'rgba(255, 152, 0, 0.1)' : '#FFF3E0' }]}>
+                    <View style={[styles.statusIconCircle, { backgroundColor: '#FF9800' }]}>
+                      <Ionicons name="notifications-outline" size={20} color="#FFF" />
+                    </View>
                     <View>
                       <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Active</Text>
                       <Text style={{ color: themeColors.text, fontSize: 16 }}>{counts.Active}</Text>
                     </View>
                   </View>
-                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 18, marginRight: 8 }}>✅</Text>
+                  <View style={[styles.reminderStatusBox, { backgroundColor: isDark ? 'rgba(76, 175, 80, 0.1)' : '#E8F5E9' }]}>
+                    <View style={[styles.statusIconCircle, { backgroundColor: '#4CAF50' }]}>
+                      <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" />
+                    </View>
                     <View>
                       <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Completed</Text>
                       <Text style={{ color: themeColors.text, fontSize: 16 }}>{counts.Completed}</Text>
                     </View>
                   </View>
-                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: themeColors.cardBg, padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 18, marginRight: 8 }}>❌</Text>
+                  <View style={[styles.reminderStatusBox, { backgroundColor: isDark ? 'rgba(244, 67, 54, 0.1)' : '#FFEBEE' }]}>
+                    <View style={[styles.statusIconCircle, { backgroundColor: '#F44336' }]}>
+                      <Ionicons name="warning-outline" size={20} color="#FFF" />
+                    </View>
                     <View>
                       <Text style={{ color: themeColors.text, fontWeight: 'bold' }}>Missed</Text>
                       <Text style={{ color: themeColors.text, fontSize: 16 }}>{counts.Missed}</Text>
@@ -799,16 +816,18 @@ export default function HealthHomeScreen() {
             console.log("Filtered reminders for dashboard:", filteredReminders);
             
             return filteredReminders.map((reminder: any, index: number) => {
-              let icon = '⏰';
+              let iconName: any = 'clock-outline';
+              let iconColor = '#2196F3';
               let title = reminder.reminder_type || 'Reminder';
+              
               switch(reminder.reminder_type?.toLowerCase()) {
-                case 'workout': icon = '🏋️'; title = 'Workout Reminder'; break;
-                case 'breakfast': icon = '🍳'; title = 'Breakfast Reminder'; break;
-                case 'lunch': icon = '🍽️'; title = 'Lunch Reminder'; break;
-                case 'dinner': icon = '🌙'; title = 'Dinner Reminder'; break;
-                case 'snack': icon = '🍎'; title = 'Snack Reminder'; break;
-                case 'water': icon = '💧'; title = 'Water Reminder'; break;
-                case 'sleep': icon = '😴'; title = 'Sleep Reminder'; break;
+                case 'workout': iconName = 'dumbbell'; iconColor = '#9C27B0'; title = 'Workout Reminder'; break;
+                case 'breakfast': iconName = 'food-croissant'; iconColor = '#FF9800'; title = 'Breakfast Reminder'; break;
+                case 'lunch': iconName = 'silverware-fork-knife'; iconColor = '#4CAF50'; title = 'Lunch Reminder'; break;
+                case 'dinner': iconName = 'food-steak'; iconColor = '#F44336'; title = 'Dinner Reminder'; break;
+                case 'snack': iconName = 'food-apple'; iconColor = '#FF5252'; title = 'Snack Reminder'; break;
+                case 'water': iconName = 'water-drop'; iconColor = '#00BCD4'; title = 'Water Reminder'; break;
+                case 'sleep': iconName = 'moon-waning-crescent'; iconColor = '#3F51B5'; title = 'Sleep Reminder'; break;
               }
               
               let status = reminder.status || 'Upcoming';
@@ -819,7 +838,9 @@ export default function HealthHomeScreen() {
               return (
                 <View key={index} style={[styles.mealItem, { borderBottomColor: themeColors.border, paddingVertical: 12, flexDirection: 'column', alignItems: 'stretch' }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{fontSize: 24}}>{icon}</Text>
+                    <View style={[styles.reminderIconBox, { backgroundColor: iconColor + '20' }]}>
+                      <MaterialCommunityIcons name={iconName} size={24} color={iconColor} />
+                    </View>
                     <View style={{flex: 1, marginLeft: 15}}>
                       <Text style={[styles.mealName, {color: themeColors.text}]}>{title}</Text>
                       <Text style={[styles.mealTime, { color: statusColor }]}>
@@ -1124,6 +1145,9 @@ export default function HealthHomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  reminderIconBox: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  reminderStatusBox: { flex: 1, minWidth: '45%', padding: 15, borderRadius: 16, flexDirection: 'row', alignItems: 'center' },
+  statusIconCircle: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
   container: { flex: 1, backgroundColor: '#F8F9FA' },
   topHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 25, paddingVertical: 20, paddingTop: Platform.OS === 'android' ? 50 : 20, alignItems: 'center' },
   userInfoRow: { flexDirection: 'row', alignItems: 'center' },
@@ -1142,12 +1166,13 @@ const styles = StyleSheet.create({
   calDayNum: { fontSize: 14, fontWeight: 'bold' },
   scroll: { paddingHorizontal: 20, paddingBottom: 50 },
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
-  statCard: { width: '48%', backgroundColor: '#FFF', borderRadius: 20, padding: 15, elevation: 1 },
-  cardTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  statLabel: { fontSize: 13, color: '#7D8592', marginLeft: 8, fontWeight: '600' },
-  statValue: { fontSize: 22, fontWeight: 'bold' },
-  statSub: { fontSize: 11, color: '#7D8592' },
-  gaugeCard: { borderRadius: 30, padding: 25, marginBottom: 20, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10 },
+  statCard: { width: '48%', backgroundColor: '#FFF', borderRadius: 20, padding: 20, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 5 },
+  cardTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
+  iconCircle: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  statLabel: { fontSize: 14, color: '#7D8592', marginLeft: 8, fontWeight: '600' },
+  statValue: { fontSize: 26, fontWeight: 'bold' },
+  statSub: { fontSize: 12, color: '#7D8592', marginTop: 4 },
+  gaugeCard: { borderRadius: 30, padding: 25, marginBottom: 20, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10 },
   gaugeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   gaugeTitle: { fontSize: 20, fontWeight: 'bold' },
   gaugeWrapper: { height: 160, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
@@ -1160,7 +1185,7 @@ const styles = StyleSheet.create({
   macroCard: { width: '31%', borderRadius: 20, padding: 12, alignItems: 'center', justifyContent: 'center' },
   macroValue: { fontSize: 16, fontWeight: 'bold', marginTop: 5 },
   macroLabel: { fontSize: 10, fontWeight: '600', marginTop: 2 },
-  mainCard: { backgroundColor: '#FFF', borderRadius: 25, padding: 20, marginBottom: 15, elevation: 1 },
+  mainCard: { backgroundColor: '#FFF', borderRadius: 25, padding: 20, marginBottom: 15, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 6 },
   mainCardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
   cardTitle: { fontSize: 18, fontWeight: 'bold' },
   scanBtn: { flexDirection: 'row', alignItems: 'center' },

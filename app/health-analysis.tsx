@@ -25,6 +25,7 @@ export default function HealthAnalysisScreen() {
   const [currentStep, setCurrentStep] = useState(1); // 1: Analyzing, 2: Finding Match, 3: Select/Confirm
   const [detectionResult, setDetectionResult] = useState<any>(null);
   const [fatSecretResults, setFatSecretResults] = useState<any[]>([]);
+  const [analysisData, setAnalysisData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   
@@ -47,12 +48,12 @@ export default function HealthAnalysisScreen() {
     const performAnalysis = async () => {
       setIsLoading(true);
       try {
-        // STEP 1: Gemini Analysis (Food Name Only)
+        // STEP 1: Gemini Analysis (Food Name, Quantity, Unit)
         setCurrentStep(1);
         const geminiResult = await analyzeImage(imageUri);
-        const { food_name, confidence, estimated_nutrition } = geminiResult;
+        const { food_name, quantity, unit, confidence, estimated_nutrition } = geminiResult;
 
-        console.log(`AI Detected: ${food_name} (${confidence}%)`);
+        console.log(`AI Detected: ${food_name} (${quantity} ${unit}) - ${confidence}%`);
 
         // STEP 2: Confidence Logic
         if (confidence < 70) {
@@ -86,6 +87,8 @@ export default function HealthAnalysisScreen() {
             food_name: detail.food_name,
             foodImage: detail.food_image,
             confidence: confidence,
+            quantity: quantity,
+            unit: unit,
             estimated_nutrition: {
               calories: detail.servings[0].calories,
               protein: detail.servings[0].protein,
@@ -95,7 +98,8 @@ export default function HealthAnalysisScreen() {
           });
         } else {
           // Medium Confidence (70-84): Let user select from top 3
-          // Already have fsResults set, UI will show selection list
+          // Set analysisData for handleSelectFood to use
+          setAnalysisData({ quantity, unit });
         }
 
         setCurrentStep(3);
@@ -136,7 +140,9 @@ export default function HealthAnalysisScreen() {
           protein: detail.servings[0].protein,
           carbs: detail.servings[0].carbs,
           fat: detail.servings[0].fat,
-          emoji: '🍽️'
+          emoji: '🍽️',
+          detectedQuantity: analysisData?.quantity,
+          detectedUnit: analysisData?.unit
         }
       });
     } catch (err) {
@@ -159,7 +165,9 @@ export default function HealthAnalysisScreen() {
         protein: detectionResult.estimated_nutrition?.protein,
         carbs: detectionResult.estimated_nutrition?.carbs,
         fat: detectionResult.estimated_nutrition?.fat,
-        emoji: '🍽️'
+        emoji: '🍽️',
+        detectedQuantity: detectionResult.quantity,
+        detectedUnit: detectionResult.unit
       }
     });
     // Reset processing state after navigation if needed (usually handled by router)

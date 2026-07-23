@@ -56,15 +56,15 @@ export default function HealthQuantityScreen() {
     }
   }, [category]);
 
-  const [selectedUnit, setSelectedUnit] = useState(initialConfig.unit);
-  const [quantity, setQuantity] = useState(initialConfig.quantity);
+  const [selectedUnit, setSelectedUnit] = useState(params.detectedUnit ? String(params.detectedUnit) : initialConfig.unit);
+  const [quantity, setQuantity] = useState(params.detectedQuantity ? parseFloat(String(params.detectedQuantity)) : initialConfig.quantity);
   const [isCustomActive, setIsCustomActive] = useState(false);
 
   React.useEffect(() => {
-    setSelectedUnit(initialConfig.unit);
-    setQuantity(initialConfig.quantity);
+    setSelectedUnit(params.detectedUnit ? String(params.detectedUnit) : initialConfig.unit);
+    setQuantity(params.detectedQuantity ? parseFloat(String(params.detectedQuantity)) : initialConfig.quantity);
     setIsCustomActive(false);
-  }, [foodName, initialConfig]);
+  }, [foodName, initialConfig, params.detectedQuantity, params.detectedUnit]);
   
   // 2. LOOKUP NUTRITION
   const foodInfo = useMemo(() => foodDatabase.find(f => f.name.toLowerCase() === foodName.toLowerCase()), [foodName]);

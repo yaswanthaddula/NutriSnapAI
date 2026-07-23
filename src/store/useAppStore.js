@@ -686,6 +686,61 @@ const useAppStore = create((set, get) => ({
     get().recalculateWaterGoal();
   },
 
+  checkNewDay: () => {
+    const today = new Date().toISOString().split('T')[0];
+    const { lastStepDate, steps, caloriesBurned, activityHistory, waterData, lastActiveDate, reminderStatuses } = get();
+    
+    let needsSave = false;
+
+    // 1. Reset Steps & Calories if day changed
+    if (lastStepDate && lastStepDate !== today) {
+      // Ensure history is updated before reset
+      const history = [...activityHistory];
+      const index = history.findIndex(h => h.date === lastStepDate);
+      if (index >= 0) {
+        history[index].steps = steps;
+        history[index].caloriesBurned = caloriesBurned;
+      } else {
+        history.push({ date: lastStepDate, steps, caloriesBurned });
+      }
+
+      set({ 
+        steps: 0, 
+        caloriesBurned: 0, 
+        lastStepDate: today,
+        activityHistory: history 
+      });
+      needsSave = true;
+    }
+
+    // 2. Reset Water if day changed
+    if (waterData && waterData.date !== today) {
+      set({ 
+        waterData: { 
+          date: today, 
+          waterIntake: 0, 
+          waterGoal: waterData.waterGoal || 2500 
+        } 
+      });
+      needsSave = true;
+    }
+
+    // 3. Reset Daily Sleep/Mood/Reminders
+    if (lastActiveDate !== today) {
+      set({ 
+        todayMood: null, 
+        todaySleep: 0, 
+        lastActiveDate: today,
+        reminderStatuses: {}
+      });
+      needsSave = true;
+    }
+
+    if (needsSave) {
+      get().saveStoredData();
+    }
+  },
+
   logout: async () => {
     set({
       userProfile: {

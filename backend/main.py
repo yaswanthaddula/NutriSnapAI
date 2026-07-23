@@ -285,6 +285,38 @@ async def search_foods(request: SearchRequest):
         print(f"ERROR in search_foods: {str(e)}")
         return []
 
+def get_base_unit_type(food_name: str) -> str:
+    name = food_name.lower().strip()
+    if any(x in name for x in ['juice','milk','tea','coffee','smoothie','drink','water','beverage','soup','soda','beer','wine','alcohol','liquid','broth']):
+        return 'ml'
+    if any(x in name for x in ['rice','noodle','pasta','curry','dal','spaghetti','gravy','chicken breast','beef','pork','fish','steak','oats','porridge','quinoa','lentil','beans']):
+        return 'grams'
+    if any(x in name for x in ['slices','sliced','cut','pieces','salad','chopped','diced','chunks','halves']):
+        return 'grams'
+    if any(x in name for x in ['chips','biscuit','chocolate','cookie','wafer','cracker','snack','popcorn','candy','nut','almond','cashew','peanut']):
+        return 'grams'
+    return 'count'
+
+def get_piece_grams(food_name: str) -> float:
+    name = food_name.lower()
+    if 'apple' in name: return 182.0
+    if 'banana' in name: return 120.0
+    if 'mango' in name: return 200.0
+    if 'orange' in name: return 130.0
+    if 'egg' in name: return 50.0
+    if 'burger' in name: return 220.0
+    if 'sandwich' in name: return 150.0
+    if 'chapati' in name or 'roti' in name: return 40.0
+    if 'idli' in name: return 50.0
+    if 'dosa' in name: return 80.0
+    if 'pizza' in name: return 120.0
+    if 'donut' in name: return 60.0
+    if 'cookie' in name: return 30.0
+    if 'biscuit' in name: return 10.0
+    if 'chocolate' in name: return 40.0
+    if 'packet' in name: return 50.0
+    return 150.0
+
 @app.get("/foods/{food_id}", response_model=FoodDetail)
 async def get_food_detail(food_id: str):
     if food_id.startswith("gemini_fallback:"):
@@ -341,20 +373,39 @@ async def get_food_detail(food_id: str):
                 elif n_id == 1005 or n_name == "Carbohydrate, by difference": carbs = float(n_value)
                 elif n_id == 1004 or n_name == "Total lipid (fat)": fat = float(n_value)
 
-            serving_size = food.get("servingSize", 1)
+            serving_size = food.get("servingSize")
             serving_unit = food.get("servingSizeUnit", "serving")
-            serving_desc = f"{serving_size} {serving_unit}"
-
+            serving_desc = f"{serving_size} {serving_unit}" if serving_size else "1 serving"
+            
+            # The nutrients extracted from foodNutrients are per 100g or 100mL by USDA standards.
+            # Scale them to per piece if the frontend treats this as a countable item.
+            food_desc = str(food.get("description", "Unknown Food"))
+            base_type = get_base_unit_type(food_desc)
+            
+            if base_type == 'count':
+                # Determine piece weight
+                piece_weight = serving_size
+                if piece_weight is None or float(piece_weight) <= 0:
+                    piece_weight = get_piece_grams(food_desc)
+                else:
+                    piece_weight = float(piece_weight)
+                
+                # Scale from per 100g to per piece
+                cal = (cal / 100.0) * piece_weight
+                prot = (prot / 100.0) * piece_weight
+                carbs = (carbs / 100.0) * piece_weight
+                fat = (fat / 100.0) * piece_weight
+                
             return {
                 "food_id": str(food.get("fdcId", food_id)),
-                "food_name": str(food.get("description", "Unknown Food")),
+                "food_name": food_desc,
                 "food_image": None,
                 "servings": [{
                     "serving_description": serving_desc,
-                    "calories": cal,
-                    "protein": prot,
-                    "carbs": carbs,
-                    "fat": fat
+                    "calories": float(cal),
+                    "protein": float(prot),
+                    "carbs": float(carbs),
+                    "fat": float(fat)
                 }]
             }
         except httpx.HTTPStatusError as e:
