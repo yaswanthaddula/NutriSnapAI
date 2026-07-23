@@ -15,6 +15,7 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { apiService } from '../src/services/apiService';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
@@ -98,18 +99,20 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
-          {/* Back Button */}
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={28} color="#333" />
-          </TouchableOpacity>
+    <LinearGradient colors={['#E8F5E9', '#4CAF50']} style={styles.gradientBg}>
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} showsVerticalScrollIndicator={false}>
+            {/* Back Button */}
+            <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+              <Ionicons name="chevron-back" size={28} color="#000" />
+            </TouchableOpacity>
 
-          <View style={styles.content}>
+            <View style={styles.glassContainer}>
+              <View style={styles.content}>
             <Text style={styles.header}>Reset Password</Text>
             <Text style={styles.subHeader}>Fill in the details below to reset your password and continue.</Text>
 
@@ -212,36 +215,54 @@ export default function ForgotPasswordScreen() {
               ) : (
                 <Text style={styles.mainBtnText}>Continue with Login</Text>
               )}
-            </TouchableOpacity>
+              </TouchableOpacity>
 
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  backBtn: { padding: 20, marginTop: 10 },
-  content: { paddingHorizontal: 30, paddingBottom: 40 },
-  header: { fontSize: 32, fontWeight: 'bold', color: '#011627', marginBottom: 10 },
-  subHeader: { fontSize: 16, color: '#707070', marginBottom: 30 },
-  inputSection: { marginBottom: 25 },
-  label: { fontSize: 14, fontWeight: '600', color: '#011627', marginBottom: 10 },
+  container: { flex: 1, backgroundColor: 'transparent' },
+  gradientBg: { flex: 1 },
+  glassContainer: {
+    marginHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 30,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+    paddingVertical: 20,
+  },
+  backBtn: { position: 'absolute', top: 10, left: 20, zIndex: 10, padding: 10, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 20 },
+  content: { paddingHorizontal: 30, paddingBottom: 20 },
+  header: { fontSize: 32, fontWeight: '900', color: '#1B5E20', marginTop: 20, marginBottom: 10 },
+  subHeader: { fontSize: 16, color: '#388E3C', marginBottom: 30, fontWeight: '600' },
+  inputSection: { marginBottom: 15 },
+  label: { fontSize: 14, fontWeight: '700', color: '#2E7D32', marginBottom: 8 },
   input: { 
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderWidth: 1, 
-    borderColor: '#E0E0E0', 
+    borderColor: '#C8E6C9', 
     padding: 15, 
-    borderRadius: 12, 
+    borderRadius: 16, 
     fontSize: 16 
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 12,
+    borderColor: '#C8E6C9',
+    borderRadius: 16,
+    minHeight: 55,
   },
   passwordInput: {
     flex: 1,
@@ -270,16 +291,16 @@ const styles = StyleSheet.create({
     textAlign: 'right'
   },
   mainBtn: { 
-    backgroundColor: '#00C853', 
+    backgroundColor: '#4CAF50', 
     padding: 18, 
-    borderRadius: 50, 
+    borderRadius: 16, 
     alignItems: 'center',
     marginTop: 20,
-    shadowColor: '#00C853',
+    elevation: 8,
+    shadowColor: '#4CAF50',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 4
+    shadowOpacity: 0.3,
+    shadowRadius: 10
   },
   mainBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
 });

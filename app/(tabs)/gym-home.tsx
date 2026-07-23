@@ -42,6 +42,35 @@ export default function GymHomeScreen() {
   
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'gym')).length;
   
+  const getNotificationBadgeText = () => {
+    if (unreadCount > 0) return unreadCount.toString();
+    
+    // Find next reminder today
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+    let nextTimeStr = '';
+    let minDiff = Infinity;
+    
+    todayReminders?.forEach((r: any) => {
+      if (!r.is_enabled || r.status === 'Completed' || r.status === 'Missed') return;
+      const match = r.reminder_time?.match(/^(\d{1,2})[:.](\d{2})\s*(AM|PM)$/i);
+      if (match) {
+        let h = parseInt(match[1]);
+        const m = parseInt(match[2]);
+        const ampm = match[3].toUpperCase();
+        if (ampm === 'PM' && h < 12) h += 12;
+        if (ampm === 'AM' && h === 12) h = 0;
+        const rMins = h * 60 + m;
+        if (rMins > currentMins && (rMins - currentMins) < minDiff) {
+          minDiff = rMins - currentMins;
+          nextTimeStr = r.reminder_time;
+        }
+      }
+    });
+    return nextTimeStr ? `Next: ${nextTimeStr}` : '';
+  };
+  const badgeText = getNotificationBadgeText();
+  
   // Calculate Today's Workout
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const todayName = days[new Date().getDay()];
@@ -349,7 +378,8 @@ export default function GymHomeScreen() {
     if (chatInput.trim() === '' || isChatLoading) return;
     
     setIsChatLoading(true);
-    const userMsg = { id: Date.now(), text: chatInput, isAi: false };
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const userMsg = { id: Date.now(), text: chatInput, isAi: false, timestamp: timeStr };
     setMessages(prev => [...prev, userMsg]);
     const currentInput = chatInput;
     setChatInput('');
@@ -361,7 +391,8 @@ export default function GymHomeScreen() {
       const aiMsg = { 
         id: Date.now() + 1, 
         text: aiResponse, 
-        isAi: true 
+        isAi: true,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       
       setMessages(prev => {
@@ -427,11 +458,18 @@ export default function GymHomeScreen() {
   const theme = {
     background: 'transparent',
     text: '#FFFFFF',
-    subText: 'rgba(255,255,255,0.7)',
-    card: 'rgba(255,255,255,0.1)',
-    border: 'rgba(255,255,255,0.2)',
+    subText: 'rgba(255,255,255,0.85)',
+    card: 'rgba(255,255,255,0.15)',
+    border: 'rgba(255,255,255,0.3)',
     iconColor: '#FFFFFF',
-    chatBg: 'rgba(255,255,255,0.1)'
+    chatBg: 'rgba(255,255,255,0.1)',
+    shadow: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.3,
+      shadowRadius: 20,
+      elevation: 10,
+    }
   };
 
   const { totalCalories, totalProtein, totalCarbs, totalFats } = calculateMealTotals(gymMeals);
@@ -463,7 +501,7 @@ export default function GymHomeScreen() {
 
   return (
     <LinearGradient
-      colors={isDark ? ['#0F172A', '#1E3A8A'] : ['#1E3A8A', '#7C3AED']}
+      colors={isDark ? ['#1e3c72', '#2a5298'] : ['#2563EB', '#3B82F6']}
       style={styles.container}
     >
       <SafeAreaView style={{ flex: 1 }}>
@@ -523,11 +561,14 @@ export default function GymHomeScreen() {
           </View>
         </View>
         
-        <TouchableOpacity style={[styles.bellCircle, { backgroundColor: isDark ? '#2A2A2A' : '#FFF', borderColor: theme.border }]} onPress={() => router.push('/notification-list')}>
-          <MaterialCommunityIcons name="bell-outline" size={24} color={theme.iconColor} />
-          {unreadCount > 0 && (
-            <View style={styles.notifDot} />
+        <TouchableOpacity style={[styles.bellPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)', borderColor: theme.border }]} onPress={() => router.push('/notification-list')}>
+          <MaterialCommunityIcons name="bell-outline" size={20} color={theme.iconColor} />
+          {badgeText !== '' && (
+            <Text style={{ color: theme.iconColor, fontWeight: 'bold', marginLeft: 6, fontSize: 13 }}>
+              {badgeText}
+            </Text>
           )}
+          {unreadCount > 0 && <View style={styles.notifDotPill} />}
         </TouchableOpacity>
       </View>
 
@@ -578,21 +619,21 @@ export default function GymHomeScreen() {
           </View>
 
           <View style={styles.macroRow}>
-            <View style={[styles.macroCard, { backgroundColor: isDark ? '#1A2E22' : '#F1FBF2' }]}>
-              <MaterialCommunityIcons name="dumbbell" size={24} color="#00C853" />
-              <Text style={[styles.macroValue, { color: theme.text }]}>{proteinLeft}g</Text>
-              <Text style={[styles.macroLabel, { color: theme.subText }]}>Protein Left</Text>
-            </View>
-            <View style={[styles.macroCard, { backgroundColor: isDark ? '#2E241A' : '#FFF8F1' }]}>
-              <MaterialCommunityIcons name="fire" size={24} color="#FF9800" />
-              <Text style={[styles.macroValue, { color: theme.text }]}>{fatsLeft}g</Text>
-              <Text style={[styles.macroLabel, { color: theme.subText }]}>Fats Left</Text>
-            </View>
-            <View style={[styles.macroCard, { backgroundColor: isDark ? '#1A2633' : '#F1F7FB' }]}>
-              <MaterialCommunityIcons name="bowl-mix-outline" size={24} color="#2196F3" />
-              <Text style={[styles.macroValue, { color: theme.text }]}>{carbsLeft}g</Text>
-              <Text style={[styles.macroLabel, { color: theme.subText }]}>Carbs Left</Text>
-            </View>
+            <LinearGradient colors={['#2563EB', '#60A5FA']} style={styles.macroGradientCard}>
+              <MaterialCommunityIcons name="dumbbell" size={24} color="#FFF" />
+              <Text style={[styles.macroValue, { color: '#FFF' }]}>{proteinLeft}g</Text>
+              <Text style={[styles.macroLabel, { color: 'rgba(255,255,255,0.8)' }]}>Protein Left</Text>
+            </LinearGradient>
+            <LinearGradient colors={['#F97316', '#FDBA74']} style={styles.macroGradientCard}>
+              <MaterialCommunityIcons name="fire" size={24} color="#FFF" />
+              <Text style={[styles.macroValue, { color: '#FFF' }]}>{fatsLeft}g</Text>
+              <Text style={[styles.macroLabel, { color: 'rgba(255,255,255,0.8)' }]}>Fats Left</Text>
+            </LinearGradient>
+            <LinearGradient colors={['#22C55E', '#86EFAC']} style={styles.macroGradientCard}>
+              <MaterialCommunityIcons name="bowl-mix-outline" size={24} color="#FFF" />
+              <Text style={[styles.macroValue, { color: '#FFF' }]}>{carbsLeft}g</Text>
+              <Text style={[styles.macroLabel, { color: 'rgba(255,255,255,0.8)' }]}>Carbs Left</Text>
+            </LinearGradient>
           </View>
         </View>
 
@@ -836,41 +877,41 @@ export default function GymHomeScreen() {
             </TouchableOpacity>
           </View>
           {gymMeals.length > 0 ? (
-            gymMeals.map((item: any, index: number) => (
-              <View key={index} style={styles.mealItem}>
-                {item.imageUri ? (
-                  <Image source={{ uri: item.imageUri }} style={styles.mealThumb} />
-                ) : (
-                  <Text style={{fontSize: 20}}>{item.emoji}</Text>
-                )}
-                <View style={{flex: 1, marginLeft: 15}}>
-                  <Text style={[styles.mealName, {color: theme.text}]}>{item.name}</Text>
-                  <Text style={styles.mealTime}>{item.time}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 10, gap: 15 }}>
+              {gymMeals.map((item: any, index: number) => (
+                <View key={index} style={[styles.mealItemHorizontal, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                  {item.imageUri ? (
+                    <Image source={{ uri: item.imageUri }} style={styles.mealThumbLarge} />
+                  ) : item.image_url ? (
+                    <Image source={{ uri: item.image_url }} style={styles.mealThumbLarge} />
+                  ) : (
+                    <View style={[styles.mealThumbLarge, { backgroundColor: isDark ? '#333' : '#E0E0E0', justifyContent: 'center', alignItems: 'center' }]}>
+                      <Text style={{ fontSize: 28 }}>{item.emoji || '🍽️'}</Text>
+                    </View>
+                  )}
+                  <View style={{ padding: 12 }}>
+                    <Text style={[styles.mealNameHorizontal, { color: theme.text }]} numberOfLines={1}>{item.name}</Text>
+                    <Text style={[styles.mealTime, { color: theme.subText, marginTop: 4 }]}>{item.time}</Text>
+                    <Text style={styles.mealCalsHorizontal}>{item.calories} kcal</Text>
+                  </View>
                 </View>
-                <Text style={styles.mealCals}>{item.calories} kcal</Text>
-                <TouchableOpacity 
-                  style={{ marginLeft: 10 }}
-                  onPress={async () => {
-                    useAppStore.getState().deleteMeal(item.id);
-                    await useAppStore.getState().saveStoredData();
-                  }}
-                >
-                  <Ionicons name="trash-outline" size={20} color="#FF5252" />
-                </TouchableOpacity>
-              </View>
-            ))
-          ) : (
-            <Text style={{color: theme.subText, fontSize: 12, marginTop: 5, paddingVertical: 10}}>No meals logged yet.</Text>
+              ))}
+            </ScrollView>
+            <View style={{ alignItems: 'center', paddingVertical: 15 }}>
+              <Text style={{color: theme.subText, fontSize: 13, fontStyle: 'italic', textAlign: 'center'}}>No meals logged today</Text>
+            </View>
           )}
         </View>
 
         {/* PROGRESS CARD */}
-        <TouchableOpacity style={styles.transformCard}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.transformTitle}>Transformation Progress</Text>
-            <Text style={styles.transformSub}>Track your muscle gains</Text>
-          </View>
-          <MaterialCommunityIcons name="chart-timeline-variant" size={32} color="#FFF" />
+        <TouchableOpacity>
+          <LinearGradient colors={['#3B82F6', '#8B5CF6']} style={styles.transformCard}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.transformTitle}>Transformation Progress</Text>
+              <Text style={styles.transformSub}>Track your muscle gains</Text>
+            </View>
+            <MaterialCommunityIcons name="chart-timeline-variant" size={32} color="#FFF" />
+          </LinearGradient>
         </TouchableOpacity>
 
         {/* WATER INTAKE CARD */}
@@ -1049,11 +1090,21 @@ export default function GymHomeScreen() {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.chatBody} contentContainerStyle={{ padding: 20 }}>
-              {messages.map((msg) => (
+              {messages.map((msg: any) => (
                 <View key={msg.id} style={[styles.bubble, msg.isAi ? styles.aiBubble : styles.userBubble]}>
                   <Text style={[styles.bubbleText, { color: msg.isAi ? '#333' : '#FFF' }]}>{msg.text}</Text>
+                  {msg.timestamp && (
+                    <Text style={{ fontSize: 10, color: msg.isAi ? '#888' : 'rgba(255,255,255,0.7)', alignSelf: 'flex-end', marginTop: 4 }}>
+                      {msg.timestamp}
+                    </Text>
+                  )}
                 </View>
               ))}
+              {isChatLoading && (
+                <View style={[styles.bubble, styles.aiBubble, { width: 60, height: 40, justifyContent: 'center', alignItems: 'center' }]}>
+                  <Text style={{ fontSize: 24, lineHeight: 28, color: '#999' }}>...</Text>
+                </View>
+              )}
             </ScrollView>
             <View style={styles.chatInputRow}>
               <TextInput 
@@ -1090,11 +1141,32 @@ export default function GymHomeScreen() {
             <ScrollView style={styles.historyList}>
               {chatHistory.length > 0 ? (
                 chatHistory.map((item) => (
-                  <TouchableOpacity key={item.id} style={[styles.historyItem, { borderColor: theme.border }]}>
-                    <Text style={[styles.historyQuestion, { color: theme.text }]} numberOfLines={1}>Q: {item.question}</Text>
-                    <Text style={styles.historyAnswer} numberOfLines={2}>{item.answer}</Text>
-                    <Text style={styles.historyDate}>{item.createdAt}</Text>
-                  </TouchableOpacity>
+                  <View key={item.id} style={[styles.historyItem, { borderColor: theme.border }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.historyQuestion, { color: theme.text }]} numberOfLines={1}>Q: {item.question}</Text>
+                      <Text style={styles.historyAnswer} numberOfLines={2}>{item.answer}</Text>
+                      <Text style={styles.historyDate}>{item.createdAt}</Text>
+                    </View>
+                    <TouchableOpacity 
+                      style={{ padding: 10, marginLeft: 10 }}
+                      onPress={() => {
+                        Alert.alert("Delete Chat", "Remove this chat from history?", [
+                          { text: "Cancel", style: "cancel" },
+                          { text: "Delete", style: "destructive", onPress: async () => {
+                            const newHistory = chatHistory.filter(h => h.id !== item.id);
+                            setChatHistory(newHistory);
+                            await AsyncStorage.setItem('gym_chat_history_list', JSON.stringify(newHistory));
+                            // Also try to delete from backend if possible
+                            try {
+                              await apiService.deleteChatHistoryItem(item.id);
+                            } catch(e) {}
+                          }}
+                        ]);
+                      }}
+                    >
+                      <Ionicons name="trash-outline" size={20} color="#FF5252" />
+                    </TouchableOpacity>
+                  </View>
                 ))
               ) : (
                 <Text style={styles.emptyHistory}>No history yet.</Text>
@@ -1233,6 +1305,10 @@ const styles = StyleSheet.create({
   mealTime: { fontSize: 12, color: '#777' },
   mealThumb: { width: 40, height: 40, borderRadius: 10 },
   mealCals: { fontSize: 14, color: '#00C853', fontWeight: 'bold' },
+  mealItemHorizontal: { width: 140, borderRadius: 16, overflow: 'hidden' },
+  mealThumbLarge: { width: '100%', height: 100, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
+  mealNameHorizontal: { fontSize: 14, fontWeight: 'bold' },
+  mealCalsHorizontal: { fontSize: 12, color: '#00C853', fontWeight: 'bold', marginTop: 4 },
   floatingAiBtn: { position: 'absolute', bottom: 30, right: 20, backgroundColor: '#A855F7', width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', elevation: 10 },
   chatContainer: { flex: 1 },
   chatHeader: { backgroundColor: '#A855F7', padding: 20, flexDirection: 'row', alignItems: 'center', paddingTop: Platform.OS === 'android' ? 40 : 20 },
@@ -1254,7 +1330,7 @@ const styles = StyleSheet.create({
   historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   historyTitle: { fontSize: 22, fontWeight: 'bold' },
   historyList: { flex: 1 },
-  historyItem: { paddingVertical: 15, borderBottomWidth: 1, marginBottom: 10 },
+  historyItem: { paddingVertical: 15, borderBottomWidth: 1, marginBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   historyQuestion: { fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
   historyAnswer: { fontSize: 14, color: '#777', lineHeight: 20 },
   historyDate: { fontSize: 11, color: '#AAA', marginTop: 8 },
@@ -1280,8 +1356,8 @@ const styles = StyleSheet.create({
   welcomeTextColumn: { justifyContent: 'center' },
   welcomeSmall: { fontSize: 13, fontWeight: '500' },
   userNameBold: { fontSize: 22, fontWeight: '900' },
-  bellCircle: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
-  notifDot: { position: 'absolute', top: 12, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: '#FF5252' },
+  bellPill: { flexDirection: 'row', alignItems: 'center', height: 42, paddingHorizontal: 15, borderRadius: 21, borderWidth: 1, position: 'relative' },
+  notifDotPill: { position: 'absolute', top: 10, right: 10, width: 8, height: 8, borderRadius: 4, backgroundColor: '#FF5252' },
 
   calendarWrapper: { paddingBottom: 10 },
   calendarScroll: { paddingHorizontal: 15 },
@@ -1303,6 +1379,7 @@ const styles = StyleSheet.create({
 
   macroRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
   macroCard: { width: '31%', borderRadius: 22, padding: 15, alignItems: 'center', justifyContent: 'center' },
+  macroGradientCard: { width: '31%', borderRadius: 22, padding: 15, alignItems: 'center', justifyContent: 'center', elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 },
   macroValue: { fontSize: 18, fontWeight: 'bold', marginTop: 6 },
   macroLabel: { fontSize: 10, opacity: 0.7, marginTop: 2 },
 

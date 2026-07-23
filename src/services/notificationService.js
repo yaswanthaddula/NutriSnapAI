@@ -92,6 +92,30 @@ if (Notifications) {
       options: { isDestructive: true, opensAppToForeground: false },
     },
   ]);
+
+  if (Platform.OS === 'android') {
+    Notifications.setNotificationChannelAsync('high_priority_v2', {
+      name: 'Reminders',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+      sound: true,
+      enableVibrate: true,
+      showBadge: true,
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC
+    });
+    
+    Notifications.setNotificationChannelAsync('nutrisnap-reminders', {
+      name: 'General Reminders',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#00C853',
+      sound: true,
+      enableVibrate: true,
+      showBadge: true,
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC
+    });
+  }
 }
 
 const getDayName = () => {

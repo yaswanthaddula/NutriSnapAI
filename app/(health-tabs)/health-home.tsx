@@ -52,6 +52,31 @@ export default function HealthHomeScreen() {
 
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'health')).length;
 
+  const getNotificationBadgeText = () => {
+    if (unreadCount > 0) return unreadCount.toString();
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+    let nextTimeStr = '';
+    let minDiff = Infinity;
+    todayReminders?.forEach((r: any) => {
+      if (!r.is_enabled || r.status === 'Completed' || r.status === 'Missed') return;
+      const match = r.reminder_time?.match(/^(\d{1,2})[:.](\d{2})\s*(AM|PM)$/i);
+      if (match) {
+        let h = parseInt(match[1]);
+        const m = parseInt(match[2]);
+        const ampm = match[3].toUpperCase();
+        if (ampm === 'PM' && h < 12) h += 12;
+        if (ampm === 'AM' && h === 12) h = 0;
+        const rMins = h * 60 + m;
+        if (rMins > currentMins && (rMins - currentMins) < minDiff) {
+          minDiff = rMins - currentMins;
+          nextTimeStr = r.reminder_time;
+        }
+      }
+    });
+    return nextTimeStr ? `Next: ${nextTimeStr}` : '';
+  };
+  const badgeText = getNotificationBadgeText();
   const [isPedometerAvailable, setIsPedometerAvailable] = useState('checking');
   const [showManualSteps, setShowManualSteps] = useState(false);
   const [manualStepsVal, setManualStepsVal] = useState(steps.toString());
@@ -290,7 +315,8 @@ export default function HealthHomeScreen() {
   const handleSendMessage = async () => {
     if (chatInput.trim() === '') return;
     
-    const userMsg = { id: Date.now(), text: chatInput, isAi: false };
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const userMsg = { id: Date.now(), text: chatInput, isAi: false, timestamp: timeStr };
     setMessages(prev => [...prev, userMsg]);
     const currentInput = chatInput;
     setChatInput('');
@@ -298,7 +324,7 @@ export default function HealthHomeScreen() {
 
     try {
       const aiResponse = await chatWithAi(currentInput, messages);
-      const aiMsg = { id: Date.now() + 1, text: aiResponse, isAi: true };
+      const aiMsg = { id: Date.now() + 1, text: aiResponse, isAi: true, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
       setMessages(prev => [...prev, aiMsg]);
 
       // Save current session history to AsyncStorage
@@ -577,16 +603,16 @@ export default function HealthHomeScreen() {
         </View>
         
         <TouchableOpacity 
-          style={[styles.bellCircle, { backgroundColor: themeColors.card, borderColor: themeColors.border }]} 
-          onPress={() => {
-            // Note: No markAllAsRead here to keep consistent with Gym mode
-            router.push('/notification-list');
-          }}
+          style={[styles.bellPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: themeColors.border }]} 
+          onPress={() => router.push('/notification-list')}
         >
-          <Ionicons name="notifications-outline" size={24} color={themeColors.text} />
-          {unreadCount > 0 && (
-            <View style={styles.badge}><Text style={styles.badgeText}>{unreadCount}</Text></View>
+          <Ionicons name="notifications-outline" size={20} color={themeColors.text} />
+          {badgeText !== '' && (
+            <Text style={{ color: themeColors.text, fontWeight: 'bold', marginLeft: 6, fontSize: 13 }}>
+              {badgeText}
+            </Text>
           )}
+          {unreadCount > 0 && <View style={styles.notifDotPill} />}
         </TouchableOpacity>
       </View>
 
@@ -956,29 +982,26 @@ export default function HealthHomeScreen() {
           </View>
 
           {filteredMeals.length > 0 ? (
-            filteredMeals.map((item: any, index: number) => (
-              <View key={index} style={[styles.mealItem, { borderBottomColor: themeColors.border }]}>
-                {item.imageUri ? (
-                  <Image source={{ uri: item.imageUri }} style={styles.mealThumb} />
-                ) : (
-                  <Text style={{fontSize: 24}}>{item.emoji}</Text>
-                )}
-                <View style={{flex: 1, marginLeft: 15}}>
-                  <Text style={[styles.mealName, { color: themeColors.text }]}>{item.name}</Text>
-                  <Text style={[styles.mealTime, { color: themeColors.subText }]}>{item.time} • {item.protein || 0}g protein</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 10, gap: 15 }}>
+              {filteredMeals.map((item: any, index: number) => (
+                <View key={index} style={[styles.mealItemHorizontal, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                  {item.imageUri ? (
+                    <Image source={{ uri: item.imageUri }} style={styles.mealThumbLarge} />
+                  ) : item.image_url ? (
+                    <Image source={{ uri: item.image_url }} style={styles.mealThumbLarge} />
+                  ) : (
+                    <View style={[styles.mealThumbLarge, { backgroundColor: isDark ? '#333' : '#E0E0E0', justifyContent: 'center', alignItems: 'center' }]}>
+                      <Text style={{ fontSize: 28 }}>{item.emoji || '🍽️'}</Text>
+                    </View>
+                  )}
+                  <View style={{ padding: 12 }}>
+                    <Text style={[styles.mealNameHorizontal, { color: themeColors.text }]} numberOfLines={1}>{item.name}</Text>
+                    <Text style={[styles.mealTime, { color: themeColors.subText, marginTop: 4 }]}>{item.time}</Text>
+                    <Text style={styles.mealCalsHorizontal}>{item.calories} kcal</Text>
+                  </View>
                 </View>
-                <Text style={styles.mealCals}>{item.calories} kcal</Text>
-                <TouchableOpacity 
-                  style={{ marginLeft: 10 }}
-                  onPress={async () => {
-                    useAppStore.getState().deleteMeal(item.id);
-                    await useAppStore.getState().saveStoredData();
-                  }}
-                >
-                  <Ionicons name="trash-outline" size={20} color="#FF5252" />
-                </TouchableOpacity>
-              </View>
-            ))
+              ))}
+            </ScrollView>
           ) : (
             <View style={[styles.emptyMeal, { borderColor: themeColors.border, backgroundColor: isDark ? '#1E1E1E' : '#F1FDF5' }]}>
               <Text style={{fontSize: 32}}>🍎</Text>
@@ -1106,26 +1129,37 @@ export default function HealthHomeScreen() {
                 </TouchableOpacity>
               </View>
             <ScrollView style={styles.chatBody} contentContainerStyle={{ padding: 20 }}>
-              {messages.map((msg) => (
+              {messages.map((msg: any) => (
                 <View key={msg.id} style={[styles.bubble, msg.isAi ? styles.aiBubble : styles.userBubble]}>
                   <Text style={[styles.bubbleText, { color: msg.isAi ? '#333' : '#FFF' }]}>{msg.text}</Text>
+                  {msg.timestamp && (
+                    <Text style={{ fontSize: 10, color: msg.isAi ? '#888' : 'rgba(255,255,255,0.7)', alignSelf: 'flex-end', marginTop: 4 }}>
+                      {msg.timestamp}
+                    </Text>
+                  )}
                 </View>
               ))}
+              {isChatLoading && (
+                <View style={[styles.bubble, styles.aiBubble, { width: 60, height: 40, justifyContent: 'center', alignItems: 'center' }]}>
+                  <Text style={{ fontSize: 24, lineHeight: 28, color: '#999' }}>...</Text>
+                </View>
+              )}
             </ScrollView>
             <View style={styles.chatInputRow}>
               <TextInput 
-                style={styles.textInput} 
-                placeholder="Ask for advice..." 
+                style={[styles.textInput, isChatLoading && { opacity: 0.5 }]} 
+                placeholder={isChatLoading ? "Coach is thinking..." : "Ask for advice..."} 
                 value={chatInput} 
                 onChangeText={setChatInput} 
                 placeholderTextColor="#999" 
+                editable={!isChatLoading}
               />
               <TouchableOpacity 
-                style={[styles.sendBtn, { backgroundColor: chatInput.trim().length > 0 ? '#00C853' : '#A5D6A7' }]} 
+                style={[styles.sendBtn, { backgroundColor: (chatInput.trim().length > 0 && !isChatLoading) ? '#00C853' : '#A5D6A7' }]} 
                 onPress={handleSendMessage}
-                disabled={chatInput.trim().length === 0}
+                disabled={chatInput.trim().length === 0 || isChatLoading}
               >
-                <Ionicons name="send-sharp" size={20} color="white" />
+                <Ionicons name={isChatLoading ? "ellipsis-horizontal" : "send-sharp"} size={20} color="white" />
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
@@ -1146,11 +1180,32 @@ export default function HealthHomeScreen() {
             <ScrollView style={styles.historyList}>
               {chatHistory.length > 0 ? (
                 chatHistory.map((item) => (
-                  <TouchableOpacity key={item.id} style={[styles.historyItem, { borderColor: themeColors.border }]}>
-                    <Text style={[styles.historyQuestion, { color: themeColors.text }]} numberOfLines={1}>Q: {item.question}</Text>
-                    <Text style={styles.historyAnswer} numberOfLines={2}>{item.answer}</Text>
-                    <Text style={styles.historyDate}>{item.createdAt}</Text>
-                  </TouchableOpacity>
+                  <View key={item.id} style={[styles.historyItem, { borderColor: themeColors.border }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.historyQuestion, { color: themeColors.text }]} numberOfLines={1}>Q: {item.question}</Text>
+                      <Text style={styles.historyAnswer} numberOfLines={2}>{item.answer}</Text>
+                      <Text style={styles.historyDate}>{item.createdAt}</Text>
+                    </View>
+                    <TouchableOpacity 
+                      style={{ padding: 10, marginLeft: 10 }}
+                      onPress={() => {
+                        Alert.alert("Delete Chat", "Remove this chat from history?", [
+                          { text: "Cancel", style: "cancel" },
+                          { text: "Delete", style: "destructive", onPress: async () => {
+                            const newHistory = chatHistory.filter(h => h.id !== item.id);
+                            setChatHistory(newHistory);
+                            await AsyncStorage.setItem('health_chat_history_list', JSON.stringify(newHistory));
+                            // Try to delete from backend
+                            try {
+                              await apiService.deleteChatHistoryItem(item.id);
+                            } catch(e) {}
+                          }}
+                        ]);
+                      }}
+                    >
+                      <Ionicons name="trash-outline" size={20} color="#FF5252" />
+                    </TouchableOpacity>
+                  </View>
                 ))
               ) : (
                 <Text style={styles.emptyHistory}>No history yet.</Text>
@@ -1176,14 +1231,15 @@ const styles = StyleSheet.create({
   reminderStatusBox: { flex: 1, minWidth: '45%', padding: 15, borderRadius: 16, flexDirection: 'row', alignItems: 'center' },
   statusIconCircle: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
   container: { flex: 1, backgroundColor: '#F8F9FA' },
-  topHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 25, paddingVertical: 20, paddingTop: Platform.OS === 'android' ? 50 : 20, alignItems: 'center' },
+  topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: Platform.OS === 'android' ? 50 : 20, paddingBottom: 15 },
   userInfoRow: { flexDirection: 'row', alignItems: 'center' },
-  avatarCircle: { width: 45, height: 45, borderRadius: 23, backgroundColor: '#00C853', justifyContent: 'center', alignItems: 'center', marginRight: 15, elevation: 3, shadowColor: '#00C853', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4 },
-  avatarLetter: { color: 'white', fontSize: 20, fontWeight: 'bold' },
+  avatarCircle: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#E3F2FD', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
+  avatarLetter: { color: '#1E88E5', fontSize: 20, fontWeight: 'bold' },
   welcomeTextColumn: { justifyContent: 'center' },
   welcomeSmall: { fontSize: 13, fontWeight: '500' },
   userNameBold: { fontSize: 20, fontWeight: 'bold' },
-  bellCircle: { width: 45, height: 45, borderRadius: 23, justifyContent: 'center', alignItems: 'center', borderWidth: 1, elevation: 1 },
+  bellPill: { flexDirection: 'row', alignItems: 'center', height: 42, paddingHorizontal: 15, borderRadius: 21, borderWidth: 1, position: 'relative' },
+  notifDotPill: { position: 'absolute', top: 10, right: 10, width: 8, height: 8, borderRadius: 4, backgroundColor: '#FF5252' },
   calendarWrapper: { paddingBottom: 15 },
   calendarScroll: { paddingHorizontal: 20, gap: 12 },
   calendarDayCard: { width: 55, height: 85, borderRadius: 18, borderWidth: 1, paddingVertical: 10, alignItems: 'center', justifyContent: 'space-between' },
@@ -1218,8 +1274,12 @@ const styles = StyleSheet.create({
   scanBtn: { flexDirection: 'row', alignItems: 'center' },
   scanText: { color: '#00C853', fontWeight: 'bold', marginLeft: 4 },
   emptyMeal: { backgroundColor: '#F1FDF5', borderRadius: 20, padding: 25, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(0, 200, 83, 0.1)' },
-  emptyText: { fontSize: 16, fontWeight: 'bold', marginTop: 10 },
-  emptySub: { fontSize: 12, color: '#7D8592', textAlign: 'center' },
+  emptyText: { fontSize: 18, fontWeight: 'bold', marginVertical: 8 },
+  emptySub: { fontSize: 14, textAlign: 'center' },
+  mealItemHorizontal: { width: 140, borderRadius: 16, overflow: 'hidden' },
+  mealThumbLarge: { width: '100%', height: 100, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
+  mealNameHorizontal: { fontSize: 14, fontWeight: 'bold' },
+  mealCalsHorizontal: { fontSize: 12, color: '#00C853', fontWeight: 'bold', marginTop: 4 },
   mealItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
   mealName: { fontSize: 16, fontWeight: 'bold', color: '#011627' },
   mealTime: { fontSize: 12, color: '#7D8592' },
@@ -1284,8 +1344,8 @@ const styles = StyleSheet.create({
   historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   historyTitle: { fontSize: 22, fontWeight: 'bold' },
   historyList: { flex: 1 },
-  historyItem: { paddingVertical: 15, borderBottomWidth: 1 },
-  historyQuestion: { fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
+  historyItem: { paddingVertical: 15, borderBottomWidth: 1, marginBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  historyQuestion: { fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
   historyAnswer: { fontSize: 14, color: '#777', lineHeight: 20 },
   historyDate: { fontSize: 12, color: '#999', marginTop: 8 },
   emptyHistory: { textAlign: 'center', marginTop: 50, fontSize: 16, color: '#999' },
