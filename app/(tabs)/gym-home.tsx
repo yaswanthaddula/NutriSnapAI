@@ -109,6 +109,7 @@ export default function GymHomeScreen() {
   const [showManualSteps, setShowManualSteps] = useState(false);
   const [manualStepsVal, setManualStepsVal] = useState(steps.toString());
   const [showWaterModal, setShowWaterModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [waterInputVal, setWaterInputVal] = useState('');
   const [messages, setMessages] = useState([
     { id: 1, text: `Hi User! I'm your NutriSnap AI assistant. I can help you with nutrition advice, workout tips, and personalized recommendations. What would you like to know?`, isAi: true }
@@ -484,17 +485,18 @@ export default function GymHomeScreen() {
   };
 
   const theme = {
+    gradient: isDark ? ['#121212', '#1A1A1A', '#0F0F0F'] as const : ['#F8FAFC', '#E2E8F0', '#CBD5E1'] as const,
     background: 'transparent',
-    text: '#FFFFFF',
-    subText: 'rgba(255,255,255,0.85)',
-    card: 'rgba(255,255,255,0.15)',
-    border: 'rgba(255,255,255,0.3)',
-    iconColor: '#FFFFFF',
-    chatBg: 'rgba(255,255,255,0.1)',
+    text: isDark ? '#F8FAFC' : '#1E293B',
+    subText: isDark ? '#94A3B8' : '#64748B',
+    card: isDark ? 'rgba(30, 30, 30, 0.9)' : '#FFFFFF',
+    border: isDark ? '#334155' : '#E2E8F0',
+    iconColor: isDark ? '#F8FAFC' : '#334155',
+    chatBg: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9',
     shadow: {
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.3,
+      shadowOpacity: isDark ? 0.3 : 0.05,
       shadowRadius: 20,
       elevation: 10,
     }
@@ -529,7 +531,7 @@ export default function GymHomeScreen() {
 
   return (
     <LinearGradient
-      colors={isDark ? ['#1e3c72', '#2a5298'] : ['#2563EB', '#3B82F6']}
+      colors={theme.gradient}
       style={styles.container}
     >
       <SafeAreaView style={{ flex: 1 }}>
@@ -550,9 +552,12 @@ export default function GymHomeScreen() {
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowManualSteps(false)}>
-                <Text style={{ color: '#777' }}>Cancel</Text>
+                <Text style={{ color: theme.subText }}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtnModal} onPress={handleManualSteps}>
+              <TouchableOpacity 
+                style={[styles.saveBtnModal, { backgroundColor: '#F97316' }]} 
+                onPress={handleManualSteps}
+              >
                 <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Save</Text>
               </TouchableOpacity>
             </View>
@@ -577,6 +582,67 @@ export default function GymHomeScreen() {
         </View>
       </Modal>
 
+      {/* NOTIFICATION MODAL */}
+      <Modal visible={showNotificationModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.notifModalContent, { backgroundColor: theme.card }]}>
+            <View style={styles.notifModalHeader}>
+              <Text style={[styles.notifModalTitle, { color: theme.text }]}>Today's Notifications</Text>
+              <TouchableOpacity onPress={() => setShowNotificationModal(false)}>
+                <Ionicons name="close" size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ maxHeight: 400 }}>
+              {(() => {
+                const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+                const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
+                const isWeekend = ['Sat', 'Sun'].includes(todayDay);
+                
+                const filteredReminders = todayReminders?.filter((r: any) => {
+                  if (!r.is_enabled) return false;
+                  const repeat = r.repeat_type || 'Daily';
+                  if (repeat === 'Daily') return true;
+                  if (repeat === 'Weekdays') return isWeekday;
+                  if (repeat === 'Weekends') return isWeekend;
+                  if (repeat === 'Custom' && r.repeat_days) return r.repeat_days.includes(todayDay);
+                  return true;
+                }) || [];
+
+                if (filteredReminders.length === 0) {
+                  return <Text style={{ color: theme.subText, textAlign: 'center', marginTop: 20 }}>No reminders for today.</Text>;
+                }
+
+                return filteredReminders.map((r: any, idx: number) => {
+                  const status = r.status || 'Upcoming';
+                  let statusColor = '#2196F3';
+                  let statusIcon = 'time-outline';
+                  let statusLabel = 'Upcoming';
+                  if (status === 'Completed') { statusColor = '#4CAF50'; statusIcon = 'checkmark-circle'; statusLabel = 'Completed'; }
+                  else if (status === 'Missed') { statusColor = '#F44336'; statusIcon = 'close-circle'; statusLabel = 'Missed'; }
+                  else if (status === 'Active') { statusColor = '#FF9800'; statusIcon = 'notifications'; statusLabel = 'Active'; }
+                  
+                  return (
+                    <View key={idx} style={[styles.notifItemCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F8FAFC', borderColor: theme.border }]}>
+                      <View style={[styles.notifIconCircle, { backgroundColor: status === 'Completed' ? 'rgba(76, 175, 80, 0.1)' : (status === 'Missed' ? 'rgba(244, 67, 54, 0.1)' : 'rgba(33, 150, 243, 0.1)') }]}>
+                         <Text style={{ fontSize: 20 }}>{r.title?.includes('Breakfast') ? '🍳' : r.title?.includes('Lunch') ? '🥗' : r.title?.includes('Dinner') ? '🍽️' : r.title?.includes('Water') ? '💧' : r.title?.includes('Workout') ? '🏋️' : '🔔'}</Text>
+                      </View>
+                      <View style={{ flex: 1, marginLeft: 12 }}>
+                        <Text style={[styles.notifItemTitle, { color: theme.text }]}>{r.title || r.reminder_type}</Text>
+                        <Text style={[styles.notifItemTime, { color: theme.subText }]}>{r.reminder_time}</Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                         <Ionicons name={statusIcon as any} size={20} color={statusColor} />
+                         <Text style={{ color: statusColor, fontSize: 12, fontWeight: 'bold', marginTop: 2 }}>{statusLabel}</Text>
+                      </View>
+                    </View>
+                  );
+                });
+              })()}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* NEW PREMIUM HEADER */}
       <View style={[styles.topHeader, { backgroundColor: theme.background }]}>
         <View style={styles.userInfoRow}>
@@ -591,7 +657,7 @@ export default function GymHomeScreen() {
         
         <TouchableOpacity 
           style={styles.notifBtn} 
-          onPress={() => router.push('/notifications')}
+          onPress={() => setShowNotificationModal(true)}
           activeOpacity={0.7}
         >
           <Animated.View style={[
@@ -948,7 +1014,7 @@ export default function GymHomeScreen() {
 
         {/* PROGRESS CARD */}
         <TouchableOpacity>
-          <LinearGradient colors={['#3B82F6', '#8B5CF6']} style={styles.transformCard}>
+          <LinearGradient colors={['#F97316', '#2563EB']} style={styles.transformCard}>
             <View style={{ flex: 1 }}>
               <Text style={styles.transformTitle}>Transformation Progress</Text>
               <Text style={styles.transformSub}>Track your muscle gains</Text>
@@ -1438,7 +1504,14 @@ const styles = StyleSheet.create({
   waterHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   waterHeaderLeft: { flexDirection: 'row', alignItems: 'center' },
   waterIconCircle: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  waterCardTitle: { fontSize: 18, fontWeight: 'bold' },
+  notifModalContent: { width: '90%', borderRadius: 24, padding: 20, maxHeight: '80%' },
+  notifModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  notifModalTitle: { fontSize: 20, fontWeight: 'bold' },
+  notifItemCard: { flexDirection: 'row', alignItems: 'center', padding: 15, borderRadius: 16, marginBottom: 10, borderWidth: 1 },
+  notifIconCircle: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  notifItemTitle: { fontSize: 16, fontWeight: 'bold' },
+  notifItemTime: { fontSize: 13, marginTop: 2 },
+  waterCardTitle: { fontSize: 14, fontWeight: 'bold' },
   waterCardSubTitle: { fontSize: 13, marginTop: 2 },
   waterProgressContainer: { marginBottom: 20 },
   waterProgressBarBase: { height: 12, borderRadius: 6, overflow: 'hidden' },

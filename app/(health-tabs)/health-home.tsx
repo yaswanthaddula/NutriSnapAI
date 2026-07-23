@@ -98,6 +98,7 @@ export default function HealthHomeScreen() {
   const [showManualSteps, setShowManualSteps] = useState(false);
   const [manualStepsVal, setManualStepsVal] = useState(steps.toString());
   const [showSleepModal, setShowSleepModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [sleepVal, setSleepVal] = useState(todaySleep.toString());
   const [dailyTip, setDailyTip] = useState('');
   
@@ -620,6 +621,67 @@ export default function HealthHomeScreen() {
         </View>
       </Modal>
 
+      {/* NOTIFICATION MODAL */}
+      <Modal visible={showNotificationModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.notifModalContent, { backgroundColor: themeColors.card }]}>
+            <View style={styles.notifModalHeader}>
+              <Text style={[styles.notifModalTitle, { color: themeColors.text }]}>Today's Notifications</Text>
+              <TouchableOpacity onPress={() => setShowNotificationModal(false)}>
+                <Ionicons name="close" size={24} color={themeColors.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ maxHeight: 400 }}>
+              {(() => {
+                const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+                const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
+                const isWeekend = ['Sat', 'Sun'].includes(todayDay);
+                
+                const filteredReminders = todayReminders?.filter((r: any) => {
+                  if (!r.is_enabled) return false;
+                  const repeat = r.repeat_type || 'Daily';
+                  if (repeat === 'Daily') return true;
+                  if (repeat === 'Weekdays') return isWeekday;
+                  if (repeat === 'Weekends') return isWeekend;
+                  if (repeat === 'Custom' && r.repeat_days) return r.repeat_days.includes(todayDay);
+                  return true;
+                }) || [];
+
+                if (filteredReminders.length === 0) {
+                  return <Text style={{ color: themeColors.subText, textAlign: 'center', marginTop: 20 }}>No reminders for today.</Text>;
+                }
+
+                return filteredReminders.map((r: any, idx: number) => {
+                  const status = r.status || 'Upcoming';
+                  let statusColor = '#2196F3';
+                  let statusIcon = 'time-outline';
+                  let statusLabel = 'Upcoming';
+                  if (status === 'Completed') { statusColor = '#4CAF50'; statusIcon = 'checkmark-circle'; statusLabel = 'Completed'; }
+                  else if (status === 'Missed') { statusColor = '#F44336'; statusIcon = 'close-circle'; statusLabel = 'Missed'; }
+                  else if (status === 'Active') { statusColor = '#FF9800'; statusIcon = 'notifications'; statusLabel = 'Active'; }
+                  
+                  return (
+                    <View key={idx} style={[styles.notifItemCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F8FAFC', borderColor: themeColors.border }]}>
+                      <View style={[styles.notifIconCircle, { backgroundColor: status === 'Completed' ? 'rgba(76, 175, 80, 0.1)' : (status === 'Missed' ? 'rgba(244, 67, 54, 0.1)' : 'rgba(33, 150, 243, 0.1)') }]}>
+                         <Text style={{ fontSize: 20 }}>{r.title?.includes('Breakfast') ? '🍳' : r.title?.includes('Lunch') ? '🥗' : r.title?.includes('Dinner') ? '🍽️' : r.title?.includes('Water') ? '💧' : r.title?.includes('Workout') ? '🏋️' : '🔔'}</Text>
+                      </View>
+                      <View style={{ flex: 1, marginLeft: 12 }}>
+                        <Text style={[styles.notifItemTitle, { color: themeColors.text }]}>{r.title || r.reminder_type}</Text>
+                        <Text style={[styles.notifItemTime, { color: themeColors.subText }]}>{r.reminder_time}</Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                         <Ionicons name={statusIcon as any} size={20} color={statusColor} />
+                         <Text style={{ color: statusColor, fontSize: 12, fontWeight: 'bold', marginTop: 2 }}>{statusLabel}</Text>
+                      </View>
+                    </View>
+                  );
+                });
+              })()}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* --- PREMIUM HEADER --- */}
       <View style={[styles.topHeader, { backgroundColor: themeColors.bg }]}>
         <View style={styles.userInfoRow}>
@@ -633,7 +695,7 @@ export default function HealthHomeScreen() {
         </View>
         <TouchableOpacity 
           style={styles.notifBtn} 
-          onPress={() => router.push('/notifications')}
+          onPress={() => setShowNotificationModal(true)}
           activeOpacity={0.7}
         >
           <Animated.View style={[
@@ -1279,6 +1341,13 @@ const styles = StyleSheet.create({
   welcomeSmall: { fontSize: 13, fontWeight: '500' },
   userNameBold: { fontSize: 20, fontWeight: 'bold' },
   notifBtn: { position: 'relative' },
+  notifModalContent: { width: '90%', borderRadius: 24, padding: 20, maxHeight: '80%' },
+  notifModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  notifModalTitle: { fontSize: 20, fontWeight: 'bold' },
+  notifItemCard: { flexDirection: 'row', alignItems: 'center', padding: 15, borderRadius: 16, marginBottom: 10, borderWidth: 1 },
+  notifIconCircle: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  notifItemTitle: { fontSize: 16, fontWeight: 'bold' },
+  notifItemTime: { fontSize: 13, marginTop: 2 },
   badgePremium: { position: 'absolute', top: -4, right: -4, backgroundColor: '#FF5252', borderRadius: 10, minWidth: 20, height: 20, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#FFF', paddingHorizontal: 4, elevation: 4, shadowColor: '#FF5252', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3 },
   badgePremiumText: { color: '#FFF', fontSize: 10, fontWeight: '900' },
   premiumBellContainer: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)' },
