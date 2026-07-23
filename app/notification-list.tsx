@@ -17,12 +17,57 @@ import { notificationService } from '../src/services/notificationService';
 
 export default function NotificationList() {
   const { isDark } = useTheme();
-  const { notifications, userProfile, markAllAsRead, clearNotifications, clearNotification, fetchNotifications, markAsRead } = useAppStore();
+  const { notifications, userProfile, markAllAsRead, clearNotifications, clearNotification, fetchNotifications, markAsRead, todayReminders, fetchTodayReminders } = useAppStore();
   
   const currentMode = (userProfile.selected_mode || 'gym').toLowerCase();
   
-  // Exclude cleared ones, though API already does this, but good for local cache state
   const filteredNotifications = notifications?.filter((n: any) => n.status !== 'Cleared' && n.status !== 'cleared') || [];
+
+  const mappedReminders = (todayReminders || [])
+    .filter((r: any) => r.is_enabled)
+    .map((r: any) => {
+      const isCompleted = r.status === 'Completed';
+      const isMissed = r.status === 'Missed';
+      const isWorkout = r.reminder_type === 'workout';
+      
+      let displayTitle = r.title;
+      let icon = 'bell-outline';
+      let color = '#FF9800';
+
+      if (isCompleted) {
+         displayTitle = `✓ ${r.title} Completed`;
+         icon = 'check-circle';
+         color = '#4CAF50';
+      } else if (isMissed) {
+         displayTitle = `❌ Missed ${r.title}`;
+         icon = 'close-circle';
+         color = '#F44336';
+      } else {
+         if (isWorkout) {
+           displayTitle = `🏋 ${r.title}`;
+           icon = 'dumbbell';
+           color = '#2196F3';
+         } else {
+           displayTitle = `⏰ Upcoming ${r.title}`;
+           icon = 'clock-outline';
+         }
+      }
+      
+      const today = new Date().toISOString().split('T')[0];
+
+      return {
+        id: `rem-${r.id}`,
+        isReminderInfo: true,
+        title: displayTitle,
+        message: `Status: ${r.status} • Time: ${r.reminder_time} • Date: ${today}`,
+        created_at: new Date().toISOString(),
+        status: 'Read', 
+        icon: icon,
+        color: color,
+      };
+    });
+
+  const combinedList = [...mappedReminders, ...filteredNotifications];
 
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -32,6 +77,7 @@ export default function NotificationList() {
       try {
         setLoading(true);
         await fetchNotifications();
+        if (fetchTodayReminders) await fetchTodayReminders();
         setError(null);
       } catch (err) {
         setError('Failed to load notifications');
@@ -107,10 +153,10 @@ export default function NotificationList() {
           <View style={styles.emptyContainer}>
             <Text style={[styles.emptyText, { color: '#FF5252' }]}>{error}</Text>
           </View>
-        ) : filteredNotifications.length > 0 ? (
-          filteredNotifications.map((item: any) => (
+        ) : combinedList.length > 0 ? (
+          combinedList.map((item: any, idx: number) => (
               <TouchableOpacity 
-                key={item.id} 
+                key={item.id || idx.toString()} 
                 onPress={() => markAsRead(item.id)}
                 style={[
                   styles.card, 
@@ -129,15 +175,17 @@ export default function NotificationList() {
                   <Text style={[styles.notifDesc, { color: theme.subText }]}>{item.message}</Text>
                   <Text style={styles.notifTime}>{getTimeAgo(item.created_at || item.createdAt)}</Text>
                 </View>
-              <TouchableOpacity 
-                style={styles.clearBtn} 
-                onPress={() => {
-                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                  clearNotification(item.id);
-                }}
-              >
-                <Ionicons name="close" size={20} color={theme.subText} />
-              </TouchableOpacity>
+              {item.isReminderInfo ? null : (
+                <TouchableOpacity 
+                  style={styles.clearBtn} 
+                  onPress={() => {
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                    clearNotification(item.id);
+                  }}
+                >
+                  <Ionicons name="close" size={20} color={theme.subText} />
+                </TouchableOpacity>
+              )}
             </TouchableOpacity>
           ))
         ) : (

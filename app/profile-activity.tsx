@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function DailyActivity() {
   const params = useLocalSearchParams();
@@ -41,102 +42,122 @@ export default function DailyActivity() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        
-        {/* Back Arrow & Progress */}
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-          <Ionicons name="chevron-back" size={28} color="#333" />
-        </TouchableOpacity>
+    <LinearGradient colors={['#E8F5E9', '#4CAF50']} style={styles.gradientBg}>
+      <SafeAreaView style={styles.safe}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+            <Ionicons name="arrow-back" size={28} color="#000" />
+          </TouchableOpacity>
 
-        <View style={styles.progressContainer}>
-          <View style={[styles.progressDash, styles.dashActive]} />
-          <View style={[styles.progressDash, styles.dashActive]} />
-          <View style={[styles.progressDash, styles.dashActive]} />
-          <View style={styles.progressDash} />
-        </View>
+          <View style={styles.glassContainer}>
+            <View style={styles.progressContainer}>
+              <View style={[styles.progressDash, styles.dashActive]} />
+              <View style={[styles.progressDash, styles.dashActive]} />
+              <View style={[styles.progressDash, styles.dashActive]} />
+              <View style={styles.progressDash} />
+            </View>
 
-        <Text style={styles.title}>Daily Activity</Text>
-        <Text style={styles.subtitle}>How active are you?</Text>
+            <Text style={styles.title}>Daily Activity</Text>
+            <Text style={styles.subtitle}>How active are you?</Text>
 
-        <View style={styles.list}>
-          {activityOptions.map((item) => (
+            <View style={styles.list}>
+              {activityOptions.map((item) => (
+                <TouchableOpacity 
+                  key={item.id} 
+                  activeOpacity={0.7}
+                  style={[
+                    styles.card, 
+                    selectedLevel === item.id && styles.cardActive
+                  ]}
+                  onPress={() => setSelectedLevel(item.id)}
+                >
+                  <View style={styles.cardContent}>
+                    <Text style={styles.emojiIcon}>{item.icon}</Text>
+                    <View style={styles.textGroup}>
+                      <Text style={[styles.label, selectedLevel === item.id && styles.labelActive]}>
+                        {item.title}
+                      </Text>
+                      <Text style={[styles.subText, selectedLevel === item.id && styles.subTextActive]}>{item.desc}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             <TouchableOpacity 
-              key={item.id} 
-              activeOpacity={0.7}
-              style={[
-                styles.card, 
-                selectedLevel === item.id && styles.cardActive
-              ]}
-              onPress={() => setSelectedLevel(item.id)}
+              style={styles.continueBtnWrapper}
+              onPress={handleContinue}
+              disabled={!isFormValid}
             >
-              <View style={styles.cardContent}>
-                <Text style={styles.emojiIcon}>{item.icon}</Text>
-                <View style={styles.textGroup}>
-                  <Text style={[styles.label, selectedLevel === item.id && styles.labelActive]}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.subText}>{item.desc}</Text>
-                </View>
+              <View style={[styles.continueBtn, !isFormValid && styles.btnDisabled]}>
+                <Text style={styles.continueBtnText}>Continue</Text>
               </View>
             </TouchableOpacity>
-          ))}
-        </View>
+          </View>
 
-        {/* Dynamic Continue Button */}
-        <TouchableOpacity 
-          style={[
-            styles.continueBtn, 
-            { backgroundColor: isFormValid ? '#00C853' : '#81E19E' }
-          ]} 
-          onPress={handleContinue}
-        >
-          <Text style={styles.continueBtnText}>Continue</Text>
-        </TouchableOpacity>
-
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFF' },
-  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 20 },
-  backBtn: { marginTop: 10, marginBottom: 10, width: 50, height: 50, justifyContent: 'center', marginLeft: -15 },
-  progressContainer: { flexDirection: 'row', marginTop: 15, marginBottom: 32 },
-  progressDash: { height: 4, width: 40, backgroundColor: '#E9ECEF', borderRadius: 2, marginRight: 8 },
-  dashActive: { backgroundColor: '#2DCE89' },
-  title: { fontSize: 32, fontWeight: '700', color: '#0A1629', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#7D8592', marginBottom: 32 },
+  safe: { flex: 1, backgroundColor: 'transparent' },
+  gradientBg: { flex: 1 },
+  scroll: { flexGrow: 1, paddingBottom: 30, justifyContent: 'center' },
+  glassContainer: {
+    marginHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 30,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+    paddingHorizontal: 25,
+    paddingVertical: 30,
+  },
+  backBtn: { marginTop: 10, marginBottom: 10, marginLeft: 20, width: 40, height: 40, justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 20, alignItems: 'center', zIndex: 10 },
+  progressContainer: { flexDirection: 'row', marginBottom: 25 },
+  progressDash: { height: 6, flex: 1, backgroundColor: '#C8E6C9', borderRadius: 3, marginRight: 8 },
+  dashActive: { backgroundColor: '#4CAF50', shadowColor: '#4CAF50', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 4, elevation: 2 },
+  title: { fontSize: 32, fontWeight: '900', color: '#1B5E20' },
+  subtitle: { fontSize: 16, color: '#388E3C', marginTop: 10, marginBottom: 30, fontWeight: '600' },
   list: { flex: 1 },
   card: { 
     flexDirection: 'row', 
     alignItems: 'center', 
     padding: 20, 
     borderWidth: 1, 
-    borderColor: '#D8E0F0', 
+    borderColor: '#C8E6C9', 
     borderRadius: 16, 
     marginBottom: 16, 
-    backgroundColor: '#FFF' 
+    backgroundColor: 'rgba(255,255,255,0.9)' 
   },
-  cardActive: { borderColor: '#00C853', backgroundColor: '#F1FBF2' },
+  cardActive: { borderColor: '#4CAF50', backgroundColor: '#E8F5E9', borderWidth: 2 },
   cardContent: { flexDirection: 'row', alignItems: 'center' },
   emojiIcon: { fontSize: 24, marginRight: 16 },
   textGroup: { flex: 1 },
-  label: { fontSize: 18, fontWeight: '700', color: '#0A1629' },
-  labelActive: { color: '#00C853' },
-  subText: { fontSize: 14, color: '#7D8592', marginTop: 4 },
-  continueBtn: { 
-    height: 56, 
-    borderRadius: 16, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    marginTop: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+  label: { fontSize: 16, fontWeight: '700', color: '#2E7D32' },
+  labelActive: { color: '#1B5E20', fontWeight: '900' },
+  subText: { fontSize: 14, color: '#666', marginTop: 4, fontWeight: '500' },
+  subTextActive: { color: '#388E3C' },
+  continueBtnWrapper: {
+    marginTop: 10,
   },
-  continueBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' }
+  continueBtn: { 
+    backgroundColor: '#4CAF50', 
+    padding: 18, 
+    borderRadius: 16, 
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10
+  },
+  btnDisabled: { backgroundColor: '#A5D6A7', elevation: 0 },
+  continueBtnText: { color: 'white', fontSize: 18, fontWeight: 'bold' }
 });

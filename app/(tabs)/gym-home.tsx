@@ -43,16 +43,16 @@ export default function GymHomeScreen() {
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'gym')).length;
   
   const getNotificationBadgeText = () => {
-    if (unreadCount > 0) return unreadCount.toString();
-    
-    // Find next reminder today
-    const now = new Date();
-    const currentMins = now.getHours() * 60 + now.getMinutes();
-    let nextTimeStr = '';
-    let minDiff = Infinity;
-    
-    todayReminders?.forEach((r: any) => {
-      if (!r.is_enabled || r.status === 'Completed' || r.status === 'Missed') return;
+    const upcoming = todayReminders?.filter((r: any) => r.is_enabled && r.status !== 'Completed' && r.status !== 'Missed') || [];
+    const count = upcoming.length;
+
+    if (count > 1) {
+      return `${count} Upcoming`;
+    } else if (count === 1) {
+      const r = upcoming[0];
+      const now = new Date();
+      const currentMins = now.getHours() * 60 + now.getMinutes();
+      
       const match = r.reminder_time?.match(/^(\d{1,2})[:.](\d{2})\s*(AM|PM)$/i);
       if (match) {
         let h = parseInt(match[1]);
@@ -61,13 +61,27 @@ export default function GymHomeScreen() {
         if (ampm === 'PM' && h < 12) h += 12;
         if (ampm === 'AM' && h === 12) h = 0;
         const rMins = h * 60 + m;
-        if (rMins > currentMins && (rMins - currentMins) < minDiff) {
-          minDiff = rMins - currentMins;
-          nextTimeStr = r.reminder_time;
+        const diff = rMins - currentMins;
+        
+        let title = r.title || r.reminder_type || 'Reminder';
+        title = title.replace(' Reminder', '');
+        title = title.charAt(0).toUpperCase() + title.slice(1);
+        
+        if (diff > 0 && diff <= 60) {
+          return `${title} in ${diff} min`;
+        } else {
+          return `${title} at ${r.reminder_time}`;
         }
+      } else {
+        let title = r.title || r.reminder_type || 'Reminder';
+        title = title.charAt(0).toUpperCase() + title.slice(1);
+        return `${title}`;
       }
-    });
-    return nextTimeStr ? `Next: ${nextTimeStr}` : '';
+    } else if (unreadCount > 0) {
+      return `${unreadCount} Notifications`;
+    }
+    
+    return '';
   };
   const badgeText = getNotificationBadgeText();
   
@@ -562,10 +576,11 @@ export default function GymHomeScreen() {
         </View>
         
         <TouchableOpacity style={[styles.bellPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)', borderColor: theme.border }]} onPress={() => router.push('/notification-list')}>
-          <MaterialCommunityIcons name="bell-outline" size={20} color={theme.iconColor} />
-          {badgeText !== '' && (
-            <Text style={{ color: theme.iconColor, fontWeight: 'bold', marginLeft: 6, fontSize: 13 }}>
-              {badgeText}
+          {badgeText === '' ? (
+            <MaterialCommunityIcons name="bell-outline" size={20} color={theme.iconColor} />
+          ) : (
+            <Text style={{ color: theme.iconColor, fontWeight: 'bold', fontSize: 13 }}>
+              🔔 {badgeText}
             </Text>
           )}
           {unreadCount > 0 && <View style={styles.notifDotPill} />}

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ProfilePhysical() {
   const params = useLocalSearchParams(); 
@@ -42,96 +43,119 @@ export default function ProfilePhysical() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          
-          {/* Back Button */}
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-            <Ionicons name="arrow-back" size={28} color="#0A1629" />
-          </TouchableOpacity>
+    <LinearGradient colors={['#E8F5E9', '#4CAF50']} style={styles.gradientBg}>
+      <SafeAreaView style={styles.safe}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+            
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+              <Ionicons name="arrow-back" size={28} color="#000" />
+            </TouchableOpacity>
 
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressDash, styles.dashActive]} />
-            <View style={[styles.progressDash, styles.dashActive]} />
-            <View style={styles.progressDash} />
-            <View style={styles.progressDash} />
-          </View>
+            <View style={styles.glassContainer}>
+              <View style={styles.progressContainer}>
+                <View style={[styles.progressDash, styles.dashActive]} />
+                <View style={[styles.progressDash, styles.dashActive]} />
+                <View style={styles.progressDash} />
+                <View style={styles.progressDash} />
+              </View>
 
-          <Text style={styles.title}>Body Details</Text>
-          <Text style={styles.subtitle}>Help us personalize your plan</Text>
+              <Text style={styles.title}>Body Details</Text>
+              <Text style={styles.subtitle}>Help us personalize your plan</Text>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Height (cm)</Text>
-            <TextInput 
-              style={styles.input}
-              placeholder="e.g., 173"
-              placeholderTextColor="#ADB5BD"
-              keyboardType="numeric"
-              value={height}
-              onChangeText={setHeight}
-            />
-          </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Height (cm)</Text>
+                <TextInput 
+                  style={styles.input}
+                  placeholder="e.g., 173"
+                  placeholderTextColor="#999"
+                  keyboardType="numeric"
+                  value={height}
+                  onChangeText={setHeight}
+                />
+              </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Weight (kg)</Text>
-            <TextInput 
-              style={styles.input}
-              placeholder="e.g., 88"
-              placeholderTextColor="#ADB5BD"
-              keyboardType="numeric"
-              value={weight}
-              onChangeText={setWeight}
-            />
-          </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Weight (kg)</Text>
+                <TextInput 
+                  style={styles.input}
+                  placeholder="e.g., 88"
+                  placeholderTextColor="#999"
+                  keyboardType="numeric"
+                  value={weight}
+                  onChangeText={setWeight}
+                />
+              </View>
 
-          <View style={{ flex: 1 }} />
+              <View style={{ height: 20 }} />
 
-          {/* DYNAMIC BUTTON: Switches to Dark Green when details are entered */}
-          <TouchableOpacity 
-            style={[
-              styles.continueBtn, 
-              { backgroundColor: isFormValid ? '#00C853' : '#81E19E' }
-            ]} 
-            onPress={handleContinue}
-            disabled={!isFormValid}
-          >
-            <Text style={styles.continueBtnText}>Continue</Text>
-          </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.continueBtnWrapper}
+                onPress={handleContinue}
+                disabled={!isFormValid}
+              >
+                <View style={[styles.continueBtn, !isFormValid && styles.btnDisabled]}>
+                  <Text style={styles.continueBtnText}>Continue</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
 
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFF' },
-  scroll: { flexGrow: 1, paddingHorizontal: 25, paddingBottom: 30 },
-  backBtn: { marginTop: 10, marginBottom: 10, width: 50, height: 50, justifyContent: 'center', marginLeft: -10 },
-  progressContainer: { flexDirection: 'row', marginBottom: 35 },
-  progressDash: { height: 5, width: 60, backgroundColor: '#E0E0E0', borderRadius: 5, marginRight: 8 },
-  dashActive: { backgroundColor: '#00C853' },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#011627' },
-  subtitle: { fontSize: 16, color: '#707070', marginTop: 8, marginBottom: 32 },
+  safe: { flex: 1, backgroundColor: 'transparent' },
+  gradientBg: { flex: 1 },
+  scroll: { flexGrow: 1, paddingBottom: 30, justifyContent: 'center' },
+  glassContainer: {
+    marginHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 30,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+    paddingHorizontal: 25,
+    paddingVertical: 30,
+  },
+  backBtn: { marginTop: 10, marginBottom: 10, marginLeft: 20, width: 40, height: 40, justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 20, alignItems: 'center', zIndex: 10 },
+  progressContainer: { flexDirection: 'row', marginBottom: 25 },
+  progressDash: { height: 6, flex: 1, backgroundColor: '#C8E6C9', borderRadius: 3, marginRight: 8 },
+  dashActive: { backgroundColor: '#4CAF50', shadowColor: '#4CAF50', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 4, elevation: 2 },
+  title: { fontSize: 32, fontWeight: '900', color: '#1B5E20' },
+  subtitle: { fontSize: 16, color: '#388E3C', marginTop: 10, marginBottom: 30, fontWeight: '600' },
   inputGroup: { marginBottom: 25 },
-  label: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 12 },
+  label: { fontSize: 14, fontWeight: '700', color: '#2E7D32', marginBottom: 8 },
   input: { 
     height: 60, 
     borderWidth: 1, 
-    borderColor: '#F0F0F0', 
-    borderRadius: 15, 
+    borderColor: '#C8E6C9', 
+    borderRadius: 16, 
     paddingHorizontal: 20, 
     fontSize: 16, 
-    backgroundColor: '#FAFAFA',
+    backgroundColor: 'rgba(255,255,255,0.9)',
     color: '#0A1629'
   },
-  continueBtn: { 
-    height: 65, 
-    borderRadius: 20, 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    marginTop: 20
+  continueBtnWrapper: {
+    marginTop: 10,
   },
-  continueBtnText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' }
+  continueBtn: { 
+    backgroundColor: '#4CAF50', 
+    padding: 18, 
+    borderRadius: 16, 
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10
+  },
+  btnDisabled: { backgroundColor: '#A5D6A7', elevation: 0 },
+  continueBtnText: { color: 'white', fontSize: 18, fontWeight: 'bold' }
 });

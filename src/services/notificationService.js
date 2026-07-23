@@ -71,6 +71,7 @@ if (Notifications) {
       shouldShowAlert: true,
       shouldPlaySound: true,
       shouldVibrate: true,
+      shouldSetBadge: true,
     }),
   });
 
@@ -775,10 +776,10 @@ export const notificationService = {
       // 1. Meals Reminders
       if (prefs.meals) {
         const mealReminders = [
-          { time: profile.breakfastReminderTime, repeat: prefs.breakfastRepeat, title: 'NutriSnap AI', body: '🍳 Meal Reminder - Time to log your meal.', type: 'breakfast' },
-          { time: profile.lunchReminderTime, repeat: prefs.lunchRepeat, title: 'NutriSnap AI', body: '🍳 Meal Reminder - Time to log your meal.', type: 'lunch' },
-          { time: profile.dinnerReminderTime, repeat: prefs.dinnerRepeat, title: 'NutriSnap AI', body: '🍳 Meal Reminder - Time to log your meal.', type: 'dinner' },
-          { time: profile.snackReminderTime, repeat: prefs.snackRepeat, title: 'NutriSnap AI', body: '🍳 Meal Reminder - Time to log your meal.', type: 'snack' },
+          { time: profile.breakfastReminderTime, repeat: prefs.breakfastRepeat, title: '🍳 Breakfast Reminder', body: 'Time to log your breakfast.', type: 'breakfast' },
+          { time: profile.lunchReminderTime, repeat: prefs.lunchRepeat, title: '🥗 Lunch Reminder', body: 'Time to log your lunch.', type: 'lunch' },
+          { time: profile.dinnerReminderTime, repeat: prefs.dinnerRepeat, title: '🍽 Dinner Reminder', body: 'Time to log your dinner.', type: 'dinner' },
+          { time: profile.snackReminderTime, repeat: prefs.snackRepeat, title: '🍎 Snack Reminder', body: 'Time for your healthy snack.', type: 'snack' },
         ];
 
         for (const item of mealReminders) {
@@ -789,6 +790,7 @@ export const notificationService = {
               title: item.title,
               body: item.body,
               sound: true,
+              autoDismiss: false,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
               channelId: channelId || 'nutrisnap-reminders',
@@ -812,9 +814,10 @@ export const notificationService = {
           const dbReminder = state.reminders?.find(r => r.reminder_type === 'water');
           await Notifications.scheduleNotificationAsync({
             content: {
-              title: 'NutriSnap AI',
-              body: "💧 Water Reminder - Time to drink water.",
+              title: '💧 Water Reminder',
+              body: "Time to drink water.",
               sound: true,
+              autoDismiss: false,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
               channelId: channelId || 'nutrisnap-reminders',
@@ -837,9 +840,10 @@ export const notificationService = {
         if (parsed) {
           const dbReminder = state.reminders?.find(r => r.reminder_type === 'workout');
           const content = {
-            title: 'NutriSnap AI',
-            body: '🏋️ Workout Reminder - Time for your workout session.',
+            title: '🏋 Workout Reminder',
+            body: 'Time for today\'s workout.',
             sound: true,
+            autoDismiss: false,
             vibrate: [0, 250, 250, 250],
             priority: Notifications.AndroidNotificationPriority.MAX,
             channelId: channelId || 'nutrisnap-reminders',
@@ -861,9 +865,10 @@ export const notificationService = {
         if (parsed) {
           const dbReminder = state.reminders?.find(r => r.reminder_type === 'sleep');
           const content = {
-            title: 'NutriSnap AI',
-            body: '😴 Sleep Reminder - Time to sleep and recover.',
+            title: '😴 Sleep Reminder',
+            body: 'Time to sleep and recover.',
             sound: true,
+            autoDismiss: false,
             vibrate: [0, 250, 250, 250],
             priority: Notifications.AndroidNotificationPriority.MAX,
             channelId: channelId || 'nutrisnap-reminders',
@@ -918,7 +923,7 @@ export const notificationService = {
       if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('nutrisnap-reminders', {
           name: 'NutriSnap Reminders',
-          importance: Notifications.AndroidImportance.HIGH,
+          importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: '#FF231F7C',
           lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
@@ -988,11 +993,6 @@ export const notificationService = {
       }
     }) : { remove: () => {} };
 
-    // Set up global periodic evaluator (for both web and mobile foreground)
-    const statusInterval = setInterval(() => {
-      useAppStore.getState().evaluateReminderStatuses();
-    }, 30000); // Check every 30 seconds
-
     // Web-specific notification fallback
     let webIntervalId = null;
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -1039,7 +1039,6 @@ export const notificationService = {
     return () => {
       foregroundSubscription.remove();
       responseSubscription.remove();
-      clearInterval(statusInterval);
       if (webIntervalId) clearInterval(webIntervalId);
     };
   }
