@@ -709,17 +709,18 @@ export const notificationService = {
             console.log("Saving reminder payload:", payload);
             const res = await apiService.createReminder(payload);
             console.log("Save reminder response:", res);
-            return res;
+            return { data: res };
           } catch (e) {
-            console.log("Reminder save failed:", e);
-            return null;
+            const errMsg = e.response?.data?.detail || e.message || "Unknown backend error";
+            console.error("Reminder save failed details:", errMsg);
+            return { error: errMsg };
           }
         });
         
         return new Promise((resolve) => {
           Promise.all(promises).then(async (results) => {
-            const hasFailure = results.some(r => r === null);
-            const newReminders = results.filter(r => r !== null);
+            const hasError = results.find(r => r && r.error);
+            const newReminders = results.filter(r => r && r.data);
             console.log("Successfully saved reminder responses:", newReminders.length);
             
             // Trigger strict fetch right after save
@@ -728,8 +729,11 @@ export const notificationService = {
                await useAppStore.getState().fetchTodayReminders();
             }
             
-            if (hasFailure) resolve(false);
-            else resolve(true);
+            if (hasError) {
+                resolve({ success: false, error: hasError.error });
+            } else {
+                resolve({ success: true });
+            }
           });
         });
       } catch (e) {

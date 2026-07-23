@@ -492,8 +492,8 @@ export default function NotificationsScreen() {
       // Fire scheduleReminderNotifications which maps and posts to backend
       // But we will catch any failure and revert
       const result = await notificationService.scheduleReminderNotifications();
-      if (result === false) {
-        throw new Error("Backend save failed");
+      if (!result || result.success === false) {
+        throw new Error(result?.error || "Backend save failed");
       }
       
       if (val) {
@@ -501,9 +501,9 @@ export default function NotificationsScreen() {
       }
       // If success, fetchAndSyncReminders is already called inside scheduleReminderNotifications
       // which will log "Refetched reminders:" inside useAppStore
-    } catch (error) {
+    } catch (error: any) {
       console.log("Reminder save failed:", error);
-      Alert.alert("Error", "Failed to save reminder. Please try again.");
+      Alert.alert("Error", error.message || "Failed to save reminder. Please try again.");
       updateNotificationPrefs(key, !val); // revert toggle
     }
   };

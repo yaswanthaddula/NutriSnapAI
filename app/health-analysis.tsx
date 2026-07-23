@@ -50,7 +50,7 @@ export default function HealthAnalysisScreen() {
         // STEP 1: Gemini Analysis (Food Name Only)
         setCurrentStep(1);
         const geminiResult = await analyzeImage(imageUri);
-        const { food_name, confidence } = geminiResult;
+        const { food_name, confidence, estimated_nutrition } = geminiResult;
 
         console.log(`AI Detected: ${food_name} (${confidence}%)`);
 
@@ -66,7 +66,7 @@ export default function HealthAnalysisScreen() {
 
         // STEP 3: FatSecret Search (Finding Match)
         setCurrentStep(2);
-        const fsResults = await searchFoods(food_name);
+        const fsResults = await searchFoods(food_name, estimated_nutrition);
         
         if (!fsResults || fsResults.length === 0) {
           Alert.alert(

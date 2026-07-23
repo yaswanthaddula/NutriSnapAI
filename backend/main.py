@@ -174,93 +174,22 @@ app.include_router(sync_routes.router)
 app.include_router(reminder_routes.router)
 app.include_router(notification_routes.router)
 
-# FatSecret Configuration
-CLIENT_ID = os.getenv("FATSECRET_CLIENT_ID", "").strip()
-CLIENT_SECRET = os.getenv("FATSECRET_CLIENT_SECRET", "").strip()
-AUTH_URL = "https://oauth.fatsecret.com/connect/token"
-API_BASE_URL = "https://platform.fatsecret.com/rest/server.api"
+# USDA API Configuration
+USDA_API_KEY = os.getenv("USDA_API_KEY", "DEMO_KEY").strip()
+USDA_API_BASE_URL = "https://api.nal.usda.gov/fdc/v1/foods/search"
+USDA_DETAIL_URL = "https://api.nal.usda.gov/fdc/v1/food/"
 
-# SAFE DEBUG PRINTS
-print(f"--- DEBUG: FATSECRET CONFIGURATION ---")
+print(f"--- DEBUG: USDA API CONFIGURATION ---")
 print(f"1. .env path: {env_path}")
-print(f"2. .env file exists: {os.path.exists(env_path)}")
-print(f"3. FATSECRET_CLIENT_ID loaded: {bool(CLIENT_ID)}")
-print(f"4. FATSECRET_CLIENT_SECRET loaded: {bool(CLIENT_SECRET)}")
-if CLIENT_ID:
-    print(f"5. CLIENT_ID starts with: {CLIENT_ID[:5]}...")
+print(f"2. USDA_API_KEY loaded: {bool(USDA_API_KEY)}")
+if USDA_API_KEY and USDA_API_KEY != "DEMO_KEY":
+    print(f"3. USDA_API_KEY starts with: {USDA_API_KEY[:5]}...")
 print(f"--------------------------------------")
-
-# Token Cache
-token_cache = {
-    "access_token": None,
-    "expires_at": 0
-}
-
-async def get_access_token():
-    """Gets and caches the OAuth2 token from FatSecret."""
-    now = time.time()
-    
-    # Check if we have a valid token in cache
-    if token_cache["access_token"] and now < token_cache["expires_at"]:
-        return token_cache["access_token"]
-
-    if not CLIENT_ID or not CLIENT_SECRET:
-        print("CRITICAL: FATSECRET_CLIENT_ID or FATSECRET_CLIENT_SECRET is missing!")
-        raise HTTPException(status_code=500, detail="FatSecret credentials not configured in .env")
-
-    print(f"DEBUG: Requesting token for ID: {CLIENT_ID[:5]}***")
-    
-    # Try to log the public IP to help with FatSecret whitelisting
-    try:
-        async with httpx.AsyncClient() as ip_client:
-            ip_resp = await ip_client.get("https://api.ipify.org", timeout=5.0)
-            public_ip = ip_resp.text
-            print(f"DEBUG: Your Server Public IP is: {public_ip}")
-            print(f"TIP: If you still get 'invalid_client', ensure {public_ip} is whitelisted in FatSecret Dashboard.")
-    except Exception:
-        print("DEBUG: Could not detect public IP (Check internet connection)")
-    
-    async with httpx.AsyncClient() as client:
-        try:
-            # AUTHENTICATION REQUEST (OAuth 2.0 Client Credentials Flow)
-            # Use Basic Auth (auth parameter) AND form-data (data parameter)
-            response = await client.post(
-                AUTH_URL,
-                auth=(CLIENT_ID, CLIENT_SECRET),
-                data={
-                    "grant_type": "client_credentials",
-                    "scope": "basic"
-                },
-                headers={
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                timeout=15.0
-            )
-            
-            print(f"DEBUG: Token Status: {response.status_code}")
-            if response.status_code != 200:
-                print(f"DEBUG: Token Error Body: {response.text}")
-                if "invalid_client" in response.text:
-                    print("CRITICAL ERROR: 'invalid_client' means FatSecret rejected your Client ID or Secret.")
-                    print("ACTION REQUIRED: Go to FatSecret Dashboard -> OAuth 2.0 and copy CLIENT ID (not Consumer Key).")
-            
-            response.raise_for_status()
-            data = response.json()
-            
-            token_cache["access_token"] = data["access_token"]
-            token_cache["expires_at"] = now + data.get("expires_in", 86400) - 60
-            return token_cache["access_token"]
-            
-        except httpx.HTTPStatusError as e:
-            error_detail = e.response.text
-            raise HTTPException(status_code=500, detail=f"FatSecret Auth Error: {error_detail}")
-        except Exception as e:
-            print(f"DEBUG: Connection Error during auth: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Connection Error: {str(e)}")
 
 # Models
 class SearchRequest(BaseModel):
     query: str
+    fallbackNutrition: Optional[dict] = None
 
 class FoodItem(BaseModel):
     food_id: str
@@ -284,63 +213,70 @@ class FoodDetail(BaseModel):
 @app.post("/foods/search", response_model=List[dict])
 async def search_foods(request: SearchRequest):
     try:
-        token = await get_access_token()
         print(f"DEBUG: Search Request for: '{request.query}'")
         
-        # We'll try using a POST request which is sometimes more reliable for FatSecret
-        data_params = {
-            "method": "foods.search",
-            "search_expression": request.query,
-            "format": "json",
-            "max_results": 5
+        params = {
+            "query": request.query,
+            "api_key": USDA_API_KEY,
+            "pageSize": 5,
+            "requireAllWords": False
         }
         
         async with httpx.AsyncClient() as client:
-            # Note: FatSecret often accepts params in the URL even for POST
-            response = await client.post(
-                API_BASE_URL,
-                params=data_params,
-                headers={"Authorization": f"Bearer {token}"},
+            response = await client.get(
+                USDA_API_BASE_URL,
+                params=params,
                 timeout=10.0
             )
             
             raw_data = response.json()
-            print(f"DEBUG: Raw FatSecret Data: {raw_data}")
-
-            # Check for error in JSON body (FatSecret sometimes returns 200 but with an error inside)
+            
             if "error" in raw_data:
                 err_msg = raw_data['error'].get('message', 'Unknown API Error')
-                print(f"FATSECRET API ERROR: {err_msg}")
-                # Raise 502 so the frontend can show the 'IP Blocked' warning
-                raise HTTPException(status_code=502, detail=f"FatSecret: {err_msg}")
+                print(f"USDA API ERROR: {err_msg}")
+                raise HTTPException(status_code=502, detail=f"USDA: {err_msg}")
 
-            foods_obj = raw_data.get("foods")
-            if not foods_obj or not foods_obj.get("food"):
-                print(f"DEBUG: No food list found in response.")
-                return []
-                
-            foods_data = foods_obj.get("food", [])
-            if isinstance(foods_data, dict):
-                foods_data = [foods_data]
+            foods_data = raw_data.get("foods", [])
                 
             results = []
             for f in foods_data[:5]:
-                desc = str(f.get("food_description", ""))
-                serving = "1 serving"; calories = "0"
-                try:
-                    s_m = re.search(r'^(.*?) - Calories', desc)
-                    if s_m: serving = s_m.group(1)
-                    c_m = re.search(r'Calories: (\d+)', desc)
-                    if c_m: calories = c_m.group(1)
-                except: pass
+                desc = str(f.get("description", ""))
+                brand = str(f.get("brandName", ""))
+                serving_size = f.get("servingSize", 1)
+                serving_unit = f.get("servingSizeUnit", "serving")
+                serving_desc = f"{serving_size} {serving_unit}"
+                
+                nutrients = f.get("foodNutrients", [])
+                calories = 0
+                for n in nutrients:
+                    if n.get("nutrientId") == 1008 or n.get("nutrientName") == "Energy":
+                        calories = n.get("value", 0)
+                        break
 
                 results.append({
-                    "food_id": str(f.get("food_id")),
-                    "food_name": str(f.get("food_name")),
-                    "brand_name": str(f.get("brand_name", "")),
-                    "serving_size": serving,
-                    "calories": float(calories) if calories.isdigit() else 0,
-                    "food_type": str(f.get("food_type", ""))
+                    "food_id": str(f.get("fdcId")),
+                    "food_name": desc,
+                    "brand_name": brand,
+                    "serving_size": serving_desc,
+                    "calories": float(calories),
+                    "food_type": "USDA Food"
+                })
+            
+            if not results and request.fallbackNutrition:
+                # Use Gemini fallback
+                cal = request.fallbackNutrition.get("calories", 0)
+                pro = request.fallbackNutrition.get("protein", 0)
+                carbs = request.fallbackNutrition.get("carbs", 0)
+                fat = request.fallbackNutrition.get("fat", 0)
+                fallback_id = f"gemini_fallback:{cal}:{pro}:{carbs}:{fat}"
+                
+                results.append({
+                    "food_id": fallback_id,
+                    "food_name": request.query,
+                    "brand_name": "AI Estimate",
+                    "serving_size": "1 serving",
+                    "calories": float(cal),
+                    "food_type": "Fallback"
                 })
             
             return results
@@ -351,66 +287,80 @@ async def search_foods(request: SearchRequest):
 
 @app.get("/foods/{food_id}", response_model=FoodDetail)
 async def get_food_detail(food_id: str):
-    token = await get_access_token()
-    
+    if food_id.startswith("gemini_fallback:"):
+        parts = food_id.split(":")
+        cal = float(parts[1]) if len(parts) > 1 else 0
+        prot = float(parts[2]) if len(parts) > 2 else 0
+        carbs = float(parts[3]) if len(parts) > 3 else 0
+        fat = float(parts[4]) if len(parts) > 4 else 0
+        return {
+            "food_id": food_id,
+            "food_name": "AI Estimated Food",
+            "food_image": None,
+            "servings": [{
+                "serving_description": "1 serving",
+                "calories": cal,
+                "protein": prot,
+                "carbs": carbs,
+                "fat": fat
+            }]
+        }
+        
     params = {
-        "method": "food.get.v2",
-        "food_id": food_id,
-        "format": "json"
+        "api_key": USDA_API_KEY
     }
     
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(
-                API_BASE_URL,
+                f"{USDA_DETAIL_URL}{food_id}",
                 params=params,
-                headers={"Authorization": f"Bearer {token}"},
                 timeout=10.0
             )
             response.raise_for_status()
-            data = response.json()
+            food = response.json()
             
-            if "error" in data:
-                err_msg = data['error'].get('message', 'Unknown API Error')
-                print(f"DEBUG Detail Error: {err_msg}")
-                raise HTTPException(status_code=502, detail=f"FatSecret: {err_msg}")
+            if "error" in food:
+                err_msg = food['error'].get('message', 'Unknown API Error')
+                raise HTTPException(status_code=502, detail=f"USDA: {err_msg}")
 
-            food = data.get("food", {})
-            if not food:
-                raise HTTPException(status_code=404, detail="Food not found")
-
-            servings_raw = food.get("servings", {}).get("serving", [])
-            if isinstance(servings_raw, dict):
-                servings_raw = [servings_raw]
-
-            servings = [
-                {
-                    "serving_description": s.get("serving_description", ""),
-                    "calories": float(s.get("calories", 0)),
-                    "protein": float(s.get("protein", 0)),
-                    "carbs": float(s.get("carbohydrate", 0)),
-                    "fat": float(s.get("fat", 0))
-                }
-                for s in servings_raw
-            ]
-
-            # Extract images if available
-            images = food.get("food_images", {}).get("food_image", [])
-            if isinstance(images, dict):
-                images = [images]
+            nutrients = food.get("foodNutrients", [])
+            cal = 0
+            prot = 0
+            carbs = 0
+            fat = 0
             
-            food_image = images[0].get("image_url") if images else None
+            for n in nutrients:
+                n_info = n.get("nutrient", {})
+                n_id = n_info.get("id") or n.get("nutrientId")
+                n_name = n_info.get("name") or n.get("nutrientName")
+                n_value = n.get("amount") or n.get("value") or 0
+                
+                if n_id == 1008 or n_name == "Energy": cal = float(n_value)
+                elif n_id == 1003 or n_name == "Protein": prot = float(n_value)
+                elif n_id == 1005 or n_name == "Carbohydrate, by difference": carbs = float(n_value)
+                elif n_id == 1004 or n_name == "Total lipid (fat)": fat = float(n_value)
+
+            serving_size = food.get("servingSize", 1)
+            serving_unit = food.get("servingSizeUnit", "serving")
+            serving_desc = f"{serving_size} {serving_unit}"
 
             return {
-                "food_id": food.get("food_id"),
-                "food_name": food.get("food_name"),
-                "food_image": food_image,
-                "servings": servings
+                "food_id": str(food.get("fdcId", food_id)),
+                "food_name": str(food.get("description", "Unknown Food")),
+                "food_image": None,
+                "servings": [{
+                    "serving_description": serving_desc,
+                    "calories": cal,
+                    "protein": prot,
+                    "carbs": carbs,
+                    "fat": fat
+                }]
             }
         except httpx.HTTPStatusError as e:
-            print(f"DEBUG: FatSecret Detail API Error: {e.response.status_code}")
+            print(f"DEBUG: USDA Detail API Error: {e.response.status_code}")
             print(f"DEBUG: Response Body: {e.response.text}")
-            raise HTTPException(status_code=e.response.status_code, detail="FatSecret Service Unavailable")
+            raise HTTPException(status_code=e.response.status_code, detail="USDA Service Unavailable")
         except Exception as e:
             print(f"DEBUG: Detail Error: {e}")
             raise HTTPException(status_code=503, detail="Detail Fetch Failed")

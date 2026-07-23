@@ -6,9 +6,9 @@ const BACKEND_URL = API_BASE_URL;
 /**
  * Search for foods using the FatSecret API via our backend.
  */
-export const searchFoods = async (query) => {
+export const searchFoods = async (query, fallbackNutrition = null) => {
   try {
-    const response = await axios.post(`${BACKEND_URL}/foods/search`, { query }, { timeout: 10000 });
+    const response = await axios.post(`${BACKEND_URL}/foods/search`, { query, fallbackNutrition }, { timeout: 10000 });
     return response.data;
   } catch (error) {
     handleApiError(error);

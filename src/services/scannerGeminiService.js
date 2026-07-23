@@ -25,9 +25,18 @@ Return ONLY valid JSON in this exact format:
 {
   "food_name": "name of the food",
   "confidence": 95,
-  "unit_type": "count" or "grams" or "ml"
+  "unit_type": "count" or "grams" or "ml",
+  "quantity": 1,
+  "estimated_nutrition": {
+    "calories": 150,
+    "protein": 5.5,
+    "carbs": 12.0,
+    "fat": 8.0
+  }
 }
 Choose "count" for discrete items (eggs, apples, slices), "grams" for solid/loose food (rice, chicken breast, pasta), and "ml" for liquids (milk, soup, juice).
+Quantity should be the estimated number of units or portions.
+Estimated nutrition should be per quantity shown.
 Do NOT include any other text or markdown formatting.`;
 
 /**
@@ -153,7 +162,9 @@ export const analyzeImage = async (imageUri) => {
                 return {
                   food_name: parsed.food_name,
                   confidence: parsed.confidence || 0,
-                  unit_type: parsed.unit_type || 'grams'
+                  unit_type: parsed.unit_type || 'grams',
+                  quantity: parsed.quantity || 1,
+                  estimated_nutrition: parsed.estimated_nutrition || { calories: 0, protein: 0, carbs: 0, fat: 0 }
                 };
               }
             }
