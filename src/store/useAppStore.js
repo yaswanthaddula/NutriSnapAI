@@ -85,10 +85,10 @@ const useAppStore = create((set, get) => ({
       // Sync local UI toggles (notificationPrefs) with actual backend state
       const prefs = get().notificationPrefs || {};
       const updatedPrefs = { ...prefs };
-      updatedPrefs.meals = fetchedReminders.some((r: any) => ['breakfast','lunch','dinner','snack'].includes(r.reminder_type) && r.is_enabled);
-      updatedPrefs.workout = fetchedReminders.some((r: any) => r.reminder_type === 'workout' && r.is_enabled);
-      updatedPrefs.water = fetchedReminders.some((r: any) => r.reminder_type === 'water' && r.is_enabled);
-      updatedPrefs.sleep = fetchedReminders.some((r: any) => r.reminder_type === 'sleep' && r.is_enabled);
+      updatedPrefs.meals = fetchedReminders.some((r) => ['breakfast','lunch','dinner','snack'].includes(r.reminder_type) && r.is_enabled);
+      updatedPrefs.workout = fetchedReminders.some((r) => r.reminder_type === 'workout' && r.is_enabled);
+      updatedPrefs.water = fetchedReminders.some((r) => r.reminder_type === 'water' && r.is_enabled);
+      updatedPrefs.sleep = fetchedReminders.some((r) => r.reminder_type === 'sleep' && r.is_enabled);
       set({ notificationPrefs: updatedPrefs });
 
       get().saveStoredData();
@@ -520,7 +520,7 @@ const useAppStore = create((set, get) => ({
       console.log("Notification bell response:", fetched);
       // Map backend fields to frontend fields if needed, but if backend matches, just set it
       // Backend returns: id, title, message, status, type, created_at, delivered_at
-      const mapped = fetched.map((n: any) => ({
+      const mapped = fetched.map((n) => ({
         ...n,
         isRead: n.status === 'Read' || n.status === 'read',
         createdAt: n.created_at || n.createdAt

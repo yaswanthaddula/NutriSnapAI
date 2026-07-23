@@ -11,6 +11,7 @@ import {
   Platform,
   Alert 
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from './_layout'; 
@@ -127,8 +128,10 @@ export default function EditProfile() {
           </View>
 
           <View style={styles.avatarContainer}>
-            <View style={styles.greenCircle}>
-                <Text style={{fontSize: 40}}>{gender?.toLowerCase() === 'female' ? '👧' : '👦'}</Text>
+            <View style={styles.avatarRing}>
+              <View style={styles.greenCircle}>
+                  <Text style={{fontSize: 40}}>{gender?.toLowerCase() === 'female' ? '👧' : '👦'}</Text>
+              </View>
             </View>
           </View>
 
@@ -193,23 +196,29 @@ export default function EditProfile() {
                   key={g} 
                   onPress={() => setGoal(g)}
                   style={{
-                    backgroundColor: goal === g ? '#00C853' : (isDark ? '#2D2D2D' : '#F0F2F5'),
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
+                    backgroundColor: goal === g ? (isDark ? '#388E3C' : '#E8F5E9') : (isDark ? '#2D2D2D' : '#F9FAFB'),
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
                     borderRadius: 20,
-                    marginRight: 8,
-                    marginBottom: 8,
+                    marginRight: 10,
+                    marginBottom: 10,
                     borderWidth: 1,
-                    borderColor: goal === g ? '#00C853' : (isDark ? '#444' : '#E4E6EB'),
+                    borderColor: goal === g ? '#4CAF50' : (isDark ? '#444' : '#E0E0E0'),
+                    shadowColor: goal === g ? '#4CAF50' : '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: goal === g ? 0.2 : 0.05,
+                    shadowRadius: 4,
                   }}
                 >
-                  <Text style={{ color: goal === g ? '#FFF' : theme.text, fontSize: 12, fontWeight: 'bold' }}>{g}</Text>
+                  <Text style={{ color: goal === g ? (isDark ? '#FFF' : '#1B5E20') : theme.text, fontSize: 13, fontWeight: '700' }}>{g}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-              <Text style={styles.saveBtnText}>Save Changes</Text>
+            <TouchableOpacity style={styles.saveBtnWrapper} onPress={handleSave}>
+              <LinearGradient colors={['#4CAF50', '#2E7D32']} style={styles.saveBtnGradient}>
+                <Text style={styles.saveBtnText}>Save Changes</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
 
@@ -224,18 +233,46 @@ const styles = StyleSheet.create({
   scroll: { padding: 25 },
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 30 },
   backIcon: { marginRight: 15 },
-  title: { fontSize: 28, fontWeight: 'bold' },
-  subtitle: { fontSize: 16, color: '#7D8592', marginTop: 4 },
-  avatarContainer: { alignItems: 'center', marginVertical: 20 },
-  greenCircle: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#00C853', justifyContent: 'center', alignItems: 'center' },
+  title: { fontSize: 28, fontWeight: '900' },
+  subtitle: { fontSize: 16, color: '#7D8592', marginTop: 4, fontWeight: '600' },
+  avatarContainer: { alignItems: 'center', marginVertical: 25 },
+  avatarRing: {
+    padding: 6,
+    borderRadius: 60,
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+  },
+  greenCircle: { width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(76, 175, 80, 0.15)', justifyContent: 'center', alignItems: 'center' },
   form: { marginTop: 10 },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   label: { fontSize: 14, fontWeight: 'bold', marginBottom: 8, marginTop: 15 },
-  input: { height: 55, borderWidth: 1, borderRadius: 12, paddingHorizontal: 15, fontSize: 16 },
-  saveBtn: { 
-    backgroundColor: '#00C853', height: 60, borderRadius: 15, 
-    justifyContent: 'center', alignItems: 'center', marginTop: 40,
-    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 3
+  input: { 
+    height: 60, 
+    borderWidth: 1, 
+    borderRadius: 16, 
+    paddingHorizontal: 20, 
+    fontSize: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2
   },
-  saveBtnText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' }
+  saveBtnWrapper: { 
+    marginTop: 40,
+    shadowColor: '#4CAF50', 
+    shadowOpacity: 0.3, 
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10, 
+    elevation: 5,
+    borderRadius: 20
+  },
+  saveBtnGradient: {
+    height: 65, 
+    borderRadius: 20, 
+    justifyContent: 'center', 
+    alignItems: 'center'
+  },
+  saveBtnText: { color: '#FFF', fontSize: 18, fontWeight: 'bold', letterSpacing: 1 }
 });

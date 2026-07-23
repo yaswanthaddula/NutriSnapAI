@@ -11,6 +11,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -85,8 +86,9 @@ export default function OnboardingScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Skip Button */}
+    <LinearGradient colors={['#F1F8E9', '#FFFFFF']} style={styles.gradientBg}>
+      <SafeAreaView style={styles.container}>
+        {/* Skip Button */}
       <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
         <Text style={styles.skipText}>Skip</Text>
       </TouchableOpacity>
@@ -118,19 +120,22 @@ export default function OnboardingScreen() {
           ))}
         </View>
 
-        {/* Next Button */}
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <Ionicons name="arrow-forward" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+          <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+            <LinearGradient colors={['#4CAF50', '#2E7D32']} style={styles.nextGradient}>
+              <Ionicons name="arrow-forward" size={24} color="#fff" />
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientBg: { flex: 1 },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
   },
   skipButton: {
     position: 'absolute',
@@ -166,8 +171,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#00C853',
+    fontWeight: '900',
+    color: '#1B5E20',
     textAlign: 'center',
     marginBottom: 15,
   },
@@ -201,16 +206,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E0E0',
   },
   nextButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#00C853',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
+    elevation: 8,
+    shadowColor: '#4CAF50',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
   },
+  nextGradient: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 });

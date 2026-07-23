@@ -8,11 +8,13 @@ import {
   SafeAreaView, 
   Platform, 
   Alert,
-  Modal,
   TextInput,
   KeyboardAvoidingView,
-  Image
+  Image,
+  Animated,
+  Modal
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { Platform as RNPlatform } from 'react-native';
@@ -71,8 +73,25 @@ export default function GymHomeScreen() {
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [isHistoryVisible, setHistoryVisible] = useState(false);
 
+  // Animation values
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const scaleAnim = React.useRef(new Animated.Value(0.95)).current;
+
   // 2. EFFECTS
   useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      })
+    ]).start();
     const init = async () => {
       await loadStoredData();
       await syncBackendMeals();
@@ -406,13 +425,13 @@ export default function GymHomeScreen() {
   };
 
   const theme = {
-    background: isDark ? '#121212' : '#FFFFFF',
-    text: isDark ? '#FFFFFF' : '#011627',
-    subText: isDark ? '#AAAAAA' : '#707070',
-    card: isDark ? '#1E1E1E' : '#FFFFFF',
-    border: isDark ? '#333333' : '#F0F0F0',
-    iconColor: isDark ? '#FFFFFF' : '#333333',
-    chatBg: isDark ? '#121212' : '#F5F7FA'
+    background: 'transparent',
+    text: '#FFFFFF',
+    subText: 'rgba(255,255,255,0.7)',
+    card: 'rgba(255,255,255,0.1)',
+    border: 'rgba(255,255,255,0.2)',
+    iconColor: '#FFFFFF',
+    chatBg: 'rgba(255,255,255,0.1)'
   };
 
   const { totalCalories, totalProtein, totalCarbs, totalFats } = calculateMealTotals(gymMeals);
@@ -443,7 +462,12 @@ export default function GymHomeScreen() {
   const filledSegments = Math.round(progress * segments.length);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <LinearGradient
+      colors={isDark ? ['#0F172A', '#1E3A8A'] : ['#1E3A8A', '#7C3AED']}
+      style={styles.container}
+    >
+      <SafeAreaView style={{ flex: 1 }}>
+        <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}>
       
       {/* MANUAL STEPS MODAL ... (kept same) ... */}
       <Modal visible={showManualSteps} transparent animationType="slide">
@@ -1155,7 +1179,9 @@ export default function GymHomeScreen() {
         </View>
       </Modal>
 
-    </SafeAreaView>
+        </Animated.View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 

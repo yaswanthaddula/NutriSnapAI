@@ -11,6 +11,7 @@ import {
   Platform,
   Image 
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -63,17 +64,19 @@ export default function ProfileScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       
       {/* --- TOP GREEN HEADER --- */}
-      <View style={styles.greenHeader}>
+      <LinearGradient colors={['#4CAF50', '#2E7D32']} style={styles.greenHeader}>
         <View style={styles.userInfoArea}>
-          <View style={styles.avatarCircle}>
-            <Image 
-              source={{ uri: userProfile.gender?.toLowerCase() === 'female' 
-                ? 'https://cdn-icons-png.flaticon.com/512/4140/4140047.png' 
-                : 'https://cdn-icons-png.flaticon.com/512/4140/4140048.png' 
-              }} 
-              style={styles.avatarImage} 
-              resizeMode="cover"
-            />
+          <View style={styles.avatarRing}>
+            <View style={styles.avatarCircle}>
+              <Image 
+                source={{ uri: userProfile.gender?.toLowerCase() === 'female' 
+                  ? 'https://cdn-icons-png.flaticon.com/512/4140/4140047.png' 
+                  : 'https://cdn-icons-png.flaticon.com/512/4140/4140048.png' 
+                }} 
+                style={styles.avatarImage} 
+                resizeMode="cover"
+              />
+            </View>
           </View>
           <View style={styles.nameContainer}>
             <Text style={styles.userName}>{userProfile.name}</Text>
@@ -82,22 +85,22 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.statRow}>
-          <View style={[styles.statBox, { backgroundColor: theme.card }]}>
-            <Text style={[styles.statNum, { color: theme.text }]}>{userProfile.weight}</Text>
-            <Text style={styles.statLab}>Weight</Text>
+          <View style={[styles.statBox, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+            <Text style={[styles.statNum, { color: '#FFF' }]}>{userProfile.weight}</Text>
+            <Text style={[styles.statLab, { color: 'rgba(255,255,255,0.8)' }]}>Weight</Text>
           </View>
-          <View style={[styles.statBox, { backgroundColor: theme.card }]}>
-            <Text style={[styles.statNum, { color: theme.text }]}>{userProfile.height}</Text>
-            <Text style={styles.statLab}>Height</Text>
+          <View style={[styles.statBox, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+            <Text style={[styles.statNum, { color: '#FFF' }]}>{userProfile.height}</Text>
+            <Text style={[styles.statLab, { color: 'rgba(255,255,255,0.8)' }]}>Height</Text>
           </View>
-          <View style={[styles.statBox, { backgroundColor: theme.card }]}>
-            <Text style={[styles.statNum, { color: theme.text }]}>
+          <View style={[styles.statBox, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+            <Text style={[styles.statNum, { color: '#FFF' }]}>
               {userProfile.bmi || '0.0'}
             </Text>
-            <Text style={styles.statLab}>BMI</Text>
+            <Text style={[styles.statLab, { color: 'rgba(255,255,255,0.8)' }]}>BMI</Text>
           </View>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
@@ -223,27 +226,43 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   greenHeader: { 
-    backgroundColor: '#00C853', 
     paddingTop: 50, 
-    paddingBottom: 30, 
-    borderBottomLeftRadius: 30, 
-    borderBottomRightRadius: 30,
-    paddingHorizontal: 25 
+    paddingBottom: 35, 
+    borderBottomLeftRadius: 40, 
+    borderBottomRightRadius: 40,
+    paddingHorizontal: 25,
+    elevation: 8,
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20
   },
-  userInfoArea: { flexDirection: 'row', alignItems: 'center' },
-  avatarCircle: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
+  userInfoArea: { flexDirection: 'column', alignItems: 'center' },
+  avatarRing: {
+    width: 100, height: 100, borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 15,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.5)',
+    shadowColor: '#FFF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 15
+  },
+  avatarCircle: { width: 84, height: 84, borderRadius: 42, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
   avatarImage: { width: '100%', height: '100%' },
-  nameContainer: { marginLeft: 15 },
-  userName: { color: '#FFF', fontSize: 24, fontWeight: 'bold' },
-  userAge: { color: '#FFF', opacity: 0.9, fontSize: 14 },
-  statRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 25 },
-  statBox: { width: '30%', height: 70, borderRadius: 15, justifyContent: 'center', alignItems: 'center', elevation: 2 },
-  statNum: { fontSize: 18, fontWeight: 'bold' },
-  statLab: { fontSize: 11, color: '#7D8592', marginTop: 2 },
+  nameContainer: { alignItems: 'center' },
+  userName: { color: '#FFF', fontSize: 26, fontWeight: '900' },
+  userAge: { color: 'rgba(255,255,255,0.8)', fontSize: 16, marginTop: 4, fontWeight: '600' },
+  statRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 30 },
+  statBox: { width: '31%', height: 80, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  statNum: { fontSize: 22, fontWeight: 'bold' },
+  statLab: { fontSize: 13, color: '#7D8592', marginTop: 4, fontWeight: '600' },
   scrollContent: { paddingBottom: 30, paddingTop: 20 },
-  menuGroup: { borderRadius: 20, marginHorizontal: 20, marginBottom: 20, elevation: 1 },
+  menuGroup: { borderRadius: 24, marginHorizontal: 20, marginBottom: 20, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10 },
   menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 18, paddingHorizontal: 20, borderBottomWidth: 1 },
-  detailItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 15, paddingHorizontal: 20, borderBottomWidth: 1 },
+  detailItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 18, paddingHorizontal: 20, borderBottomWidth: 1 },
   detailLabel: { fontSize: 14, fontWeight: '500' },
   detailValue: { fontSize: 15, fontWeight: '500' },
   menuLabel: { fontSize: 16, fontWeight: '500', marginLeft: 15, flex: 1 },

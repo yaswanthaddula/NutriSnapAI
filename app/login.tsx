@@ -9,8 +9,10 @@ import {
   KeyboardAvoidingView, 
   Platform,
   Alert,
-  ScrollView // Added ScrollView
+  ScrollView,
+  Image
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, AntDesign } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import apiService from '../src/services/apiService';
@@ -205,20 +207,22 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-        style={{ flex: 1 }}
-      >
-        <ScrollView 
-          contentContainerStyle={{ flexGrow: 1 }} 
-          keyboardShouldPersistTaps="handled"
+    <LinearGradient colors={['#E8F5E9', '#4CAF50']} style={styles.gradientBg}>
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+          style={{ flex: 1 }}
         >
-          <TouchableOpacity style={styles.backBtn} onPress={() => step === 2 ? setStep(1) : router.back()}>
-            <Ionicons name="chevron-back" size={28} color="#333" />
-          </TouchableOpacity>
+          <ScrollView 
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} 
+            keyboardShouldPersistTaps="handled"
+          >
+            <TouchableOpacity style={styles.backBtn} onPress={() => step === 2 ? setStep(1) : router.back()}>
+              <Ionicons name="chevron-back" size={28} color="#000" />
+            </TouchableOpacity>
 
-          <View style={styles.content}>
+            <View style={styles.glassContainer}>
+              <View style={styles.content}>
             <Text style={styles.header}>{step === 1 ? "Welcome Back" : "Enter Password"}</Text>
             <Text style={styles.subHeader}>{step === 1 ? "Login to continue your journey" : `Password for ${email}`}</Text>
 
@@ -296,9 +300,11 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
@@ -324,18 +330,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textDecorationLine: 'underline',
   },
-  container: { flex: 1, backgroundColor: '#fff' },
-  backBtn: { padding: 20, marginTop: 10 },
-  content: { paddingHorizontal: 30, flex: 1 },
-  header: { fontSize: 32, fontWeight: 'bold', color: '#011627' },
-  subHeader: { fontSize: 16, color: '#707070', marginBottom: 40 },
+  container: { flex: 1, backgroundColor: 'transparent' },
+  gradientBg: { flex: 1 },
+  glassContainer: {
+    marginHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 30,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+    paddingVertical: 20,
+  },
+  backBtn: { position: 'absolute', top: 10, left: 20, zIndex: 10, padding: 10, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 20 },
+  content: { paddingHorizontal: 30 },
+  header: { fontSize: 32, fontWeight: '900', color: '#1B5E20', marginTop: 20 },
+  subHeader: { fontSize: 16, color: '#388E3C', marginBottom: 40, fontWeight: '600' },
   inputSection: { marginBottom: 10 },
-  label: { fontSize: 14, fontWeight: '600', color: '#011627', marginBottom: 8 },
+  label: { fontSize: 14, fontWeight: '700', color: '#2E7D32', marginBottom: 8 },
   input: { 
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderWidth: 1, 
-    borderColor: '#E0E0E0', 
+    borderColor: '#C8E6C9', 
     padding: 15, 
-    borderRadius: 12, 
+    borderRadius: 16, 
     marginBottom: 20, 
     fontSize: 16 
   },
@@ -343,9 +363,10 @@ const styles = StyleSheet.create({
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 12,
+    borderColor: '#C8E6C9',
+    borderRadius: 16,
     marginBottom: 20,
     width: '100%',
     minHeight: 55,
@@ -361,21 +382,25 @@ const styles = StyleSheet.create({
   },
   forgot: { 
     textAlign: 'right', 
-    color: '#00C853', 
-    fontWeight: 'bold', 
+    color: '#388E3C', 
+    fontWeight: '800', 
     marginBottom: 30,
     fontSize: 14
   },
   loginBtn: { 
-    backgroundColor: '#00C853', 
+    backgroundColor: '#4CAF50', 
     padding: 18, 
-    borderRadius: 12, 
+    borderRadius: 16, 
     alignItems: 'center',
-    elevation: 4
+    elevation: 8,
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10
   },
   btnDisabled: { backgroundColor: '#A5D6A7' },
   loginBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 40, paddingBottom: 20 },
-  footerText: { color: '#707070' },
-  signUpText: { color: '#00C853', fontWeight: 'bold' }
+  footerText: { color: '#2E7D32', fontWeight: '600' },
+  signUpText: { color: '#1B5E20', fontWeight: '900' }
 });

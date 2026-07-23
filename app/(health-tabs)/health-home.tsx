@@ -10,8 +10,10 @@ import {
   Modal,
   TextInput,
   Image,
-  Alert
+  Alert,
+  Animated
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { Platform as RNPlatform } from 'react-native';
@@ -68,8 +70,26 @@ export default function HealthHomeScreen() {
   ]);
   const [showWelcome, setShowWelcome] = useState(true);
 
+  // Animation values
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const scaleAnim = React.useRef(new Animated.Value(0.95)).current;
+
   // 2. SYNC NAME AND MEAL DATA
   useEffect(() => {
+    // Trigger animations on mount
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      })
+    ]).start();
     loadStoredData();
     subscribePedometer();
     syncBackendMeals();
@@ -389,11 +409,11 @@ export default function HealthHomeScreen() {
   );
 
   const themeColors = {
-    bg: isDark ? '#121212' : '#F8F9FA',
-    card: isDark ? '#1E1E1E' : '#FFFFFF',
+    bg: 'transparent',
+    card: isDark ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.85)',
     text: isDark ? '#FFFFFF' : '#011627',
-    subText: isDark ? '#AAAAAA' : '#7D8592',
-    border: isDark ? '#333333' : '#F0F0F0',
+    subText: isDark ? 'rgba(255,255,255,0.7)' : '#7D8592',
+    border: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
   };
 
   const { totalCalories, totalProtein, totalCarbs, totalFats } = calculateMealTotals(filteredMeals);
@@ -469,7 +489,12 @@ export default function HealthHomeScreen() {
   const filledSegments = Math.round(progress * segments.length);
 
   return (
-     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.bg }]}>
+    <LinearGradient
+      colors={isDark ? ['#0F172A', '#1E293B'] : ['#E0F7FA', '#FFFFFF']}
+      style={styles.container}
+    >
+     <SafeAreaView style={{ flex: 1 }}>
+      <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}>
       
       {/* WELCOME ANIMATION MODAL */}
       <Modal visible={showWelcome} transparent={false} animationType="fade">
@@ -1140,7 +1165,9 @@ export default function HealthHomeScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+      </Animated.View>
+     </SafeAreaView>
+    </LinearGradient>
   );
 }
 

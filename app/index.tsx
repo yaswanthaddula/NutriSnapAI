@@ -9,6 +9,7 @@ import {
   Image,
   ActivityIndicator 
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import useAppStore from '../src/store/useAppStore';
 import apiService from '../src/services/apiService';
@@ -105,8 +106,9 @@ export default function WelcomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+    <LinearGradient colors={['#E8F5E9', '#A5D6A7']} style={styles.gradientBg}>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
         
         {/* Animated 3D Logo Area */}
         <Animated.View style={[
@@ -150,13 +152,15 @@ export default function WelcomeScreen() {
           </TouchableOpacity>
         </Animated.View>
 
-      </View>
-    </SafeAreaView>
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  gradientBg: { flex: 1 },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { 
     flex: 1, 
     alignItems: 'center', 
@@ -208,16 +212,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10 
   },
   button: { 
-    backgroundColor: '#00C853', 
+    backgroundColor: '#2E7D32', 
     width: '100%', 
     padding: 20, 
-    borderRadius: 18, 
+    borderRadius: 20, 
     alignItems: 'center',
-    elevation: 5
+    elevation: 8,
+    shadowColor: '#2E7D32',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10
   },
   buttonText: { 
     color: '#fff', 
     fontSize: 18, 
-    fontWeight: 'bold' 
+    fontWeight: '900' 
   }
 });

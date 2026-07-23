@@ -11,6 +11,7 @@ import {
   Platform,
   ScrollView 
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons'; // Ensure you have vector-icons installed
 
@@ -119,14 +120,16 @@ export default function ProfileSetUp() {
           <View style={{ height: 40 }} />
 
           <TouchableOpacity 
-            style={[
-              styles.continueBtn, 
-              { backgroundColor: isFormValid ? '#00C853' : '#81E19E' } 
-            ]} 
+            style={styles.continueBtnWrapper}
             onPress={handleContinue}
             disabled={!isFormValid}
           >
-            <Text style={styles.continueBtnText}>Continue</Text>
+            <LinearGradient 
+              colors={isFormValid ? ['#4CAF50', '#2E7D32'] : ['#A5D6A7', '#81C784']}
+              style={styles.continueBtnGradient}
+            >
+              <Text style={styles.continueBtnText}>Continue</Text>
+            </LinearGradient>
           </TouchableOpacity>
 
         </ScrollView>
@@ -139,9 +142,9 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#FFF' },
   scroll: { flexGrow: 1, paddingHorizontal: 25, paddingBottom: 30 },
   backBtn: { marginTop: 10, marginBottom: 10, width: 50, height: 50, justifyContent: 'center', marginLeft: -10 },
-  progressContainer: { flexDirection: 'row', marginBottom: 35 },
-  progressDash: { height: 5, width: 60, backgroundColor: '#E0E0E0', borderRadius: 5, marginRight: 8 },
-  dashActive: { backgroundColor: '#00C853' },
+  progressContainer: { flexDirection: 'row', marginBottom: 35, marginTop: 10 },
+  progressDash: { height: 6, width: 60, backgroundColor: '#E0E0E0', borderRadius: 3, marginRight: 8 },
+  dashActive: { backgroundColor: '#4CAF50', shadowColor: '#4CAF50', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 4, elevation: 2 },
   header: { marginBottom: 30 },
   title: { fontSize: 32, fontWeight: 'bold', color: '#011627' },
   subtitle: { fontSize: 16, color: '#707070', marginTop: 10 },
@@ -151,31 +154,49 @@ const styles = StyleSheet.create({
   input: { 
     height: 60, 
     borderWidth: 1, 
-    borderColor: '#F0F0F0', 
-    borderRadius: 15, 
+    borderColor: '#E8E8E8', 
+    borderRadius: 16, 
     paddingHorizontal: 20, 
     fontSize: 16, 
-    backgroundColor: '#FAFAFA'
+    backgroundColor: '#FFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2
   },
   genderRow: { flexDirection: 'row', justifyContent: 'space-between' },
   genderBtn: { 
     flex: 0.48, 
     height: 60, 
     borderWidth: 1, 
-    borderColor: '#F0F0F0', 
-    borderRadius: 15, 
+    borderColor: '#E8E8E8', 
+    borderRadius: 16, 
     justifyContent: 'center', 
     alignItems: 'center', 
-    backgroundColor: '#FAFAFA'
+    backgroundColor: '#FFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2
   },
-  genderBtnActive: { borderColor: '#00C853', backgroundColor: '#F1FBF2' },
-  genderText: { fontSize: 16, color: '#666' },
-  genderTextActive: { color: '#00C853', fontWeight: 'bold' },
-  continueBtn: { 
+  genderBtnActive: { borderColor: '#4CAF50', backgroundColor: '#F1F8E9', shadowColor: '#4CAF50', shadowOpacity: 0.2 },
+  genderText: { fontSize: 16, color: '#666', fontWeight: '600' },
+  genderTextActive: { color: '#2E7D32', fontWeight: '900' },
+  continueBtnWrapper: {
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
+    borderRadius: 20,
+  },
+  continueBtnGradient: { 
     height: 65, 
     borderRadius: 20, 
     justifyContent: 'center', 
     alignItems: 'center'
   },
-  continueBtnText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' }
+  continueBtnText: { color: '#FFF', fontSize: 18, fontWeight: 'bold', letterSpacing: 1 }
 });

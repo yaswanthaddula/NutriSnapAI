@@ -7,9 +7,12 @@ import {
   TouchableOpacity, 
   SafeAreaView, 
   KeyboardAvoidingView, 
-  Platform, // <--- MAKE SURE THIS IS HERE
-  Alert 
+  Platform,
+  Alert,
+  ScrollView,
+  Image
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons, AntDesign } from '@expo/vector-icons';
 import useAppStore from '../src/store/useAppStore';
@@ -105,16 +108,22 @@ export default function SignUpScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-        style={{ flex: 1 }}
-      >
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={28} color="#333" />
-        </TouchableOpacity>
+    <LinearGradient colors={['#E8F5E9', '#4CAF50']} style={styles.gradientBg}>
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+          style={{ flex: 1 }}
+        >
+          <ScrollView 
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} 
+            keyboardShouldPersistTaps="handled"
+          >
+            <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+              <Ionicons name="chevron-back" size={28} color="#000" />
+            </TouchableOpacity>
 
-        <View style={styles.content}>
+            <View style={styles.glassContainer}>
+              <View style={styles.content}>
           <Text style={styles.header}>Create Account</Text>
           <Text style={styles.subHeader}>Start your fitness journey today</Text>
 
@@ -196,25 +205,42 @@ export default function SignUpScreen() {
               <Text style={styles.loginLink}>Login</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  backBtn: { padding: 20, marginTop: 10 },
-  content: { paddingHorizontal: 30, flex: 1 },
-  header: { fontSize: 32, fontWeight: 'bold', color: '#011627' },
-  subHeader: { fontSize: 16, color: '#707070', marginBottom: 30 },
+  container: { flex: 1, backgroundColor: 'transparent' },
+  gradientBg: { flex: 1 },
+  glassContainer: {
+    marginHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 30,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+    paddingVertical: 20,
+  },
+  backBtn: { position: 'absolute', top: 10, left: 20, zIndex: 10, padding: 10, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 20 },
+  content: { paddingHorizontal: 30 },
+  header: { fontSize: 32, fontWeight: '900', color: '#1B5E20', marginTop: 20 },
+  subHeader: { fontSize: 16, color: '#388E3C', marginBottom: 30, fontWeight: '600' },
   form: { marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: '600', color: '#011627', marginBottom: 8 },
+  label: { fontSize: 14, fontWeight: '700', color: '#2E7D32', marginBottom: 8 },
   input: { 
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderWidth: 1, 
-    borderColor: '#E0E0E0', 
+    borderColor: '#C8E6C9', 
     padding: 15, 
-    borderRadius: 12, 
+    borderRadius: 16, 
     marginBottom: 15, 
     fontSize: 16 
   },
@@ -222,9 +248,10 @@ const styles = StyleSheet.create({
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 12,
+    borderColor: '#C8E6C9',
+    borderRadius: 16,
     marginBottom: 15,
   },
   passwordInput: {
@@ -237,14 +264,15 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   signUpBtn: { 
-    backgroundColor: '#00C853', 
+    backgroundColor: '#4CAF50', 
     padding: 18, 
-    borderRadius: 12, 
+    borderRadius: 16, 
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#00C853',
+    elevation: 8,
+    shadowColor: '#4CAF50',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.3,
+    shadowRadius: 10
   },
   btnDisabled: { backgroundColor: '#A5D6A7' },
   signUpBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
@@ -262,6 +290,6 @@ const styles = StyleSheet.create({
   },
   googleBtnText: { marginLeft: 10, fontWeight: '600', color: '#555' },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 30, paddingBottom: 20 },
-  footerText: { color: '#707070' },
-  loginLink: { color: '#00C853', fontWeight: 'bold' }
+  footerText: { color: '#2E7D32', fontWeight: '600' },
+  loginLink: { color: '#1B5E20', fontWeight: '900' }
 });

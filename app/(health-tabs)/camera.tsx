@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   SafeAreaView, 
   Platform,
-  Alert 
+  Alert,
+  Animated
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +24,25 @@ export default function TabCameraScreen() {
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [cooldownTime, setCooldownTime] = useState(0);
   const cameraRef = useRef<any>(null);
+  
+  const scanAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scanAnim, {
+          toValue: 260,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scanAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: true,
+        })
+      ])
+    ).start();
+  }, [scanAnim]);
 
   useEffect(() => {
     let timer: any;
@@ -169,6 +189,7 @@ export default function TabCameraScreen() {
               <View style={styles.cornerTopRight} />
               <View style={styles.cornerBottomLeft} />
               <View style={styles.cornerBottomRight} />
+              <Animated.View style={[styles.laser, { transform: [{ translateY: scanAnim }] }]} />
               <Text style={styles.scannerText}>Point camera at food</Text>
             </View>
           </View>
@@ -243,10 +264,11 @@ const styles = StyleSheet.create({
     textShadowRadius: 10
   },
 
-  cornerTopLeft: { position: 'absolute', top: 0, left: 0, width: 40, height: 40, borderTopWidth: 3, borderLeftWidth: 3, borderColor: 'white', borderTopLeftRadius: 20 },
-  cornerTopRight: { position: 'absolute', top: 0, right: 0, width: 40, height: 40, borderTopWidth: 3, borderRightWidth: 3, borderColor: 'white', borderTopRightRadius: 20 },
-  cornerBottomLeft: { position: 'absolute', bottom: 0, left: 0, width: 40, height: 40, borderBottomWidth: 3, borderLeftWidth: 3, borderColor: 'white', borderBottomLeftRadius: 20 },
-  cornerBottomRight: { position: 'absolute', bottom: 0, right: 0, width: 40, height: 40, borderBottomWidth: 3, borderRightWidth: 3, borderColor: 'white', borderBottomRightRadius: 20 },
+  cornerTopLeft: { position: 'absolute', top: 0, left: 0, width: 40, height: 40, borderTopWidth: 4, borderLeftWidth: 4, borderColor: '#00E676', borderTopLeftRadius: 20, shadowColor: '#00E676', shadowOpacity: 0.8, shadowRadius: 10, shadowOffset: { width:0, height:0 } },
+  cornerTopRight: { position: 'absolute', top: 0, right: 0, width: 40, height: 40, borderTopWidth: 4, borderRightWidth: 4, borderColor: '#00E676', borderTopRightRadius: 20, shadowColor: '#00E676', shadowOpacity: 0.8, shadowRadius: 10, shadowOffset: { width:0, height:0 } },
+  cornerBottomLeft: { position: 'absolute', bottom: 0, left: 0, width: 40, height: 40, borderBottomWidth: 4, borderLeftWidth: 4, borderColor: '#00E676', borderBottomLeftRadius: 20, shadowColor: '#00E676', shadowOpacity: 0.8, shadowRadius: 10, shadowOffset: { width:0, height:0 } },
+  cornerBottomRight: { position: 'absolute', bottom: 0, right: 0, width: 40, height: 40, borderBottomWidth: 4, borderRightWidth: 4, borderColor: '#00E676', borderBottomRightRadius: 20, shadowColor: '#00E676', shadowOpacity: 0.8, shadowRadius: 10, shadowOffset: { width:0, height:0 } },
+  laser: { position: 'absolute', top: 0, left: 20, right: 20, height: 2, backgroundColor: '#00E676', shadowColor: '#00E676', shadowOpacity: 1, shadowRadius: 10, shadowOffset: { width:0, height:0 } },
 
   bottomBar: { 
     flexDirection: 'row', 
@@ -258,24 +280,29 @@ const styles = StyleSheet.create({
     width: 84, 
     height: 84, 
     borderRadius: 42, 
-    borderWidth: 5, 
-    borderColor: 'white', 
+    borderWidth: 4, 
+    borderColor: '#00E676', 
     justifyContent: 'center', 
-    alignItems: 'center' 
+    alignItems: 'center',
+    shadowColor: '#00E676',
+    shadowOpacity: 0.6,
+    shadowRadius: 15
   },
   captureBtnInner: { 
-    width: 64, 
-    height: 64, 
-    borderRadius: 32, 
+    width: 66, 
+    height: 66, 
+    borderRadius: 33, 
     backgroundColor: 'white' 
   },
   sideBtn: { 
-    width: 54, 
-    height: 54, 
-    borderRadius: 18, 
-    backgroundColor: 'rgba(255,255,255,0.2)', 
+    width: 56, 
+    height: 56, 
+    borderRadius: 28, 
+    backgroundColor: 'rgba(0,200,83,0.3)', 
     justifyContent: 'center', 
-    alignItems: 'center' 
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0,200,83,0.5)'
   },
 
   permissionContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30, backgroundColor: '#FFF' },

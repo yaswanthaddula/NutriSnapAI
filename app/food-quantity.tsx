@@ -7,11 +7,13 @@ import {
   TouchableOpacity, 
   ScrollView,
   Image,
-  TextInput,
-  KeyboardAvoidingView,
   Platform,
-  LayoutAnimation
+  LayoutAnimation,
+  Animated,
+  KeyboardAvoidingView,
+  TextInput
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { foodDatabase } from '../src/data/foodDatabase';
@@ -152,32 +154,30 @@ export default function FoodQuantityScreen() {
           </View>
 
           {/* LIVE NUTRITION PREVIEW */}
-          <View style={styles.previewCard}>
-            <View style={styles.previewHeader}>
-              <MaterialCommunityIcons name="lightning-bolt" size={16} color="#00C853" />
-              <Text style={styles.previewTitle}>Estimated Nutrition</Text>
-            </View>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{liveCalories}</Text>
-                <Text style={styles.statLabel}>kcal</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{liveProtein}g</Text>
-                <Text style={styles.statLabel}>Protein</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{liveCarbs}g</Text>
-                <Text style={styles.statLabel}>Carbs</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{liveFat}g</Text>
-                <Text style={styles.statLabel}>Fats</Text>
-              </View>
-            </View>
+          <View style={styles.premiumStatsGrid}>
+            <LinearGradient colors={['#FF9800', '#FFCC80']} style={styles.macroGradientCard}>
+              <MaterialCommunityIcons name="fire" size={24} color="#FFF" />
+              <Text style={styles.macroGradientValue}>{liveCalories}</Text>
+              <Text style={styles.macroGradientLabel}>Calories</Text>
+            </LinearGradient>
+
+            <LinearGradient colors={['#2196F3', '#90CAF9']} style={styles.macroGradientCard}>
+              <MaterialCommunityIcons name="dumbbell" size={24} color="#FFF" />
+              <Text style={styles.macroGradientValue}>{liveProtein}g</Text>
+              <Text style={styles.macroGradientLabel}>Protein</Text>
+            </LinearGradient>
+
+            <LinearGradient colors={['#9C27B0', '#CE93D8']} style={styles.macroGradientCard}>
+              <MaterialCommunityIcons name="grain" size={24} color="#FFF" />
+              <Text style={styles.macroGradientValue}>{liveCarbs}g</Text>
+              <Text style={styles.macroGradientLabel}>Carbs</Text>
+            </LinearGradient>
+
+            <LinearGradient colors={['#4CAF50', '#A5D6A7']} style={styles.macroGradientCard}>
+              <MaterialCommunityIcons name="water-percent" size={24} color="#FFF" />
+              <Text style={styles.macroGradientValue}>{liveFat}g</Text>
+              <Text style={styles.macroGradientLabel}>Fats</Text>
+            </LinearGradient>
           </View>
 
           {/* SMART OPTIONS */}
@@ -394,5 +394,39 @@ const styles = StyleSheet.create({
     shadowRadius: 15
   },
   continueText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
-  btnDisabled: { backgroundColor: '#A5D6A7', elevation: 0 }
+  btnDisabled: { backgroundColor: '#A5D6A7', elevation: 0 },
+  premiumStatsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 25,
+    marginTop: 15,
+  },
+  macroGradientCard: {
+    width: '48%',
+    borderRadius: 20,
+    padding: 15,
+    marginBottom: 15,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  macroGradientValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#FFF',
+    marginTop: 5,
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  macroGradientLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.9)',
+    marginTop: 2,
+  }
 });

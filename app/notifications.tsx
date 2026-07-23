@@ -11,6 +11,7 @@ import {
   Alert,
   Modal
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTheme } from './_layout'; 
@@ -352,21 +353,23 @@ const RepeatPicker = ({ value, onChange, theme }: any) => {
 
 // Reminder Preview Component
 const ReminderPreview = ({ title, time, repeat, theme, onDelete }: any) => (
-  <View style={{ marginTop: 10, padding: 15, borderRadius: 12, backgroundColor: theme.cardBg, borderWidth: 1, borderColor: theme.border }}>
-    <Text style={{ fontSize: 12, fontWeight: 'bold', color: theme.subText, textTransform: 'uppercase', marginBottom: 8 }}>Preview Before Save</Text>
+  <LinearGradient colors={theme.background === '#121212' ? ['#1B5E20', '#2E7D32'] : ['#E8F5E9', '#C8E6C9']} style={{ marginTop: 10, padding: 15, borderRadius: 16, borderWidth: 1, borderColor: theme.background === '#121212' ? '#388E3C' : '#A5D6A7' }}>
+    <Text style={{ fontSize: 12, fontWeight: '800', color: theme.background === '#121212' ? '#A5D6A7' : '#2E7D32', textTransform: 'uppercase', marginBottom: 8, letterSpacing: 1 }}>Active Reminder</Text>
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <Ionicons name="notifications" size={20} color="#00C853" />
-      <View style={{ marginLeft: 10 }}>
-        <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.text }}>{title}</Text>
-        <Text style={{ fontSize: 14, color: theme.subText, marginTop: 2 }}>{time} • {repeat || 'Daily'}</Text>
+      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.background === '#121212' ? '#4CAF50' : '#4CAF50', justifyContent: 'center', alignItems: 'center', shadowColor: '#4CAF50', shadowOffset: {width:0, height:4}, shadowOpacity: 0.3, shadowRadius: 5 }}>
+        <Ionicons name="notifications" size={22} color="#FFF" />
+      </View>
+      <View style={{ marginLeft: 12 }}>
+        <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.background === '#121212' ? '#FFF' : '#1B5E20' }}>{title}</Text>
+        <Text style={{ fontSize: 14, color: theme.background === '#121212' ? 'rgba(255,255,255,0.7)' : '#388E3C', marginTop: 2, fontWeight: '600' }}>{time} • {repeat || 'Daily'}</Text>
       </View>
       {onDelete && (
-        <TouchableOpacity style={{ marginLeft: 'auto', padding: 8 }} onPress={onDelete}>
-          <Ionicons name="trash-outline" size={20} color="#F44336" />
+        <TouchableOpacity style={{ marginLeft: 'auto', padding: 8, backgroundColor: 'rgba(244,67,54,0.15)', borderRadius: 12 }} onPress={onDelete}>
+          <Ionicons name="trash-outline" size={22} color="#F44336" />
         </TouchableOpacity>
       )}
     </View>
-  </View>
+  </LinearGradient>
 );
 
 export default function NotificationsScreen() {
