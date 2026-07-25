@@ -37,53 +37,46 @@ export default function GymHomeScreen() {
   const { 
     userProfile, meals, steps, caloriesBurned, workouts, activeWorkout, notifications, 
     notificationPrefs, waterData, updateSteps, loadStoredData, saveStoredData, setMeals, 
-    addWater, setWaterIntake, recalculateWaterGoal, fetchTodayReminders, todayReminders, reminders, checkNewDay
+    addWater, setWaterIntake, recalculateWaterGoal, fetchTodayReminders, todayReminders, reminders, checkNewDay, markAllAsRead
   } = useAppStore();
   
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'gym')).length;
   
-  const getNotificationBadgeText = () => {
+  const getNextReminder = () => {
     const upcoming = todayReminders?.filter((r: any) => r.is_enabled && r.status !== 'Completed' && r.status !== 'Missed') || [];
-    const count = upcoming.length;
+    if (upcoming.length === 0) return null;
+    
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
 
-    if (count > 1) {
-      return `${count} Upcoming`;
-    } else if (count === 1) {
-      const r = upcoming[0];
-      const now = new Date();
-      const currentMins = now.getHours() * 60 + now.getMinutes();
-      
+    let next = null;
+    let minDiff = Infinity;
+
+    upcoming.forEach(r => {
       const match = r.reminder_time?.match(/^(\d{1,2})[:.](\d{2})\s*(AM|PM)$/i);
       if (match) {
         let h = parseInt(match[1]);
         const m = parseInt(match[2]);
         const ampm = match[3].toUpperCase();
-        if (ampm === 'PM' && h < 12) h += 12;
-        if (ampm === 'AM' && h === 12) h = 0;
-        const rMins = h * 60 + m;
-        const diff = rMins - currentMins;
-        
-        let title = r.title || r.reminder_type || 'Reminder';
-        title = title.replace(' Reminder', '');
-        title = title.charAt(0).toUpperCase() + title.slice(1);
-        
-        if (diff > 0 && diff <= 60) {
-          return `${title} in ${diff} min`;
-        } else {
-          return `${title} at ${r.reminder_time}`;
+        if (h === 12) h = ampm === 'AM' ? 0 : 12;
+        else if (ampm === 'PM') h += 12;
+
+        const reminderMins = h * 60 + m;
+        const diff = reminderMins - currentMins;
+        if (diff > 0 && diff < minDiff) {
+          minDiff = diff;
+          let icon = '🔔';
+          if (r.title?.includes('Breakfast')) icon = '🍳';
+          else if (r.title?.includes('Lunch')) icon = '🥗';
+          else if (r.title?.includes('Dinner')) icon = '🍽️';
+          else if (r.title?.includes('Water')) icon = '💧';
+          else if (r.title?.includes('Workout')) icon = '🏋️';
+          next = { title: r.title || r.reminder_type, time: r.reminder_time, icon };
         }
-      } else {
-        let title = r.title || r.reminder_type || 'Reminder';
-        title = title.charAt(0).toUpperCase() + title.slice(1);
-        return `${title}`;
       }
-    } else if (unreadCount > 0) {
-      return `${unreadCount} Notifications`;
-    }
-    
-    return '';
+    });
+    return next;
   };
-  const badgeText = getNotificationBadgeText();
   
   // Calculate Today's Workout
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -503,6 +496,16 @@ export default function GymHomeScreen() {
   };
 
   const { totalCalories, totalProtein, totalCarbs, totalFats } = calculateMealTotals(gymMeals);
+
+  const getMealType = (timeStr: string) => {
+    if (!timeStr) return 'Snack';
+    const [h] = timeStr.split(':');
+    const hour = parseInt(h);
+    if (hour >= 5 && hour < 11) return 'Breakfast';
+    if (hour >= 11 && hour < 15) return 'Lunch';
+    if (hour >= 15 && hour < 19) return 'Snack';
+    return 'Dinner';
+  };
   const caloriesLeft = Math.max(0, userProfile.calorieTarget - totalCalories);
   const proteinLeft = Math.max(0, (userProfile.proteinTarget || 150) - totalProtein);
   const carbsLeft = Math.max(0, (userProfile.carbsTarget || 250) - totalCarbs);
@@ -511,6 +514,23 @@ export default function GymHomeScreen() {
   // Calendar Data
   const calendarDays = [];
   const today = new Date();
+  
+  const hour = today.getHours();
+  let greetingTitle = '';
+  let greetingSub = '';
+  if (hour < 12) {
+    greetingTitle = `☀️ Good Morning, ${userProfile.name} 👋`;
+    greetingSub = 'Start your day with healthy choices.';
+  } else if (hour < 17) {
+    greetingTitle = `🌤 Good Afternoon, ${userProfile.name} 👋`;
+    greetingSub = 'Stay active and keep your energy high.';
+  } else if (hour < 21) {
+    greetingTitle = `🌆 Good Evening, ${userProfile.name} 👋`;
+    greetingSub = 'Stay consistent and finish strong today.';
+  } else {
+    greetingTitle = `🌙 Good Night, ${userProfile.name} 👋`;
+    greetingSub = 'Rest well and be ready for tomorrow.';
+  }
   const startOfWeek = new Date();
   startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
 
@@ -648,9 +668,21 @@ export default function GymHomeScreen() {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text style={{ fontSize: 24, fontWeight: '800', color: theme.text }}>Gym Dashboard</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
+            {/* Reminder Chip */}
+            {getNextReminder() && (
+              <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}>
+                <Text style={{ color: theme.text, fontSize: 12, fontWeight: '600' }}>
+                  {getNextReminder()?.icon} {getNextReminder()?.title} • {getNextReminder()?.time}
+                </Text>
+              </View>
+            )}
+
             <TouchableOpacity 
               style={[styles.notifBtn, { position: 'relative' }]} 
-              onPress={() => setShowNotificationModal(true)}
+              onPress={() => {
+                setShowNotificationModal(true);
+                markAllAsRead();
+              }}
               activeOpacity={0.7}
             >
               <Animated.View style={[
@@ -665,23 +697,29 @@ export default function GymHomeScreen() {
               ]}>
                 <MaterialCommunityIcons name="bell-outline" size={24} color={theme.text} />
               </Animated.View>
-              {(unreadCount > 0 || badgeText !== '') && (
-                <View style={[styles.badgePremium, { right: -2, top: -2, width: 12, height: 12, borderRadius: 6, minWidth: 12 }]} />
+              {unreadCount > 0 && (
+                <View style={[styles.badgePremium, { right: -4, top: -4, minWidth: 16, height: 16, borderRadius: 8, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FF3B30', borderWidth: 2, borderColor: theme.background }]}>
+                  <Text style={{ color: '#FFF', fontSize: 9, fontWeight: 'bold' }}>{unreadCount}</Text>
+                </View>
               )}
             </TouchableOpacity>
             
             <TouchableOpacity onPress={() => router.push('/profile')} style={styles.avatarCircle}>
-              <Text style={styles.avatarLetter}>{userProfile.name?.charAt(0).toUpperCase() || 'U'}</Text>
+              {userProfile.profileImage ? (
+                <Image source={{ uri: userProfile.profileImage }} style={{ width: '100%', height: '100%', borderRadius: 20 }} />
+              ) : (
+                <Text style={styles.avatarLetter}>{userProfile.name?.charAt(0).toUpperCase() || 'U'}</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={{ marginTop: 25, marginBottom: 10 }}>
           <Text style={[styles.userNameBold, { color: theme.text, fontSize: 20 }]}>
-            {today.getHours() < 12 ? 'Good Morning' : today.getHours() < 17 ? 'Good Afternoon' : 'Good Evening'}, {userProfile.name} 👋
+            {greetingTitle}
           </Text>
           <Text style={[styles.welcomeSmall, { color: theme.subText, marginTop: 4, fontSize: 13, fontWeight: '500' }]}>
-            {isDark ? 'Discipline today, strength tomorrow.' : 'Focus • Consistency • Results'}
+            {greetingSub}
           </Text>
         </View>
       </View>
@@ -775,6 +813,43 @@ export default function GymHomeScreen() {
             <Text style={{ color: theme.text, fontSize: 24, fontWeight: 'bold' }}>{totalProtein || '82'}<Text style={{ fontSize: 16 }}>g</Text></Text>
             <Text style={{ color: theme.subText, fontSize: 12, marginTop: 4 }}>intake today</Text>
           </View>
+        </View>
+
+        {/* TODAY'S MEALS SECTION */}
+        <View style={{ backgroundColor: theme.card, padding: 22, borderRadius: 24, marginBottom: 20, ...theme.shadow }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+            <Text style={{ color: theme.text, fontSize: 15, fontWeight: 'bold' }}>Today's Meals</Text>
+            <TouchableOpacity onPress={() => router.push({ pathname: '/(tabs)/camera', params: { fromMode: 'gym' } })}>
+              <Text style={{ color: isDark ? '#F97316' : '#2563EB', fontSize: 13, fontWeight: '600' }}>+ Add</Text>
+            </TouchableOpacity>
+          </View>
+          {gymMeals.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 10, gap: 15 }}>
+              {gymMeals.map((item: any, index: number) => (
+                <View key={index} style={[styles.mealItemHorizontal, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', width: 220, borderRadius: 16, overflow: 'hidden' }]}>
+                  {item.imageUri ? (
+                    <Image source={{ uri: item.imageUri }} style={{ width: '100%', height: 100 }} />
+                  ) : item.image_url ? (
+                    <Image source={{ uri: item.image_url }} style={{ width: '100%', height: 100 }} />
+                  ) : (
+                    <View style={{ width: '100%', height: 100, backgroundColor: isDark ? '#333' : '#E0E0E0', justifyContent: 'center', alignItems: 'center' }}>
+                      <Text style={{ fontSize: 32 }}>{item.emoji || '🍽️'}</Text>
+                    </View>
+                  )}
+                  <View style={{ padding: 12 }}>
+                    <Text style={{ color: theme.text, fontSize: 14, fontWeight: '700' }} numberOfLines={1}>{item.name}</Text>
+                    <Text style={{ color: '#2563EB', fontSize: 11, marginTop: 2, fontWeight: '600' }}>{getMealType(item.time)}</Text>
+                    <Text style={{ color: theme.subText, fontSize: 12, marginTop: 2 }}>{item.time}</Text>
+                    <Text style={{ color: theme.subText, fontSize: 12, fontWeight: '600', marginTop: 4 }}>{item.calories} kcal</Text>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={{ alignItems: 'center', paddingVertical: 15 }}>
+              <Text style={{color: theme.subText, fontSize: 13, fontStyle: 'italic', textAlign: 'center'}}>No meals logged today</Text>
+            </View>
+          )}
         </View>
 
         {/* WEEKLY PROGRESS */}

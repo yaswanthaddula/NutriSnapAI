@@ -47,53 +47,46 @@ export default function HealthHomeScreen() {
     userProfile, meals, steps, caloriesBurned, updateSteps, 
     loadStoredData, saveStoredData, waterData, addWater,
     streak, todayMood, setMood, todaySleep, setSleep, updateStreak,
-    notifications, notificationPrefs, reminderStatuses, fetchTodayReminders, todayReminders, reminders, checkNewDay
+    notifications, notificationPrefs, reminderStatuses, fetchTodayReminders, todayReminders, reminders, checkNewDay, markAllAsRead
   } = useAppStore();
 
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'health')).length;
 
-  const getNotificationBadgeText = () => {
+  const getNextReminder = () => {
     const upcoming = todayReminders?.filter((r: any) => r.is_enabled && r.status !== 'Completed' && r.status !== 'Missed') || [];
-    const count = upcoming.length;
+    if (upcoming.length === 0) return null;
+    
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
 
-    if (count > 1) {
-      return `${count} Upcoming`;
-    } else if (count === 1) {
-      const r = upcoming[0];
-      const now = new Date();
-      const currentMins = now.getHours() * 60 + now.getMinutes();
-      
+    let next = null;
+    let minDiff = Infinity;
+
+    upcoming.forEach(r => {
       const match = r.reminder_time?.match(/^(\d{1,2})[:.](\d{2})\s*(AM|PM)$/i);
       if (match) {
         let h = parseInt(match[1]);
         const m = parseInt(match[2]);
         const ampm = match[3].toUpperCase();
-        if (ampm === 'PM' && h < 12) h += 12;
-        if (ampm === 'AM' && h === 12) h = 0;
-        const rMins = h * 60 + m;
-        const diff = rMins - currentMins;
-        
-        let title = r.title || r.reminder_type || 'Reminder';
-        title = title.replace(' Reminder', '');
-        title = title.charAt(0).toUpperCase() + title.slice(1);
-        
-        if (diff > 0 && diff <= 60) {
-          return `${title} in ${diff} min`;
-        } else {
-          return `${title} at ${r.reminder_time}`;
+        if (h === 12) h = ampm === 'AM' ? 0 : 12;
+        else if (ampm === 'PM') h += 12;
+
+        const reminderMins = h * 60 + m;
+        const diff = reminderMins - currentMins;
+        if (diff > 0 && diff < minDiff) {
+          minDiff = diff;
+          let icon = '🔔';
+          if (r.title?.includes('Breakfast')) icon = '🍳';
+          else if (r.title?.includes('Lunch')) icon = '🥗';
+          else if (r.title?.includes('Dinner')) icon = '🍽️';
+          else if (r.title?.includes('Water')) icon = '💧';
+          else if (r.title?.includes('Workout')) icon = '🏋️';
+          next = { title: r.title || r.reminder_type, time: r.reminder_time, icon };
         }
-      } else {
-        let title = r.title || r.reminder_type || 'Reminder';
-        title = title.charAt(0).toUpperCase() + title.slice(1);
-        return `${title}`;
       }
-    } else if (unreadCount > 0) {
-      return `${unreadCount} Notifications`;
-    }
-    
-    return '';
+    });
+    return next;
   };
-  const badgeText = getNotificationBadgeText();
   const [isPedometerAvailable, setIsPedometerAvailable] = useState('checking');
   const [showManualSteps, setShowManualSteps] = useState(false);
   const [manualStepsVal, setManualStepsVal] = useState(steps.toString());
@@ -459,7 +452,26 @@ export default function HealthHomeScreen() {
   };
 
   // 4. DATA FILTERING & CALCULATIONS
-  const today = new Date().toISOString().split('T')[0];
+  const todayDateObj = new Date();
+  const today = todayDateObj.toISOString().split('T')[0];
+
+  const hour = todayDateObj.getHours();
+  let greetingTitle = '';
+  let greetingSub = '';
+  if (hour < 12) {
+    greetingTitle = `☀️ Good Morning, ${userProfile.name} 👋`;
+    greetingSub = 'Start your day with healthy choices.';
+  } else if (hour < 17) {
+    greetingTitle = `🌤 Good Afternoon, ${userProfile.name} 👋`;
+    greetingSub = 'Stay active and keep your energy high.';
+  } else if (hour < 21) {
+    greetingTitle = `🌆 Good Evening, ${userProfile.name} 👋`;
+    greetingSub = 'Stay consistent and finish strong today.';
+  } else {
+    greetingTitle = `🌙 Good Night, ${userProfile.name} 👋`;
+    greetingSub = 'Rest well and be ready for tomorrow.';
+  }
+
   const filteredMeals = meals.filter((m: any) => 
     m.mode === 'health' && 
     (m.date === today || !m.date) // Handle legacy meals without date
@@ -478,6 +490,16 @@ export default function HealthHomeScreen() {
   // Real Profile Targets + Macro Fallback Logic
   const calorieTarget = userProfile.calorieTarget || 2000;
   const proteinTarget = userProfile.proteinTarget || 100;
+
+  const getMealType = (timeStr: string) => {
+    if (!timeStr) return 'Snack';
+    const [h] = timeStr.split(':');
+    const hour = parseInt(h);
+    if (hour >= 5 && hour < 11) return 'Breakfast';
+    if (hour >= 11 && hour < 15) return 'Lunch';
+    if (hour >= 15 && hour < 19) return 'Snack';
+    return 'Dinner';
+  };
   const fatsTarget = userProfile.fatsTarget || (calorieTarget * 0.25) / 9;
   const carbsTarget = userProfile.carbsTarget || (calorieTarget - (proteinTarget * 4) - (fatsTarget * 9)) / 4;
 
@@ -683,39 +705,58 @@ export default function HealthHomeScreen() {
       </Modal>
 
       {/* --- PREMIUM HEADER --- */}
-      <View style={[styles.topHeader, { backgroundColor: themeColors.bg }]}>
+      <View style={[styles.topHeader, { backgroundColor: themeColors.bg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
         <View style={styles.userInfoRow}>
           <TouchableOpacity onPress={() => router.push('/profile')} style={styles.avatarCircle}>
-            <Text style={styles.avatarLetter}>{userProfile.name?.charAt(0).toUpperCase() || 'U'}</Text>
+            {userProfile.profileImage ? (
+              <Image source={{ uri: userProfile.profileImage }} style={{ width: '100%', height: '100%', borderRadius: 24 }} />
+            ) : (
+              <Text style={styles.avatarLetter}>{userProfile.name?.charAt(0).toUpperCase() || 'U'}</Text>
+            )}
           </TouchableOpacity>
           <View style={styles.welcomeTextColumn}>
-            <Text style={[styles.welcomeSmall, { color: themeColors.subText }]}>Hello,</Text>
-            <Text style={[styles.userNameBold, { color: themeColors.text }]}>{userProfile.name} 🌿</Text>
+            <Text style={[styles.userNameBold, { color: themeColors.text, fontSize: 18 }]}>{greetingTitle}</Text>
+            <Text style={[styles.welcomeSmall, { color: themeColors.subText }]}>{greetingSub}</Text>
           </View>
         </View>
-        <TouchableOpacity 
-          style={styles.notifBtn} 
-          onPress={() => setShowNotificationModal(true)}
-          activeOpacity={0.7}
-        >
-          <Animated.View style={[
-            styles.premiumBellContainer,
-            { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' },
-            { transform: [{
-              rotate: bellShakeAnim.interpolate({
-                inputRange: [-1, 1],
-                outputRange: ['-15deg', '15deg']
-              })
-            }] }
-          ]}>
-            <MaterialCommunityIcons name="bell-outline" size={24} color={isDark ? '#FFF' : '#2E7D32'} />
-          </Animated.View>
-          {(unreadCount > 0 || badgeText !== '') && (
-            <View style={styles.badgePremium}>
-               <Text style={styles.badgePremiumText}>{unreadCount > 0 ? unreadCount : '!'}</Text>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          {/* Reminder Chip */}
+          {getNextReminder() && (
+            <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16 }}>
+              <Text style={{ color: themeColors.text, fontSize: 11, fontWeight: '600' }}>
+                {getNextReminder()?.icon} {getNextReminder()?.title} • {getNextReminder()?.time}
+              </Text>
             </View>
           )}
-        </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.notifBtn} 
+            onPress={() => {
+              setShowNotificationModal(true);
+              markAllAsRead();
+            }}
+            activeOpacity={0.7}
+          >
+            <Animated.View style={[
+              styles.premiumBellContainer,
+              { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' },
+              { transform: [{
+                rotate: bellShakeAnim.interpolate({
+                  inputRange: [-1, 1],
+                  outputRange: ['-15deg', '15deg']
+                })
+              }] }
+            ]}>
+              <MaterialCommunityIcons name="bell-outline" size={24} color={isDark ? '#FFF' : '#2E7D32'} />
+            </Animated.View>
+            {unreadCount > 0 && (
+              <View style={[styles.badgePremium, { right: -4, top: -4, minWidth: 16, height: 16, borderRadius: 8, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 0 }]}>
+                 <Text style={[styles.badgePremiumText, { fontSize: 9, textAlign: 'center' }]}>{unreadCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* --- WEEKLY CALENDAR --- */}
@@ -1098,7 +1139,8 @@ export default function HealthHomeScreen() {
                   )}
                   <View style={{ padding: 12 }}>
                     <Text style={[styles.mealNameHorizontal, { color: themeColors.text }]} numberOfLines={1}>{item.name}</Text>
-                    <Text style={[styles.mealTime, { color: themeColors.subText, marginTop: 4 }]}>{item.time}</Text>
+                    <Text style={{ color: '#2563EB', fontSize: 11, marginTop: 2, fontWeight: '600' }}>{getMealType(item.time)}</Text>
+                    <Text style={[styles.mealTime, { color: themeColors.subText, marginTop: 2 }]}>{item.time}</Text>
                     <Text style={styles.mealCalsHorizontal}>{item.calories} kcal</Text>
                   </View>
                 </View>

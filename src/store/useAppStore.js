@@ -7,6 +7,7 @@ const useAppStore = create((set, get) => ({
   userProfile: {
     name: 'User',
     email: '',
+    profileImage: null,
     age: 25,
     height: 170,
     weight: 60,
@@ -42,9 +43,9 @@ const useAppStore = create((set, get) => ({
     workout: false,
     water: false,
     sleep: false,
-    goals: true,
-    reports: true,
-    quotes: true,
+    goals: false,
+    reports: false,
+    quotes: false,
     breakfastRepeat: 'Daily',
     lunchRepeat: 'Daily',
     dinnerRepeat: 'Daily',
@@ -246,7 +247,8 @@ const useAppStore = create((set, get) => ({
   deleteMeal: (id) => set({ meals: get().meals.filter(meal => meal.id !== id) }),
   
   updateSteps: (steps) => {
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const caloriesBurned = Math.round(steps * 0.04);
     
     // Update history
@@ -630,7 +632,8 @@ const useAppStore = create((set, get) => ({
     if (storedCaloriesBurned !== null) set({ caloriesBurned: storedCaloriesBurned });
     
     const storedStepDate = await storage.getData('lastStepDate');
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     
     if (storedStepDate && storedStepDate !== today) {
       // It's a new day, reset steps

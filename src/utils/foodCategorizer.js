@@ -84,7 +84,110 @@ export const getUnitsByCategory = (category) => {
  */
 export const getSmartQuantityOptions = (foodName = '', category) => {
   const cleanFoodName = foodName.trim();
+  const lowerName = cleanFoodName.toLowerCase();
   
+  // Explicit User Requested Mappings
+  if (lowerName.includes('egg')) {
+    return [
+      { label: '1 Egg', value: 1, unit: 'pieces' },
+      { label: '2 Eggs', value: 2, unit: 'pieces' },
+      { label: '3 Eggs', value: 3, unit: 'pieces' },
+      { label: 'Custom', value: 'custom', unit: 'pieces' }
+    ];
+  }
+  if (lowerName.includes('apple')) {
+    return [
+      { label: '1 Apple', value: 1, unit: 'pieces' },
+      { label: '2 Apples', value: 2, unit: 'pieces' },
+      { label: 'Half Apple', value: 0.5, unit: 'pieces' },
+      { label: 'Custom', value: 'custom', unit: 'pieces' }
+    ];
+  }
+  if (lowerName.includes('banana')) {
+    return [
+      { label: '1 Banana', value: 1, unit: 'pieces' },
+      { label: '2 Bananas', value: 2, unit: 'pieces' },
+      { label: 'Custom', value: 'custom', unit: 'pieces' }
+    ];
+  }
+  if (lowerName.includes('rice')) {
+    return [
+      { label: '100 g', value: 100, unit: 'grams' },
+      { label: '200 g', value: 200, unit: 'grams' },
+      { label: 'Bowl', value: 1, unit: 'bowl' },
+      { label: 'Plate', value: 1, unit: 'plate' }
+    ];
+  }
+  if (lowerName.includes('chicken')) {
+    return [
+      { label: '100 g', value: 100, unit: 'grams' },
+      { label: '250 g', value: 250, unit: 'grams' },
+      { label: '500 g', value: 500, unit: 'grams' },
+      { label: 'Custom', value: 'custom', unit: 'grams' }
+    ];
+  }
+  if (lowerName.includes('pizza')) {
+    return [
+      { label: 'Slice', value: 1, unit: 'slices' },
+      { label: '2 Slices', value: 2, unit: 'slices' },
+      { label: 'Whole Pizza', value: 8, unit: 'slices' },
+      { label: 'Custom', value: 'custom', unit: 'slices' }
+    ];
+  }
+  if (lowerName.includes('cake')) {
+    return [
+      { label: 'Slice', value: 1, unit: 'slices' },
+      { label: 'Half Cake', value: 4, unit: 'slices' },
+      { label: 'Custom', value: 'custom', unit: 'slices' }
+    ];
+  }
+  if (lowerName.includes('juice')) {
+    return [
+      { label: '100 ml', value: 100, unit: 'ml' },
+      { label: '250 ml', value: 250, unit: 'ml' },
+      { label: 'Glass', value: 1, unit: 'glass' },
+      { label: 'Custom', value: 'custom', unit: 'ml' }
+    ];
+  }
+  if (lowerName.includes('milk')) {
+    return [
+      { label: 'Cup', value: 1, unit: 'cup' },
+      { label: 'Glass', value: 1, unit: 'glass' },
+      { label: 'ml', value: 'custom', unit: 'ml' }
+    ];
+  }
+  if (lowerName.includes('mango')) {
+    return [
+      { label: '1 Mango', value: 1, unit: 'pieces' },
+      { label: 'Half Mango', value: 0.5, unit: 'pieces' },
+      { label: 'Pieces', value: 'custom', unit: 'pieces' }
+    ];
+  }
+  if (lowerName.includes('watermelon')) {
+    return [
+      { label: 'Slice', value: 1, unit: 'slices' },
+      { label: 'Bowl', value: 1, unit: 'bowl' },
+      { label: 'kg', value: 1000, unit: 'grams' },
+      { label: 'Custom', value: 'custom', unit: 'grams' }
+    ];
+  }
+  if (lowerName.match(/(biryani|curry|dal|paneer|masala|tikka)/)) {
+    return [
+      { label: 'Half Plate', value: 0.5, unit: 'plate' },
+      { label: 'Full Plate', value: 1, unit: 'plate' },
+      { label: 'Double Plate', value: 2, unit: 'plate' },
+      { label: 'Custom', value: 'custom', unit: 'plate' }
+    ];
+  }
+  if (category === SMART_CATEGORIES.SLICED_FOODS || lowerName.match(/(veg|vegetable|salad)/)) {
+    return [
+      { label: 'Bowl', value: 1, unit: 'bowl' },
+      { label: 'Plate', value: 1, unit: 'plate' },
+      { label: 'grams', value: 'custom_grams', unit: 'grams' }
+    ];
+  }
+
+  // Fallback to generic smart categories
   switch (category) {
     case SMART_CATEGORIES.WHOLE_FOODS:
       return [
@@ -229,9 +332,17 @@ export const getNutritionMultiplier = (quantity, unit, baseUnitType = 'grams', f
     userGrams = quantity * 50;
     userMl = quantity * 50;
     userCount = (quantity * 50) / pieceWeight;
-  } else {
-    return quantity;
-  }
+    } else if (unit === 'glass' || unit === 'cup') {
+      userGrams = quantity * 250;
+      userMl = quantity * 250;
+      userCount = (quantity * 250) / pieceWeight;
+    } else if (unit === 'slices' || unit === 'slice') {
+      userGrams = quantity * pieceWeight;
+      userMl = quantity * pieceWeight;
+      userCount = quantity;
+    } else {
+      return quantity;
+    }
 
   if (baseUnitType === 'grams') {
     return userGrams / 100;

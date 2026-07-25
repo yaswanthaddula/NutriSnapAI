@@ -339,17 +339,22 @@ const styles = StyleSheet.create({
   presetBtn: { 
     width: '18%',
     marginRight: '2%',
-    height: 45, 
-    borderRadius: 12, 
-    backgroundColor: '#F5F7FA',
+    height: 48, 
+    borderRadius: 14, 
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center', 
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#EEE',
-    marginBottom: 10
+    borderColor: '#E5E7EB',
+    marginBottom: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3
   },
-  presetBtnActive: { backgroundColor: '#00C853', borderColor: '#00C853' },
-  presetText: { fontSize: 14, color: '#011627', fontWeight: '700' },
+  presetBtnActive: { backgroundColor: '#00C853', borderColor: '#00C853', elevation: 4 },
+  presetText: { fontSize: 13, color: '#374151', fontWeight: '700' },
   presetTextActive: { color: '#FFF' },
 
   adjustContainer: { 

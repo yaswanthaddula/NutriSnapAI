@@ -14,6 +14,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useGlobalSearchParams } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 // --- IMPORT THE THEME HOOK ---
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../_layout'; 
@@ -38,6 +39,29 @@ export default function ProfileScreen() {
     setName(userProfile.name);
     setAge(userProfile.age.toString());
   }, [userProfile.name, userProfile.age]);
+
+  const pickImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Sorry, we need camera roll permissions to change your profile picture.');
+        return;
+      }
+      
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        useAppStore.getState().updateProfile('profileImage', result.assets[0].uri);
+      }
+    } catch (e) {
+      console.warn("Error picking image:", e);
+    }
+  };
 
   const handleLogout = async () => {
     const doLogout = async () => {
@@ -80,16 +104,19 @@ export default function ProfileScreen() {
       <LinearGradient colors={['#4CAF50', '#2E7D32']} style={styles.greenHeader}>
         <View style={styles.userInfoArea}>
           <View style={styles.avatarRing}>
-            <View style={styles.avatarCircle}>
+            <TouchableOpacity style={styles.avatarCircle} onPress={pickImage} activeOpacity={0.8}>
               <Image 
-                source={{ uri: userProfile.gender?.toLowerCase() === 'female' 
+                source={{ uri: userProfile.profileImage ? userProfile.profileImage : (userProfile.gender?.toLowerCase() === 'female' 
                   ? 'https://cdn-icons-png.flaticon.com/512/4140/4140047.png' // Female Icon
-                  : 'https://cdn-icons-png.flaticon.com/512/4140/4140048.png' // Male Icon
+                  : 'https://cdn-icons-png.flaticon.com/512/4140/4140048.png') // Male Icon
                 }} 
                 style={styles.avatarImage} 
                 resizeMode="cover"
               />
-            </View>
+              <View style={styles.editIconBadge}>
+                <Ionicons name="camera" size={14} color="#FFF" />
+              </View>
+            </TouchableOpacity>
           </View>
           <View style={styles.nameContainer}>
             <Text style={styles.userName}>{name}</Text>
@@ -263,8 +290,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 15
   },
-  avatarCircle: { width: 84, height: 84, borderRadius: 42, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
-  avatarImage: { width: '100%', height: '100%' },
+  avatarCircle: { width: 84, height: 84, borderRadius: 42, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', overflow: 'visible', position: 'relative' },
+  avatarImage: { width: 84, height: 84, borderRadius: 42 },
+  editIconBadge: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#333', width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#FFF' },
   nameContainer: { alignItems: 'center' },
   userName: { color: '#FFF', fontSize: 26, fontWeight: '900' },
   userAge: { color: 'rgba(255,255,255,0.8)', fontSize: 16, marginTop: 4, fontWeight: '600' },
