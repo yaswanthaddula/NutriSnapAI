@@ -7,7 +7,7 @@ import {
   TouchableOpacity, 
   SafeAreaView, 
   ScrollView, 
-  KeyboardAvoidingView, 
+  KeyboardAvoidingView,
   Platform,
   Alert,
   Image 
@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from './_layout'; 
 import useAppStore from '../src/store/useAppStore';
 import apiService from '../src/services/apiService';
@@ -67,7 +68,14 @@ export default function EditProfile() {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        useAppStore.getState().updateUserProfile('profileImage', result.assets[0].uri);
+        const uri = result.assets[0].uri;
+        useAppStore.getState().updateUserProfile('profileImage', uri);
+        
+        // Persist permanently for this user (so it survives logout/login)
+        const currentEmail = useAppStore.getState().userProfile.email;
+        if (currentEmail) {
+          AsyncStorage.setItem(`nutrisnap_avatar_${currentEmail}`, uri).catch(e => console.warn(e));
+        }
       }
     } catch (e) {
       console.warn("Error picking image:", e);

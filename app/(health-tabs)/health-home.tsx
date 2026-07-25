@@ -52,6 +52,36 @@ export default function HealthHomeScreen() {
 
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'health')).length;
 
+  // Helper to get nearest upcoming reminder
+  const getNextReminder = () => {
+    if (!todayReminders || todayReminders.length === 0) return null;
+    const now = new Date();
+    let next = null;
+    let minDiff = Infinity;
+    todayReminders.forEach((r: any) => {
+      if (!r.is_enabled || r.status === 'done' || r.status === 'cleared') return;
+      const timeStr = r.reminder_time;
+      if (!timeStr) return;
+      const match = timeStr.match(/^(\d{1,2})[:.](\d{2})\s*(AM|PM)?$/i);
+      if (match) {
+        let hour = parseInt(match[1]);
+        const min = parseInt(match[2]);
+        const ampm = match[3]?.toUpperCase();
+        if (ampm === 'PM' && hour < 12) hour += 12;
+        if (ampm === 'AM' && hour === 12) hour = 0;
+        const remDate = new Date(now);
+        remDate.setHours(hour, min, 0, 0);
+        const diff = remDate.getTime() - now.getTime();
+        if (diff > 0 && diff < minDiff) {
+          minDiff = diff;
+          next = r;
+        }
+      }
+    });
+    return next;
+  };
+  const upcomingReminder = getNextReminder();
+
   const getNotificationBadgeText = () => {
     const upcoming = todayReminders?.filter((r: any) => r.is_enabled && r.status !== 'Completed' && r.status !== 'Missed') || [];
     const count = upcoming.length;
@@ -732,34 +762,43 @@ export default function HealthHomeScreen() {
           </View>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-
-          <TouchableOpacity 
-            style={styles.notifBtn} 
-            onPress={() => {
-              setShowNotificationModal(true);
-              markAllAsRead();
-            }}
-            activeOpacity={0.7}
-          >
-            <Animated.View style={[
-              styles.premiumBellContainer,
-              { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' },
-              { transform: [{
-                rotate: bellShakeAnim.interpolate({
-                  inputRange: [-1, 1],
-                  outputRange: ['-15deg', '15deg']
-                })
-              }] }
-            ]}>
-              <MaterialCommunityIcons name="bell-outline" size={24} color={isDark ? '#FFF' : '#2E7D32'} />
-            </Animated.View>
-            {unreadCount > 0 && (
-              <View style={[styles.badgePremium, { right: -4, top: -4, minWidth: 16, height: 16, borderRadius: 8, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 0 }]}>
-                 <Text style={[styles.badgePremiumText, { fontSize: 9, textAlign: 'center' }]}>{unreadCount}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            {upcomingReminder && (
+              <View style={[styles.nextReminderChip, { backgroundColor: isDark ? '#1E1E1E' : '#FFF' }]}>
+                <Text style={[styles.nextReminderText, { color: themeColors.text }]}>
+                  {upcomingReminder.reminder_type === 'breakfast' ? '🍳 Breakfast' :
+                   upcomingReminder.reminder_type === 'lunch' ? '🥗 Lunch' :
+                   upcomingReminder.reminder_type === 'dinner' ? '🍽 Dinner' :
+                   upcomingReminder.reminder_type === 'water' ? '💧 Water' :
+                   upcomingReminder.reminder_type === 'workout' ? '🏋 Workout' :
+                   '⏰ Reminder'} • {upcomingReminder.reminder_time}
+                </Text>
               </View>
             )}
-          </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.notifBtn} 
+              onPress={() => router.push('/notification-center')}
+              activeOpacity={0.7}
+            >
+              <Animated.View style={[
+                styles.premiumBellContainer,
+                { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' },
+                { transform: [{
+                  rotate: bellShakeAnim.interpolate({
+                    inputRange: [-1, 1],
+                    outputRange: ['-15deg', '15deg']
+                  })
+                }] }
+              ]}>
+                <MaterialCommunityIcons name="bell-outline" size={24} color={isDark ? '#FFF' : '#2E7D32'} />
+              </Animated.View>
+              {unreadCount > 0 && (
+                <View style={[styles.badgePremium, { right: -4, top: -4, minWidth: 16, height: 16, borderRadius: 8, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 0 }]}>
+                   <Text style={[styles.badgePremiumText, { fontSize: 9, textAlign: 'center' }]}>{unreadCount}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
         </View>
       </View>
 
@@ -1415,7 +1454,7 @@ const styles = StyleSheet.create({
   notifItemTitle: { fontSize: 16, fontWeight: 'bold' },
   notifItemTime: { fontSize: 13, marginTop: 2 },
   badgePremium: { position: 'absolute', top: -4, right: -4, backgroundColor: '#FF5252', borderRadius: 10, minWidth: 20, height: 20, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#FFF', paddingHorizontal: 4, elevation: 4, shadowColor: '#FF5252', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3 },
-  badgePremiumText: { color: '#FFF', fontSize: 10, fontWeight: '900' },
+  badgePremiumText: { color: '#FFF', fontSize: 9, fontWeight: '900' },
   premiumBellContainer: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)' },
   bellPill: { flexDirection: 'row', alignItems: 'center', height: 42, paddingHorizontal: 15, borderRadius: 21, borderWidth: 1, position: 'relative' },
   notifDotPill: { position: 'absolute', top: 10, right: 10, width: 8, height: 8, borderRadius: 4, backgroundColor: '#FF5252' },
@@ -1426,6 +1465,19 @@ const styles = StyleSheet.create({
   calDayCircle: { width: 34, height: 34, borderRadius: 17, justifyContent: 'center', alignItems: 'center' },
   calTodayActive: { backgroundColor: '#00C853' },
   calDayNum: { fontSize: 14, fontWeight: 'bold' },
+  nextReminderChip: { 
+    paddingHorizontal: 12, 
+    paddingVertical: 8, 
+    borderRadius: 20, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    elevation: 3, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.1, 
+    shadowRadius: 5 
+  },
+  nextReminderText: { fontSize: 13, fontWeight: '600' },
   scroll: { paddingHorizontal: 20, paddingBottom: 50 },
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
   statCard: { width: '48%', backgroundColor: '#FFF', borderRadius: 20, padding: 20, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 5 },

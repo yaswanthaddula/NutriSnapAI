@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, AntDesign } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import apiService from '../src/services/apiService';
 import useAppStore from '../src/store/useAppStore';
@@ -98,11 +99,18 @@ export default function LoginScreen() {
         console.log("Backend profile:", profileData);
         console.log("Selected mode:", profileData.selected_mode);
 
+        // Check if there is a saved profile image from a previous session
+        let savedImage = null;
+        try {
+          savedImage = await AsyncStorage.getItem(`nutrisnap_avatar_${userEmail}`);
+        } catch (e) {}
+
         // Save profile to store with recalculated fields
         setUserProfile({
           ...profileData,
           name: userName,
           email: userEmail,
+          profileImage: savedImage || null
         });
         
         await saveStoredData();

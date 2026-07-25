@@ -68,14 +68,15 @@ export default function ProfileScreen() {
         <View style={styles.userInfoArea}>
           <View style={styles.avatarRing}>
             <View style={styles.avatarCircle}>
-              <Image 
-                source={{ uri: userProfile.gender?.toLowerCase() === 'female' 
-                  ? 'https://cdn-icons-png.flaticon.com/512/4140/4140047.png' 
-                  : 'https://cdn-icons-png.flaticon.com/512/4140/4140048.png' 
-                }} 
-                style={styles.avatarImage} 
-                resizeMode="cover"
-              />
+              {userProfile.profileImage ? (
+                <Image 
+                  source={{ uri: userProfile.profileImage }} 
+                  style={styles.avatarImage} 
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text style={{fontSize: 40}}>👤</Text>
+              )}
             </View>
           </View>
           <View style={styles.nameContainer}>

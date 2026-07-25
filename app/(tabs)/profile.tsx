@@ -56,7 +56,14 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        useAppStore.getState().updateUserProfile('profileImage', result.assets[0].uri);
+        const uri = result.assets[0].uri;
+        useAppStore.getState().updateUserProfile('profileImage', uri);
+        
+        // Persist permanently for this user (so it survives logout/login)
+        const currentEmail = useAppStore.getState().userProfile.email;
+        if (currentEmail) {
+          AsyncStorage.setItem(`nutrisnap_avatar_${currentEmail}`, uri).catch(e => console.warn(e));
+        }
       }
     } catch (e) {
       console.warn("Error picking image:", e);
@@ -105,14 +112,15 @@ export default function ProfileScreen() {
         <View style={styles.userInfoArea}>
           <View style={styles.avatarRing}>
             <TouchableOpacity style={styles.avatarCircle} onPress={pickImage} activeOpacity={0.8}>
-              <Image 
-                source={{ uri: userProfile.profileImage ? userProfile.profileImage : (userProfile.gender?.toLowerCase() === 'female' 
-                  ? 'https://cdn-icons-png.flaticon.com/512/4140/4140047.png' // Female Icon
-                  : 'https://cdn-icons-png.flaticon.com/512/4140/4140048.png') // Male Icon
-                }} 
-                style={styles.avatarImage} 
-                resizeMode="cover"
-              />
+              {userProfile.profileImage ? (
+                <Image 
+                  source={{ uri: userProfile.profileImage }} 
+                  style={styles.avatarImage} 
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text style={{fontSize: 40}}>👤</Text>
+              )}
               <View style={styles.editIconBadge}>
                 <Ionicons name="camera" size={14} color="#FFF" />
               </View>

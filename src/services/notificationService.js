@@ -690,16 +690,6 @@ export const notificationService = {
       const currentMode = profile.selected_mode?.toLowerCase() || 'health';
       const prefs = state.notificationPrefs;
 
-      // Clear existing scheduled native notifications (if supported)
-      if (Notifications) {
-        try {
-          await Notifications.cancelAllScheduledNotificationsAsync();
-          console.log("Cancelled all existing scheduled notifications.");
-        } catch (e) {
-          console.log("Could not cancel native notifications:", e);
-        }
-      }
-
       // Sync to Backend Reminders Table seamlessly
       try {
         const mapping = [
@@ -817,7 +807,6 @@ export const notificationService = {
               title: '💧 Water Reminder',
               body: "Time to drink water.",
               sound: true,
-              autoDismiss: false,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
               channelId: channelId || 'nutrisnap-reminders',
@@ -843,7 +832,6 @@ export const notificationService = {
             title: '🏋 Workout Reminder',
             body: 'Time for today\'s workout.',
             sound: true,
-            autoDismiss: false,
             vibrate: [0, 250, 250, 250],
             priority: Notifications.AndroidNotificationPriority.MAX,
             channelId: channelId || 'nutrisnap-reminders',
@@ -868,7 +856,6 @@ export const notificationService = {
             title: '😴 Sleep Reminder',
             body: 'Time to sleep and recover.',
             sound: true,
-            autoDismiss: false,
             vibrate: [0, 250, 250, 250],
             priority: Notifications.AndroidNotificationPriority.MAX,
             channelId: channelId || 'nutrisnap-reminders',
