@@ -221,6 +221,12 @@ export default function HealthHomeScreen() {
       
       const backendMeals = await apiService.getTodayMeals();
       console.log("Fetched today meals:", backendMeals);
+      
+      let mealImagesCache: any = {};
+      try {
+        const cacheStr = await AsyncStorage.getItem('nutrisnap_meal_images');
+        if (cacheStr) mealImagesCache = JSON.parse(cacheStr);
+      } catch(e) {}
 
        if (backendMeals) {
         // Filter and Map backend format to frontend format
@@ -234,6 +240,9 @@ export default function HealthHomeScreen() {
           const localMatch = currentTodayMeals.find((lm: any) => 
             lm.name === bm.food_name && lm.time === formattedTime
           );
+          
+          const cacheKey = `${bm.food_name}_${formattedTime}`;
+          const cachedImage = mealImagesCache[cacheKey];
 
           return {
             id: bm.id,
@@ -245,7 +254,7 @@ export default function HealthHomeScreen() {
             quantity: bm.quantity,
             unit: bm.unit,
             emoji: localMatch?.emoji || '🍽️',
-            imageUri: localMatch?.imageUri || bm.image_url,
+            imageUri: localMatch?.imageUri || cachedImage || bm.image_url,
             mode: 'health',
             time: formattedTime,
             date: bm.date
@@ -1031,7 +1040,7 @@ export default function HealthHomeScreen() {
         <View style={[styles.mainCard, { backgroundColor: themeColors.card, borderColor: themeColors.border, borderWidth: 1, marginBottom: 15 }]}>
           <View style={styles.mainCardHeader}>
             <Text style={[styles.cardTitle, { color: themeColors.text }]}>Today's Reminders</Text>
-            <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.scanBtn}>
+            <TouchableOpacity onPress={() => router.push({ pathname: '/notifications', params: { fromMode: 'health' } })} style={styles.scanBtn}>
                <Ionicons name="settings-outline" size={20} color="#00C853" />
                <Text style={styles.scanText}>Edit</Text>
             </TouchableOpacity>
@@ -1044,6 +1053,11 @@ export default function HealthHomeScreen() {
             
             const filteredReminders = todayReminders?.filter((r: any) => {
               if (!r.is_enabled) return false;
+              
+              const type = (r.reminder_type || r.title || '').toLowerCase();
+              if (type.includes('workout') || type.includes('gym') || type.includes('exercise') || type.includes('fitness')) {
+                  return false; // Hide gym reminders from Health dashboard
+              }
               
               // Date filtering
               const repeat = r.repeat_type || 'Daily';

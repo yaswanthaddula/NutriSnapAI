@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useTheme } from './_layout'; 
 import useAppStore from '../src/store/useAppStore';
 import apiService from '../src/services/apiService';
@@ -374,9 +374,20 @@ const ReminderPreview = ({ title, time, repeat, theme, onDelete }: any) => (
 
 export default function NotificationsScreen() {
   const { isDark } = useTheme();
+  const params = useLocalSearchParams();
+  const fromMode = params.fromMode || 'health';
+
+  const theme = {
+    background: isDark ? '#121212' : '#FFFFFF',
+    text: isDark ? '#FFFFFF' : '#011627',
+    subText: isDark ? '#AAAAAA' : '#7D8592',
+    card: isDark ? '#1E1E1E' : '#F9FAFB',
+    cardBg: isDark ? '#262626' : '#FFFFFF',
+    border: isDark ? '#333333' : '#F0F0F0',
+  };
 
   const { notificationPrefs, updateNotificationPrefs, userProfile, setUserProfile, reminders, deleteReminder } = useAppStore();
-
+  const [localProfile, setLocalProfile] = useState<any>(null);
   const handleDeleteReminder = (typeStr: string) => {
     const activeReminder = reminders?.find((r: any) => r.reminder_type === typeStr && r.is_enabled);
     if (!activeReminder) {
@@ -407,17 +418,6 @@ export default function NotificationsScreen() {
       ]
     );
   };
-
-  const theme = {
-    background: isDark ? '#121212' : '#FFFFFF',
-    text: isDark ? '#FFFFFF' : '#011627',
-    subText: isDark ? '#AAAAAA' : '#7D8592',
-    card: isDark ? '#1E1E1E' : '#F9FAFB',
-    cardBg: isDark ? '#262626' : '#FFFFFF',
-    border: isDark ? '#333333' : '#F0F0F0',
-  };
-
-  const [localProfile, setLocalProfile] = useState<any>(null);
 
   useEffect(() => {
     setLocalProfile({
@@ -511,7 +511,6 @@ export default function NotificationsScreen() {
     }
   };
 
-  // Helper to render each notification row
   const NotificationOption = ({ title, sub, value, onToggle }: any) => (
     <View style={[styles.card, { backgroundColor: theme.card }]}>
       <View style={{ flex: 1 }}>
@@ -525,6 +524,145 @@ export default function NotificationsScreen() {
         thumbColor={Platform.OS === 'ios' ? undefined : '#FFF'}
       />
     </View>
+  );
+
+  const renderMealSection = () => (
+    <>
+      <NotificationOption 
+        title="Meal Reminders" 
+        sub="Get reminded to log your meals" 
+        value={notificationPrefs.meals} 
+        onToggle={(val: boolean) => handleTogglePref('meals', val)} 
+      />
+      {notificationPrefs.meals && localProfile && (
+        <View style={[styles.expandedConfig, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <CustomTimePicker
+            label="Breakfast"
+            value={localProfile.breakfastReminderTime}
+            onChange={(val: string) => handleAutoSave({ breakfastReminderTime: val })}
+            theme={theme}
+          />
+          <RepeatPicker value={localProfile.breakfastRepeat} onChange={(val: string) => handleAutoSave({ breakfastRepeat: val })} theme={theme} />
+          <ReminderPreview title="Breakfast Reminder" time={localProfile.breakfastReminderTime} repeat={localProfile.breakfastRepeat} theme={theme} onDelete={() => handleDeleteReminder('breakfast')} />
+          
+          <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 20 }} />
+
+          <CustomTimePicker
+            label="Lunch"
+            value={localProfile.lunchReminderTime}
+            onChange={(val: string) => handleAutoSave({ lunchReminderTime: val })}
+            theme={theme}
+          />
+          <RepeatPicker value={localProfile.lunchRepeat} onChange={(val: string) => handleAutoSave({ lunchRepeat: val })} theme={theme} />
+          <ReminderPreview title="Lunch Reminder" time={localProfile.lunchReminderTime} repeat={localProfile.lunchRepeat} theme={theme} onDelete={() => handleDeleteReminder('lunch')} />
+
+          <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 20 }} />
+
+          <CustomTimePicker
+            label="Dinner"
+            value={localProfile.dinnerReminderTime}
+            onChange={(val: string) => handleAutoSave({ dinnerReminderTime: val })}
+            theme={theme}
+          />
+          <RepeatPicker value={localProfile.dinnerRepeat} onChange={(val: string) => handleAutoSave({ dinnerRepeat: val })} theme={theme} />
+          <ReminderPreview title="Dinner Reminder" time={localProfile.dinnerReminderTime} repeat={localProfile.dinnerRepeat} theme={theme} onDelete={() => handleDeleteReminder('dinner')} />
+        </View>
+      )}
+    </>
+  );
+
+  const renderWorkoutSection = () => (
+    <>
+      <NotificationOption 
+        title="Workout Reminders" 
+        sub="Daily workout notifications" 
+        value={notificationPrefs.workout} 
+        onToggle={(val: boolean) => handleTogglePref('workout', val)} 
+      />
+      {notificationPrefs.workout && localProfile && (
+        <View style={[styles.expandedConfig, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <CustomTimePicker
+            label="Workout Time"
+            value={localProfile.workoutReminderTime}
+            onChange={(val: string) => handleAutoSave({ workoutReminderTime: val })}
+            theme={theme}
+          />
+          <RepeatPicker value={localProfile.workoutRepeat} onChange={(val: string) => handleAutoSave({ workoutRepeat: val })} theme={theme} />
+          <ReminderPreview title="Workout Reminder" time={localProfile.workoutReminderTime} repeat={localProfile.workoutRepeat} theme={theme} onDelete={() => handleDeleteReminder('workout')} />
+        </View>
+      )}
+    </>
+  );
+
+  const renderWaterSection = () => (
+    <>
+      <NotificationOption 
+        title="Water Reminders" 
+        sub="Stay hydrated throughout the day" 
+        value={notificationPrefs.water} 
+        onToggle={(val: boolean) => handleTogglePref('water', val)} 
+      />
+      {notificationPrefs.water && localProfile && (
+        <View style={[styles.expandedConfig, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <WaterIntervalPicker
+            value={localProfile.waterReminderInterval}
+            onChange={(val: string) => handleAutoSave({ waterReminderInterval: val })}
+            theme={theme}
+          />
+          <ReminderPreview title="Water Reminder" time={localProfile.waterReminderInterval} repeat="Daily" theme={theme} onDelete={() => handleDeleteReminder('water')} />
+        </View>
+      )}
+    </>
+  );
+
+  const renderSleepSection = () => (
+    <>
+      <NotificationOption 
+        title="Sleep Reminder" 
+        sub="Time to sleep and recover" 
+        value={notificationPrefs.sleep} 
+        onToggle={(val: boolean) => handleTogglePref('sleep', val)} 
+      />
+      {notificationPrefs.sleep && localProfile && (
+        <View style={[styles.expandedConfig, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <CustomTimePicker
+            label="Bedtime Reminder"
+            value={localProfile.sleepReminderTime}
+            onChange={(val: string) => handleAutoSave({ sleepReminderTime: val })}
+            theme={theme}
+          />
+          <RepeatPicker value={localProfile.sleepRepeat} onChange={(val: string) => handleAutoSave({ sleepRepeat: val })} theme={theme} />
+          <ReminderPreview title="Sleep Reminder" time={localProfile.sleepReminderTime} repeat={localProfile.sleepRepeat} theme={theme} onDelete={() => handleDeleteReminder('sleep')} />
+        </View>
+      )}
+    </>
+  );
+
+  const renderGoalsSection = () => (
+    <NotificationOption 
+      title="Goal Achievements" 
+      sub="Celebrate your milestones" 
+      value={notificationPrefs.goals} 
+      onToggle={(val: boolean) => handleTogglePref('goals', val)} 
+    />
+  );
+
+  const renderReportsSection = () => (
+    <NotificationOption 
+      title="Weekly Reports" 
+      sub="Get weekly progress summaries" 
+      value={notificationPrefs.reports} 
+      onToggle={(val: boolean) => handleTogglePref('reports', val)} 
+    />
+  );
+
+  const renderQuotesSection = () => (
+    <NotificationOption 
+      title="Motivational Quotes" 
+      sub="Daily inspiration" 
+      value={notificationPrefs.quotes} 
+      onToggle={(val: boolean) => handleTogglePref('quotes', val)} 
+    />
   );
 
   return (
@@ -542,122 +680,28 @@ export default function NotificationsScreen() {
           <Text style={[styles.subtitle, { color: theme.subText }]}>Manage your notification preferences</Text>
         </View>
 
-        {/* Options List */}
         <View style={styles.listContainer}>
-          <NotificationOption 
-            title="Meal Reminders" 
-            sub="Get reminded to log your meals" 
-            value={notificationPrefs.meals} 
-            onToggle={(val: boolean) => handleTogglePref('meals', val)} 
-          />
-          {notificationPrefs.meals && localProfile && (
-            <View style={[styles.expandedConfig, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <CustomTimePicker
-                label="Breakfast"
-                value={localProfile.breakfastReminderTime}
-                onChange={(val: string) => handleAutoSave({ breakfastReminderTime: val })}
-                theme={theme}
-              />
-              <RepeatPicker value={localProfile.breakfastRepeat} onChange={(val: string) => handleAutoSave({ breakfastRepeat: val })} theme={theme} />
-              <ReminderPreview title="Breakfast Reminder" time={localProfile.breakfastReminderTime} repeat={localProfile.breakfastRepeat} theme={theme} onDelete={() => handleDeleteReminder('breakfast')} />
-              
-              <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 20 }} />
-
-              <CustomTimePicker
-                label="Lunch"
-                value={localProfile.lunchReminderTime}
-                onChange={(val: string) => handleAutoSave({ lunchReminderTime: val })}
-                theme={theme}
-              />
-              <RepeatPicker value={localProfile.lunchRepeat} onChange={(val: string) => handleAutoSave({ lunchRepeat: val })} theme={theme} />
-              <ReminderPreview title="Lunch Reminder" time={localProfile.lunchReminderTime} repeat={localProfile.lunchRepeat} theme={theme} onDelete={() => handleDeleteReminder('lunch')} />
-
-              <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 20 }} />
-
-              <CustomTimePicker
-                label="Dinner"
-                value={localProfile.dinnerReminderTime}
-                onChange={(val: string) => handleAutoSave({ dinnerReminderTime: val })}
-                theme={theme}
-              />
-              <RepeatPicker value={localProfile.dinnerRepeat} onChange={(val: string) => handleAutoSave({ dinnerRepeat: val })} theme={theme} />
-              <ReminderPreview title="Dinner Reminder" time={localProfile.dinnerReminderTime} repeat={localProfile.dinnerRepeat} theme={theme} onDelete={() => handleDeleteReminder('dinner')} />
-            </View>
+          {fromMode === 'gym' ? (
+            <>
+              {renderWorkoutSection()}
+              {renderGoalsSection()}
+              {renderMealSection()}
+              {renderWaterSection()}
+              {renderSleepSection()}
+              {renderReportsSection()}
+              {renderQuotesSection()}
+            </>
+          ) : (
+            <>
+              {renderMealSection()}
+              {renderWaterSection()}
+              {renderGoalsSection()}
+              {renderReportsSection()}
+              {renderWorkoutSection()}
+              {renderSleepSection()}
+              {renderQuotesSection()}
+            </>
           )}
-
-          <NotificationOption 
-            title="Workout Reminders" 
-            sub="Daily workout notifications" 
-            value={notificationPrefs.workout} 
-            onToggle={(val: boolean) => handleTogglePref('workout', val)} 
-          />
-          {notificationPrefs.workout && localProfile && (
-            <View style={[styles.expandedConfig, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <CustomTimePicker
-                label="Workout Time"
-                value={localProfile.workoutReminderTime}
-                onChange={(val: string) => handleAutoSave({ workoutReminderTime: val })}
-                theme={theme}
-              />
-              <RepeatPicker value={localProfile.workoutRepeat} onChange={(val: string) => handleAutoSave({ workoutRepeat: val })} theme={theme} />
-              <ReminderPreview title="Workout Reminder" time={localProfile.workoutReminderTime} repeat={localProfile.workoutRepeat} theme={theme} onDelete={() => handleDeleteReminder('workout')} />
-            </View>
-          )}
-
-          <NotificationOption 
-            title="Water Reminders" 
-            sub="Stay hydrated throughout the day" 
-            value={notificationPrefs.water} 
-            onToggle={(val: boolean) => handleTogglePref('water', val)} 
-          />
-          {notificationPrefs.water && localProfile && (
-            <View style={[styles.expandedConfig, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <WaterIntervalPicker
-                value={localProfile.waterReminderInterval}
-                onChange={(val: string) => handleAutoSave({ waterReminderInterval: val })}
-                theme={theme}
-              />
-              <ReminderPreview title="Water Reminder" time={localProfile.waterReminderInterval} repeat="Daily" theme={theme} onDelete={() => handleDeleteReminder('water')} />
-            </View>
-          )}
-
-          <NotificationOption 
-            title="Sleep Reminder" 
-            sub="Time to sleep and recover" 
-            value={notificationPrefs.sleep} 
-            onToggle={(val: boolean) => handleTogglePref('sleep', val)} 
-          />
-          {notificationPrefs.sleep && localProfile && (
-            <View style={[styles.expandedConfig, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <CustomTimePicker
-                label="Bedtime Reminder"
-                value={localProfile.sleepReminderTime}
-                onChange={(val: string) => handleAutoSave({ sleepReminderTime: val })}
-                theme={theme}
-              />
-              <RepeatPicker value={localProfile.sleepRepeat} onChange={(val: string) => handleAutoSave({ sleepRepeat: val })} theme={theme} />
-              <ReminderPreview title="Sleep Reminder" time={localProfile.sleepReminderTime} repeat={localProfile.sleepRepeat} theme={theme} onDelete={() => handleDeleteReminder('sleep')} />
-            </View>
-          )}
-
-          <NotificationOption 
-            title="Goal Achievements" 
-            sub="Celebrate your milestones" 
-            value={notificationPrefs.goals} 
-            onToggle={(val: boolean) => handleTogglePref('goals', val)} 
-          />
-          <NotificationOption 
-            title="Weekly Reports" 
-            sub="Get weekly progress summaries" 
-            value={notificationPrefs.reports} 
-            onToggle={(val: boolean) => handleTogglePref('reports', val)} 
-          />
-          <NotificationOption 
-            title="Motivational Quotes" 
-            sub="Daily inspiration" 
-            value={notificationPrefs.quotes} 
-            onToggle={(val: boolean) => handleTogglePref('quotes', val)} 
-          />
         </View>
 
       </ScrollView>

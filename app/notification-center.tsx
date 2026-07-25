@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -7,6 +7,8 @@ import {
   TouchableOpacity, 
   SafeAreaView, 
   Animated,
+  PanResponder,
+  Dimensions,
   Platform,
   Alert
 } from 'react-native';
@@ -14,6 +16,65 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTheme } from './_layout';
 import useAppStore from '../src/store/useAppStore';
+
+const { width } = Dimensions.get('window');
+
+const SwipeableCard = ({ notif, children, onClear, onRead, themeColors }: any) => {
+  const [pan] = useState(new Animated.Value(0));
+  
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (e, gestureState) => {
+        return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 10;
+      },
+      onPanResponderMove: (e, gestureState) => {
+        if (gestureState.dx < 0) {
+          pan.setValue(gestureState.dx);
+        }
+      },
+      onPanResponderRelease: (e, gestureState) => {
+        if (gestureState.dx < -80) {
+          Animated.timing(pan, {
+            toValue: -width,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => onClear());
+        } else {
+          Animated.spring(pan, {
+            toValue: 0,
+            friction: 5,
+            useNativeDriver: true,
+          }).start();
+        }
+      }
+    })
+  ).current;
+
+  return (
+    <View style={{ marginBottom: 12, overflow: 'hidden', borderRadius: 16 }}>
+      <View style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 100, backgroundColor: '#EF4444', justifyContent: 'center', alignItems: 'flex-end', paddingRight: 25, borderRadius: 16 }}>
+        <Ionicons name="trash" size={24} color="#FFF" />
+      </View>
+      
+      <Animated.View
+        style={{ transform: [{ translateX: pan }] }}
+        {...panResponder.panHandlers}
+      >
+        <TouchableOpacity 
+          activeOpacity={0.9}
+          onPress={() => onRead()}
+          style={[
+            styles.card, 
+            { backgroundColor: themeColors.card, borderColor: themeColors.border, marginBottom: 0 },
+            !notif.isRead && styles.unreadCard
+          ]}
+        >
+          {children}
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
+};
 
 export default function NotificationCenterScreen() {
   const { isDark } = useTheme();
@@ -174,17 +235,12 @@ export default function NotificationCenterScreen() {
                   const iconInfo = getIconForType(notif.type, notif.title);
                   
                   return (
-                      <TouchableOpacity 
+                      <SwipeableCard
                         key={notif.id}
-                        activeOpacity={0.8}
-                        onPress={() => {
-                          if (!notif.isRead) markAsRead(notif.id);
-                        }}
-                        style={[
-                          styles.card, 
-                          { backgroundColor: themeColors.card, borderColor: themeColors.border },
-                          !notif.isRead && styles.unreadCard
-                        ]}
+                        notif={notif}
+                        themeColors={themeColors}
+                        onRead={() => { if (!notif.isRead) markAsRead(notif.id); }}
+                        onClear={() => clearNotification(notif.id)}
                       >
                         <View style={styles.cardLeft}>
                           <View style={[styles.iconCircle, { backgroundColor: iconInfo.color + '15' }]}>
@@ -196,26 +252,29 @@ export default function NotificationCenterScreen() {
                           </View>
                         </View>
                         <View style={styles.cardBody}>
-                          <Text style={[styles.cardTitle, { color: themeColors.text, fontWeight: notif.isRead ? '600' : 'bold' }]}>
+                          <Text style={[styles.cardTitle, { color: themeColors.text, fontWeight: notif.isRead ? '600' : '800' }]}>
                             {notif.title}
                           </Text>
                           <Text style={[styles.cardDesc, { color: themeColors.subText }]}>
                             {notif.message}
                           </Text>
-                          <Text style={[styles.cardTime, { color: themeColors.subText }]}>
+                          <Text style={[styles.cardTime, { color: themeColors.accent }]}>
                             {formatTime(notif.createdAt)}
                           </Text>
                         </View>
+                        
+                        {!notif.isRead && (
+                          <View style={styles.unreadBadge}>
+                            <Text style={styles.unreadBadgeText}>NEW</Text>
+                          </View>
+                        )}
                         <TouchableOpacity 
                           style={styles.deleteInlineBtn} 
                           onPress={() => clearNotification(notif.id)}
                         >
-                          <Ionicons name="trash-outline" size={20} color={themeColors.subText} />
+                          <Ionicons name="close-circle-outline" size={24} color={themeColors.subText} />
                         </TouchableOpacity>
-                        {!notif.isRead && (
-                          <View style={styles.unreadDot} />
-                        )}
-                      </TouchableOpacity>
+                      </SwipeableCard>
                   );
                 })}
               </View>
@@ -245,14 +304,15 @@ const styles = StyleSheet.create({
   emptySub: { fontSize: 15 },
   groupContainer: { marginBottom: 25 },
   groupTitle: { fontSize: 18, fontWeight: '700', marginBottom: 15, marginLeft: 5 },
-  card: { flexDirection: 'row', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 },
-  unreadCard: { shadowOpacity: 0.1, shadowRadius: 8 },
+  card: { flexDirection: 'row', borderRadius: 16, padding: 18, marginBottom: 12, borderWidth: 1, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 },
+  unreadCard: { shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 },
   cardLeft: { marginRight: 15 },
-  iconCircle: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
+  iconCircle: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center' },
   cardBody: { flex: 1, justifyContent: 'center' },
-  cardTitle: { fontSize: 16, marginBottom: 4 },
-  cardDesc: { fontSize: 14, lineHeight: 20, marginBottom: 6 },
-  cardTime: { fontSize: 12 },
-  unreadDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#3B82F6', position: 'absolute', top: 16, right: 16 },
-  deleteInlineBtn: { padding: 5, justifyContent: 'center', alignItems: 'center' }
+  cardTitle: { fontSize: 17, marginBottom: 6 },
+  cardDesc: { fontSize: 14, lineHeight: 22, marginBottom: 8 },
+  cardTime: { fontSize: 12, fontWeight: 'bold' },
+  unreadBadge: { backgroundColor: '#3B82F6', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, position: 'absolute', top: -10, left: -5 },
+  unreadBadgeText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
+  deleteInlineBtn: { padding: 5, justifyContent: 'center', alignItems: 'center', marginLeft: 10 }
 });

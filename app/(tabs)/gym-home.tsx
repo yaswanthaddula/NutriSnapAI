@@ -208,8 +208,15 @@ export default function GymHomeScreen() {
   const syncBackendMeals = async () => {
     try {
       const backendMeals = await apiService.getTodayMeals();
+      console.log("Fetched gym meals:", backendMeals);
+
+      let mealImagesCache: any = {};
+      try {
+        const cacheStr = await AsyncStorage.getItem('nutrisnap_meal_images');
+        if (cacheStr) mealImagesCache = JSON.parse(cacheStr);
+      } catch(e) {}
+
       if (backendMeals) {
-        // Filter and Map backend format to frontend format
         const currentStoreMeals = useAppStore.getState().meals;
         const currentTodayMeals = currentStoreMeals.filter((m: any) => m.date === todayStr && m.mode === 'gym');
         const gymBackendMeals = backendMeals.filter((bm: any) => bm.mode === 'gym');
@@ -219,6 +226,9 @@ export default function GymHomeScreen() {
           const localMatch = currentTodayMeals.find((lm: any) => 
             lm.name === bm.food_name && lm.time === formattedTime
           );
+          
+          const cacheKey = `${bm.food_name}_${formattedTime}`;
+          const cachedImage = mealImagesCache[cacheKey];
 
           return {
             id: bm.id,
@@ -229,8 +239,8 @@ export default function GymHomeScreen() {
             fat: bm.fat,
             quantity: bm.quantity,
             unit: bm.unit,
-            emoji: localMatch?.emoji || '🍽️',
-            imageUri: localMatch?.imageUri || bm.image_url,
+            emoji: localMatch?.emoji || '💪',
+            imageUri: localMatch?.imageUri || cachedImage || bm.image_url,
             mode: 'gym',
             time: formattedTime,
             date: bm.date
@@ -893,7 +903,7 @@ export default function GymHomeScreen() {
         <View style={[styles.insightCard, { backgroundColor: theme.card, borderColor: theme.border, borderLeftColor: '#00C853', marginBottom: 15 }]}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Today's Reminders</Text>
-            <TouchableOpacity onPress={() => router.push('/notifications')}>
+            <TouchableOpacity onPress={() => router.push({ pathname: '/notifications', params: { fromMode: 'gym' } })}>
               <Text style={styles.linkText}>Edit</Text>
             </TouchableOpacity>
           </View>
@@ -905,6 +915,11 @@ export default function GymHomeScreen() {
             
             const filteredReminders = todayReminders?.filter((r: any) => {
               if (!r.is_enabled) return false;
+              
+              const type = (r.reminder_type || r.title || '').toLowerCase();
+              if (type.includes('breakfast') || type.includes('lunch') || type.includes('dinner') || type.includes('snack') || type.includes('water') || type.includes('health') || type.includes('nutrition')) {
+                  return false; // Hide health reminders from Gym dashboard
+              }
               
               // Date filtering
               const repeat = r.repeat_type || 'Daily';

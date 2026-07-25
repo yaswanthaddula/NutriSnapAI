@@ -39,18 +39,20 @@ export default function ProfileScreen() {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const uri = result.assets[0].uri;
+      let finalPath = uri;
       
-      // Save to document directory to persist across restarts
-      const filename = uri.split('/').pop() || 'avatar.jpg';
-      const newPath = `${FileSystem.documentDirectory}${filename}`;
-      await FileSystem.copyAsync({ from: uri, to: newPath });
+      if (Platform.OS !== 'web') {
+        const filename = uri.split('/').pop() || 'avatar.jpg';
+        finalPath = `${FileSystem.documentDirectory}${filename}`;
+        await FileSystem.copyAsync({ from: uri, to: finalPath });
+      }
 
-      useAppStore.getState().updateUserProfile('profileImage', newPath);
+      useAppStore.getState().updateUserProfile('profileImage', finalPath);
       
       const currentEmail = useAppStore.getState().userProfile.email;
       if (currentEmail) {
         const normalizedEmail = currentEmail.toLowerCase();
-        AsyncStorage.setItem(`nutrisnap_avatar_${normalizedEmail}`, newPath).catch(e => console.warn(e));
+        AsyncStorage.setItem(`nutrisnap_avatar_${normalizedEmail}`, finalPath).catch(e => console.warn(e));
       }
     }
   };

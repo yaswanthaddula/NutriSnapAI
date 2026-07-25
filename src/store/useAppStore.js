@@ -241,6 +241,16 @@ const useAppStore = create((set, get) => ({
         ...meal,
         date: meal.date || new Date().toISOString().split('T')[0]
     };
+    if (meal.imageUri) {
+      import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => {
+        AsyncStorage.getItem('nutrisnap_meal_images').then((data) => {
+          const cache = data ? JSON.parse(data) : {};
+          const key = `${meal.name}_${meal.time}`;
+          cache[key] = meal.imageUri;
+          AsyncStorage.setItem('nutrisnap_meal_images', JSON.stringify(cache));
+        }).catch(e => console.log("Failed to cache meal image", e));
+      });
+    }
     set({ meals: [mealWithDate, ...get().meals] });
   },
   setMeals: (meals) => set({ meals }),
