@@ -9,11 +9,13 @@ import {
   ScrollView, 
   KeyboardAvoidingView, 
   Platform,
-  Alert 
+  Alert,
+  Image 
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from './_layout'; 
 import useAppStore from '../src/store/useAppStore';
 import apiService from '../src/services/apiService';
@@ -47,6 +49,29 @@ export default function EditProfile() {
     subText: isDark ? '#AAA' : '#7D8592',
     input: isDark ? '#1E1E1E' : '#F9FAFB',
     border: isDark ? '#333' : '#E0E0E0',
+  };
+
+  const pickImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert("Permission Required", "Sorry, we need camera roll permissions to change your avatar.");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        useAppStore.getState().updateUserProfile('profileImage', result.assets[0].uri);
+      }
+    } catch (e) {
+      console.warn("Error picking image:", e);
+    }
   };
 
   const handleSave = async () => {
@@ -127,13 +152,20 @@ export default function EditProfile() {
             </View>
           </View>
 
-          <View style={styles.avatarContainer}>
+          <TouchableOpacity style={styles.avatarContainer} onPress={pickImage} activeOpacity={0.8}>
             <View style={styles.avatarRing}>
-              <View style={styles.greenCircle}>
-                  <Text style={{fontSize: 40}}>{gender?.toLowerCase() === 'female' ? '👧' : '👦'}</Text>
+              <View style={[styles.greenCircle, { overflow: 'hidden' }]}>
+                  {userProfile.profileImage ? (
+                    <Image source={{ uri: userProfile.profileImage }} style={{ width: '100%', height: '100%' }} />
+                  ) : (
+                    <Text style={{fontSize: 40}}>👤</Text>
+                  )}
               </View>
             </View>
-          </View>
+            <View style={{ position: 'absolute', bottom: 25, right: 120, backgroundColor: '#333', width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#FFF' }}>
+              <Ionicons name="camera" size={14} color="#FFF" />
+            </View>
+          </TouchableOpacity>
 
           <View style={styles.form}>
             

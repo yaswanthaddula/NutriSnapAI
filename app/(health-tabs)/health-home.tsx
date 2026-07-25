@@ -668,6 +668,10 @@ export default function HealthHomeScreen() {
                 
                 const filteredReminders = todayReminders?.filter((r: any) => {
                   if (!r.is_enabled) return false;
+                  
+                  const isHealth = ['breakfast', 'lunch', 'dinner', 'snack', 'water', 'sleep', 'nutrition'].includes((r.reminder_type || '').toLowerCase());
+                  if (!isHealth && !r.title?.toLowerCase().includes('health')) return false;
+
                   const repeat = r.repeat_type || 'Daily';
                   if (repeat === 'Daily') return true;
                   if (repeat === 'Weekdays') return isWeekday;
@@ -722,8 +726,9 @@ export default function HealthHomeScreen() {
             )}
           </TouchableOpacity>
           <View style={styles.welcomeTextColumn}>
+            <Text style={[styles.welcomeSmall, { color: themeColors.subText, fontSize: 16, fontWeight: '700' }]}>Health Dashboard</Text>
             <Text style={[styles.userNameBold, { color: themeColors.text, fontSize: 18 }]}>{greetingTitle}</Text>
-            <Text style={[styles.welcomeSmall, { color: themeColors.subText }]}>{greetingSub}</Text>
+            <Text style={[styles.welcomeSmall, { color: themeColors.subText, marginTop: 2, fontSize: 13 }]}>Start your day with healthy choices.</Text>
           </View>
         </View>
 
@@ -1273,14 +1278,34 @@ export default function HealthHomeScreen() {
               </View>
             <ScrollView style={styles.chatBody} contentContainerStyle={{ padding: 20 }}>
               {messages.map((msg: any) => (
-                <View key={msg.id} style={[styles.bubble, msg.isAi ? styles.aiBubble : styles.userBubble]}>
-                  <Text style={[styles.bubbleText, { color: msg.isAi ? '#333' : '#FFF' }]}>{msg.text}</Text>
-                  {msg.timestamp && (
-                    <Text style={{ fontSize: 10, color: msg.isAi ? '#888' : 'rgba(255,255,255,0.7)', alignSelf: 'flex-end', marginTop: 4 }}>
-                      {msg.timestamp}
-                    </Text>
-                  )}
-                </View>
+                msg.isAi ? (
+                  <View key={msg.id} style={[styles.bubble, styles.aiBubble]}>
+                    <Text style={[styles.bubbleText, { color: '#333' }]}>{msg.text}</Text>
+                    {msg.timestamp && (
+                      <Text style={{ fontSize: 10, color: '#888', alignSelf: 'flex-end', marginTop: 4 }}>
+                        {msg.timestamp}
+                      </Text>
+                    )}
+                  </View>
+                ) : (
+                  <View key={msg.id} style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'flex-end', marginBottom: 15 }}>
+                    <View style={[styles.bubble, styles.userBubble, { marginBottom: 0, marginRight: 8 }]}>
+                      <Text style={[styles.bubbleText, { color: '#FFF' }]}>{msg.text}</Text>
+                      {msg.timestamp && (
+                        <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', alignSelf: 'flex-end', marginTop: 4 }}>
+                          {msg.timestamp}
+                        </Text>
+                      )}
+                    </View>
+                    {userProfile.profileImage ? (
+                      <Image source={{ uri: userProfile.profileImage }} style={{ width: 28, height: 28, borderRadius: 14 }} />
+                    ) : (
+                      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#4CAF50', justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 14 }}>👤</Text>
+                      </View>
+                    )}
+                  </View>
+                )
               ))}
               {isChatLoading && (
                 <View style={[styles.bubble, styles.aiBubble, { width: 60, height: 40, justifyContent: 'center', alignItems: 'center' }]}>
