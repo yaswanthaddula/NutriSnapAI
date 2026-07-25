@@ -14,7 +14,6 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTheme } from './_layout';
 import useAppStore from '../src/store/useAppStore';
-import { Swipeable } from 'react-native-gesture-handler';
 
 export default function NotificationCenterScreen() {
   const { isDark } = useTheme();
@@ -110,17 +109,6 @@ export default function NotificationCenterScreen() {
     );
   };
 
-  const renderRightActions = (id: string) => {
-    return (
-      <TouchableOpacity 
-        style={styles.deleteSwipeBtn} 
-        onPress={() => clearNotification(id)}
-      >
-        <Ionicons name="trash-outline" size={24} color="#FFF" />
-      </TouchableOpacity>
-    );
-  };
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.bg }]}>
       {/* Header */}
@@ -186,8 +174,8 @@ export default function NotificationCenterScreen() {
                   const iconInfo = getIconForType(notif.type, notif.title);
                   
                   return (
-                    <Swipeable key={notif.id} renderRightActions={() => renderRightActions(notif.id)}>
                       <TouchableOpacity 
+                        key={notif.id}
                         activeOpacity={0.8}
                         onPress={() => {
                           if (!notif.isRead) markAsRead(notif.id);
@@ -218,11 +206,16 @@ export default function NotificationCenterScreen() {
                             {formatTime(notif.createdAt)}
                           </Text>
                         </View>
+                        <TouchableOpacity 
+                          style={styles.deleteInlineBtn} 
+                          onPress={() => clearNotification(notif.id)}
+                        >
+                          <Ionicons name="trash-outline" size={20} color={themeColors.subText} />
+                        </TouchableOpacity>
                         {!notif.isRead && (
                           <View style={styles.unreadDot} />
                         )}
                       </TouchableOpacity>
-                    </Swipeable>
                   );
                 })}
               </View>
@@ -261,5 +254,5 @@ const styles = StyleSheet.create({
   cardDesc: { fontSize: 14, lineHeight: 20, marginBottom: 6 },
   cardTime: { fontSize: 12 },
   unreadDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#3B82F6', position: 'absolute', top: 16, right: 16 },
-  deleteSwipeBtn: { backgroundColor: '#EF4444', justifyContent: 'center', alignItems: 'center', width: 80, borderRadius: 16, marginBottom: 12, marginLeft: 10 }
+  deleteInlineBtn: { padding: 5, justifyContent: 'center', alignItems: 'center' }
 });
