@@ -685,9 +685,9 @@ export default function HealthHomeScreen() {
       {/* --- PREMIUM HEADER --- */}
       <View style={[styles.topHeader, { backgroundColor: themeColors.bg }]}>
         <View style={styles.userInfoRow}>
-          <View style={styles.avatarCircle}>
+          <TouchableOpacity onPress={() => router.push('/profile')} style={styles.avatarCircle}>
             <Text style={styles.avatarLetter}>{userProfile.name?.charAt(0).toUpperCase() || 'U'}</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.welcomeTextColumn}>
             <Text style={[styles.welcomeSmall, { color: themeColors.subText }]}>Hello,</Text>
             <Text style={[styles.userNameBold, { color: themeColors.text }]}>{userProfile.name} 🌿</Text>
