@@ -210,24 +210,35 @@ export default function GymHomeScreen() {
       const backendMeals = await apiService.getTodayMeals();
       if (backendMeals) {
         // Filter and Map backend format to frontend format
+        const currentStoreMeals = useAppStore.getState().meals;
+        const currentTodayMeals = currentStoreMeals.filter((m: any) => m.date === todayStr && m.mode === 'gym');
         const gymBackendMeals = backendMeals.filter((bm: any) => bm.mode === 'gym');
-        const formattedMeals = gymBackendMeals.map((bm: any) => ({
-          id: bm.id,
-          name: bm.food_name,
-          calories: bm.calories,
-          protein: bm.protein,
-          carbs: bm.carbs,
-          fat: bm.fat,
-          quantity: bm.quantity,
-          unit: bm.unit,
-          emoji: '🍽️',
-          mode: 'gym',
-          time: bm.time ? bm.time.slice(0, 5) : '00:00',
-          date: bm.date
-        }));
+
+        const formattedMeals = gymBackendMeals.map((bm: any) => {
+          const formattedTime = bm.time ? bm.time.slice(0, 5) : '00:00';
+          const localMatch = currentTodayMeals.find((lm: any) => 
+            lm.name === bm.food_name && lm.time === formattedTime
+          );
+
+          return {
+            id: bm.id,
+            name: bm.food_name,
+            calories: bm.calories,
+            protein: bm.protein,
+            carbs: bm.carbs,
+            fat: bm.fat,
+            quantity: bm.quantity,
+            unit: bm.unit,
+            emoji: localMatch?.emoji || '🍽️',
+            imageUri: localMatch?.imageUri || bm.image_url,
+            mode: 'gym',
+            time: formattedTime,
+            date: bm.date
+          };
+        });
         
         // Merge with local meals, replacing only today's gym meals
-        const otherMeals = meals.filter((m: any) => !(m.date === todayStr && m.mode === 'gym'));
+        const otherMeals = currentStoreMeals.filter((m: any) => !(m.date === todayStr && m.mode === 'gym'));
         setMeals([...formattedMeals, ...otherMeals]);
         await saveStoredData();
       }

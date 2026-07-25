@@ -225,24 +225,35 @@ export default function HealthHomeScreen() {
        if (backendMeals) {
         // Filter and Map backend format to frontend format
         // Handle cases where mode might be null/missing by default as 'health'
+        const currentStoreMeals = useAppStore.getState().meals;
+        const currentTodayMeals = currentStoreMeals.filter((m: any) => m.date === todayStr && m.mode === 'health');
         const healthBackendMeals = backendMeals.filter((bm: any) => !bm.mode || bm.mode === 'health');
-        const formattedMeals = healthBackendMeals.map((bm: any) => ({
-          id: bm.id,
-          name: bm.food_name,
-          calories: bm.calories,
-          protein: bm.protein,
-          carbs: bm.carbs,
-          fat: bm.fat,
-          quantity: bm.quantity,
-          unit: bm.unit,
-          emoji: '🍽️',
-          mode: 'health',
-          time: bm.time ? bm.time.slice(0, 5) : '00:00',
-          date: bm.date
-        }));
+
+        const formattedMeals = healthBackendMeals.map((bm: any) => {
+          const formattedTime = bm.time ? bm.time.slice(0, 5) : '00:00';
+          const localMatch = currentTodayMeals.find((lm: any) => 
+            lm.name === bm.food_name && lm.time === formattedTime
+          );
+
+          return {
+            id: bm.id,
+            name: bm.food_name,
+            calories: bm.calories,
+            protein: bm.protein,
+            carbs: bm.carbs,
+            fat: bm.fat,
+            quantity: bm.quantity,
+            unit: bm.unit,
+            emoji: localMatch?.emoji || '🍽️',
+            imageUri: localMatch?.imageUri || bm.image_url,
+            mode: 'health',
+            time: formattedTime,
+            date: bm.date
+          };
+        });
         
         // Merge with local meals, replacing only today's health meals
-        const otherMeals = meals.filter((m: any) => !(m.date === todayStr && m.mode === 'health'));
+        const otherMeals = currentStoreMeals.filter((m: any) => !(m.date === todayStr && m.mode === 'health'));
         useAppStore.getState().setMeals([...formattedMeals, ...otherMeals]);
         await saveStoredData();
       }
