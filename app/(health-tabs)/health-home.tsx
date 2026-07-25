@@ -52,41 +52,48 @@ export default function HealthHomeScreen() {
 
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'health')).length;
 
-  const getNextReminder = () => {
+  const getNotificationBadgeText = () => {
     const upcoming = todayReminders?.filter((r: any) => r.is_enabled && r.status !== 'Completed' && r.status !== 'Missed') || [];
-    if (upcoming.length === 0) return null;
-    
-    const now = new Date();
-    const currentMins = now.getHours() * 60 + now.getMinutes();
+    const count = upcoming.length;
 
-    let next = null;
-    let minDiff = Infinity;
-
-    upcoming.forEach(r => {
+    if (count > 1) {
+      return `${count} Upcoming`;
+    } else if (count === 1) {
+      const r = upcoming[0];
+      const now = new Date();
+      const currentMins = now.getHours() * 60 + now.getMinutes();
+      
       const match = r.reminder_time?.match(/^(\d{1,2})[:.](\d{2})\s*(AM|PM)$/i);
       if (match) {
         let h = parseInt(match[1]);
         const m = parseInt(match[2]);
         const ampm = match[3].toUpperCase();
-        if (h === 12) h = ampm === 'AM' ? 0 : 12;
-        else if (ampm === 'PM') h += 12;
-
-        const reminderMins = h * 60 + m;
-        const diff = reminderMins - currentMins;
-        if (diff > 0 && diff < minDiff) {
-          minDiff = diff;
-          let icon = '🔔';
-          if (r.title?.includes('Breakfast')) icon = '🍳';
-          else if (r.title?.includes('Lunch')) icon = '🥗';
-          else if (r.title?.includes('Dinner')) icon = '🍽️';
-          else if (r.title?.includes('Water')) icon = '💧';
-          else if (r.title?.includes('Workout')) icon = '🏋️';
-          next = { title: r.title || r.reminder_type, time: r.reminder_time, icon };
+        if (ampm === 'PM' && h < 12) h += 12;
+        if (ampm === 'AM' && h === 12) h = 0;
+        const rMins = h * 60 + m;
+        const diff = rMins - currentMins;
+        
+        let title = r.title || r.reminder_type || 'Reminder';
+        title = title.replace(' Reminder', '');
+        title = title.charAt(0).toUpperCase() + title.slice(1);
+        
+        if (diff > 0 && diff <= 60) {
+          return `${title} in ${diff} min`;
+        } else {
+          return `${title} at ${r.reminder_time}`;
         }
+      } else {
+        let title = r.title || r.reminder_type || 'Reminder';
+        title = title.charAt(0).toUpperCase() + title.slice(1);
+        return `${title}`;
       }
-    });
-    return next;
+    } else if (unreadCount > 0) {
+      return `${unreadCount} Notifications`;
+    }
+    
+    return '';
   };
+  const badgeText = getNotificationBadgeText();
   const [isPedometerAvailable, setIsPedometerAvailable] = useState('checking');
   const [showManualSteps, setShowManualSteps] = useState(false);
   const [manualStepsVal, setManualStepsVal] = useState(steps.toString());
@@ -721,14 +728,6 @@ export default function HealthHomeScreen() {
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          {/* Reminder Chip */}
-          {getNextReminder() && (
-            <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16 }}>
-              <Text style={{ color: themeColors.text, fontSize: 11, fontWeight: '600' }}>
-                {getNextReminder()?.icon} {getNextReminder()?.title} • {getNextReminder()?.time}
-              </Text>
-            </View>
-          )}
 
           <TouchableOpacity 
             style={styles.notifBtn} 

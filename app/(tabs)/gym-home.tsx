@@ -42,41 +42,48 @@ export default function GymHomeScreen() {
   
   const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'gym')).length;
   
-  const getNextReminder = () => {
+  const getNotificationBadgeText = () => {
     const upcoming = todayReminders?.filter((r: any) => r.is_enabled && r.status !== 'Completed' && r.status !== 'Missed') || [];
-    if (upcoming.length === 0) return null;
-    
-    const now = new Date();
-    const currentMins = now.getHours() * 60 + now.getMinutes();
+    const count = upcoming.length;
 
-    let next = null;
-    let minDiff = Infinity;
-
-    upcoming.forEach(r => {
+    if (count > 1) {
+      return `${count} Upcoming`;
+    } else if (count === 1) {
+      const r = upcoming[0];
+      const now = new Date();
+      const currentMins = now.getHours() * 60 + now.getMinutes();
+      
       const match = r.reminder_time?.match(/^(\d{1,2})[:.](\d{2})\s*(AM|PM)$/i);
       if (match) {
         let h = parseInt(match[1]);
         const m = parseInt(match[2]);
         const ampm = match[3].toUpperCase();
-        if (h === 12) h = ampm === 'AM' ? 0 : 12;
-        else if (ampm === 'PM') h += 12;
-
-        const reminderMins = h * 60 + m;
-        const diff = reminderMins - currentMins;
-        if (diff > 0 && diff < minDiff) {
-          minDiff = diff;
-          let icon = '🔔';
-          if (r.title?.includes('Breakfast')) icon = '🍳';
-          else if (r.title?.includes('Lunch')) icon = '🥗';
-          else if (r.title?.includes('Dinner')) icon = '🍽️';
-          else if (r.title?.includes('Water')) icon = '💧';
-          else if (r.title?.includes('Workout')) icon = '🏋️';
-          next = { title: r.title || r.reminder_type, time: r.reminder_time, icon };
+        if (ampm === 'PM' && h < 12) h += 12;
+        if (ampm === 'AM' && h === 12) h = 0;
+        const rMins = h * 60 + m;
+        const diff = rMins - currentMins;
+        
+        let title = r.title || r.reminder_type || 'Reminder';
+        title = title.replace(' Reminder', '');
+        title = title.charAt(0).toUpperCase() + title.slice(1);
+        
+        if (diff > 0 && diff <= 60) {
+          return `${title} in ${diff} min`;
+        } else {
+          return `${title} at ${r.reminder_time}`;
         }
+      } else {
+        let title = r.title || r.reminder_type || 'Reminder';
+        title = title.charAt(0).toUpperCase() + title.slice(1);
+        return `${title}`;
       }
-    });
-    return next;
+    } else if (unreadCount > 0) {
+      return `${unreadCount} Notifications`;
+    }
+    
+    return '';
   };
+  const badgeText = getNotificationBadgeText();
   
   // Calculate Today's Workout
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -478,13 +485,13 @@ export default function GymHomeScreen() {
   };
 
   const theme = {
-    gradient: isDark ? ['#111827', '#111827'] as const : ['#F8FAFC', '#F8FAFC'] as const,
-    background: isDark ? '#111827' : '#F8FAFC',
-    text: isDark ? '#F9FAFB' : '#111827',
-    subText: isDark ? '#9CA3AF' : '#4B5563',
-    card: isDark ? '#1F2937' : '#FFFFFF',
-    border: isDark ? '#374151' : '#E2E8F0',
-    iconColor: isDark ? '#F9FAFB' : '#1F2937',
+    gradient: isDark ? ['#121212', '#1A1A1A', '#0F0F0F'] as const : ['#F8FAFC', '#E2E8F0', '#CBD5E1'] as const,
+    background: 'transparent',
+    text: isDark ? '#F8FAFC' : '#1E293B',
+    subText: isDark ? '#94A3B8' : '#64748B',
+    card: isDark ? 'rgba(30, 30, 30, 0.9)' : '#FFFFFF',
+    border: isDark ? '#334155' : '#E2E8F0',
+    iconColor: isDark ? '#F8FAFC' : '#334155',
     chatBg: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9',
     shadow: {
       shadowColor: '#000',
@@ -496,16 +503,6 @@ export default function GymHomeScreen() {
   };
 
   const { totalCalories, totalProtein, totalCarbs, totalFats } = calculateMealTotals(gymMeals);
-
-  const getMealType = (timeStr: string) => {
-    if (!timeStr) return 'Snack';
-    const [h] = timeStr.split(':');
-    const hour = parseInt(h);
-    if (hour >= 5 && hour < 11) return 'Breakfast';
-    if (hour >= 11 && hour < 15) return 'Lunch';
-    if (hour >= 15 && hour < 19) return 'Snack';
-    return 'Dinner';
-  };
   const caloriesLeft = Math.max(0, userProfile.calorieTarget - totalCalories);
   const proteinLeft = Math.max(0, (userProfile.proteinTarget || 150) - totalProtein);
   const carbsLeft = Math.max(0, (userProfile.carbsTarget || 250) - totalCarbs);
@@ -514,23 +511,6 @@ export default function GymHomeScreen() {
   // Calendar Data
   const calendarDays = [];
   const today = new Date();
-  
-  const hour = today.getHours();
-  let greetingTitle = '';
-  let greetingSub = '';
-  if (hour < 12) {
-    greetingTitle = `☀️ Good Morning, ${userProfile.name} 👋`;
-    greetingSub = 'Start your day with healthy choices.';
-  } else if (hour < 17) {
-    greetingTitle = `🌤 Good Afternoon, ${userProfile.name} 👋`;
-    greetingSub = 'Stay active and keep your energy high.';
-  } else if (hour < 21) {
-    greetingTitle = `🌆 Good Evening, ${userProfile.name} 👋`;
-    greetingSub = 'Stay consistent and finish strong today.';
-  } else {
-    greetingTitle = `🌙 Good Night, ${userProfile.name} 👋`;
-    greetingSub = 'Rest well and be ready for tomorrow.';
-  }
   const startOfWeek = new Date();
   startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
 
@@ -664,183 +644,370 @@ export default function GymHomeScreen() {
       </Modal>
 
       {/* NEW PREMIUM HEADER */}
-      <View style={[styles.topHeader, { backgroundColor: theme.background, flexDirection: 'column', alignItems: 'stretch' }]}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontSize: 24, fontWeight: '800', color: theme.text }}>Gym Dashboard</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
-            {/* Reminder Chip */}
-            {getNextReminder() && (
-              <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}>
-                <Text style={{ color: theme.text, fontSize: 12, fontWeight: '600' }}>
-                  {getNextReminder()?.icon} {getNextReminder()?.title} • {getNextReminder()?.time}
-                </Text>
-              </View>
+      <View style={[styles.topHeader, { backgroundColor: theme.background }]}>
+        <View style={styles.userInfoRow}>
+          <TouchableOpacity onPress={() => router.push('/profile')} style={styles.avatarCircle}>
+            {userProfile.profileImage ? (
+              <Image source={{ uri: userProfile.profileImage }} style={{ width: '100%', height: '100%', borderRadius: 30 }} />
+            ) : (
+              <Text style={styles.avatarLetter}>{userProfile.name?.charAt(0).toUpperCase() || 'U'}</Text>
             )}
-
-            <TouchableOpacity 
-              style={[styles.notifBtn, { position: 'relative' }]} 
-              onPress={() => {
-                setShowNotificationModal(true);
-                markAllAsRead();
-              }}
-              activeOpacity={0.7}
-            >
-              <Animated.View style={[
-                styles.premiumBellContainer,
-                { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' },
-                { transform: [{
-                  rotate: bellShakeAnim.interpolate({
-                    inputRange: [-1, 1],
-                    outputRange: ['-15deg', '15deg']
-                  })
-                }] }
-              ]}>
-                <MaterialCommunityIcons name="bell-outline" size={24} color={theme.text} />
-              </Animated.View>
-              {unreadCount > 0 && (
-                <View style={[styles.badgePremium, { right: -4, top: -4, minWidth: 16, height: 16, borderRadius: 8, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FF3B30', borderWidth: 2, borderColor: theme.background }]}>
-                  <Text style={{ color: '#FFF', fontSize: 9, fontWeight: 'bold' }}>{unreadCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            
-            <TouchableOpacity onPress={() => router.push('/profile')} style={styles.avatarCircle}>
-              {userProfile.profileImage ? (
-                <Image source={{ uri: userProfile.profileImage }} style={{ width: '100%', height: '100%', borderRadius: 20 }} />
-              ) : (
-                <Text style={styles.avatarLetter}>{userProfile.name?.charAt(0).toUpperCase() || 'U'}</Text>
-              )}
-            </TouchableOpacity>
+          </TouchableOpacity>
+          <View style={styles.welcomeTextColumn}>
+            <Text style={[styles.welcomeSmall, { color: theme.subText }]}>Welcome Back,</Text>
+            <Text style={[styles.userNameBold, { color: theme.text }]}>{userProfile.name}</Text>
           </View>
         </View>
-
-        <View style={{ marginTop: 25, marginBottom: 10 }}>
-          <Text style={[styles.userNameBold, { color: theme.text, fontSize: 20 }]}>
-            {greetingTitle}
-          </Text>
-          <Text style={[styles.welcomeSmall, { color: theme.subText, marginTop: 4, fontSize: 13, fontWeight: '500' }]}>
-            {greetingSub}
-          </Text>
-        </View>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, { paddingTop: 10 }]}>
         
-        {/* HERO CARD - TODAY'S WORKOUT */}
         <TouchableOpacity 
-          style={{ marginBottom: 20, borderRadius: 24, overflow: 'hidden', ...theme.shadow }}
-          onPress={() => router.push({ pathname: '/workout-day-detail', params: { day: todayWorkoutData.day } })}
-          activeOpacity={0.9}
+          style={styles.notifBtn} 
+          onPress={() => {
+            setShowNotificationModal(true);
+            markAllAsRead();
+          }}
+          activeOpacity={0.7}
         >
-          {isDark ? (
-            <View style={{ backgroundColor: '#1F2937', padding: 24, borderRadius: 24, position: 'relative', overflow: 'hidden' }}>
-              <View style={{ zIndex: 2, width: '65%' }}>
-                <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '600', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Today's Workout</Text>
-                <Text style={{ color: '#FFFFFF', fontSize: 26, fontWeight: 'bold', marginBottom: 4 }}>{todayWorkoutData.day}</Text>
-                <Text style={{ color: '#94A3B8', fontSize: 13 }}>{todayWorkoutData.exercises.map((e: any) => e.target).join(' • ').substring(0, 30)}...</Text>
-                
-                <View style={{ backgroundColor: '#F97316', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 12, marginTop: 20, alignSelf: 'flex-start' }}>
-                  <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 14 }}>{workoutStatus === 'Completed' ? 'View Summary' : 'Start Workout'}</Text>
-                </View>
-              </View>
-              {/* Decorative Background Element for Dark Mode */}
-              <View style={{ position: 'absolute', right: -40, top: -20, bottom: -20, width: 200, backgroundColor: '#334155', opacity: 0.3, transform: [{ skewX: '-15deg' }] }} />
-              <Ionicons name="barbell" size={100} color="rgba(255,255,255,0.05)" style={{ position: 'absolute', right: -10, bottom: -20, zIndex: 1 }} />
+          <Animated.View style={[
+            styles.premiumBellContainer,
+            { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)' },
+            { transform: [{
+              rotate: bellShakeAnim.interpolate({
+                inputRange: [-1, 1],
+                outputRange: ['-15deg', '15deg']
+              })
+            }] }
+          ]}>
+            <MaterialCommunityIcons name="bell-outline" size={24} color={theme.text} />
+          </Animated.View>
+          {unreadCount > 0 && (
+            <View style={styles.badgePremium}>
+               <Text style={styles.badgePremiumText}>{unreadCount > 0 ? unreadCount : '!'}</Text>
             </View>
-          ) : (
-            <LinearGradient colors={['#60A5FA', '#2563EB']} start={{x: 0, y: 0}} end={{x: 1, y: 1}} style={{ padding: 24, borderRadius: 24 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: '600', marginBottom: 8 }}>Today's Workout</Text>
-                  <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: 'bold', marginBottom: 4 }}>{todayWorkoutData.day === 'Full Body' ? 'Upper Body' : todayWorkoutData.day}</Text>
-                  <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>{todayWorkoutData.exercises.map((e: any) => e.target).join(' • ').substring(0, 30)}...</Text>
-                </View>
-                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 }}>
-                  <Ionicons name="chevron-forward" size={24} color="#2563EB" />
-                </View>
-              </View>
-              <Ionicons name="barbell" size={120} color="rgba(255,255,255,0.1)" style={{ position: 'absolute', right: -10, bottom: -30 }} />
-            </LinearGradient>
           )}
         </TouchableOpacity>
+      </View>
 
-        {/* 2x2 METRICS GRID */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 20 }}>
-          {/* Calories */}
-          <View style={{ width: '47.5%', backgroundColor: theme.card, padding: 18, borderRadius: 20, marginBottom: '5%', ...theme.shadow }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDark ? 'rgba(249, 115, 22, 0.15)' : '#FFF0E6', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
-                <Ionicons name="flame" size={20} color="#F97316" />
+        {/* WORKOUT SECTION */}
+      <View style={[styles.calendarWrapper, { backgroundColor: theme.background }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.calendarScroll}>
+          {calendarDays.map((d, i) => (
+            <View key={i} style={[styles.calendarDayCard, { backgroundColor: isDark ? '#1E1E1E' : '#F8FBF9', borderColor: d.isToday ? '#00C853' : (isDark ? '#333' : '#F0F0F0') }]}>
+              <Text style={[styles.calDayName, { color: theme.subText }]}>{d.dayName}</Text>
+              <View style={[styles.calDayCircle, d.isToday && styles.calTodayActive]}>
+                <Text style={[styles.calDayNum, d.isToday ? { color: '#FFF' } : { color: theme.text }]}>{d.dayNum}</Text>
               </View>
-              <Text style={{ color: theme.subText, fontSize: 12, fontWeight: '600' }}>Calories</Text>
             </View>
-            <Text style={{ color: theme.text, fontSize: 24, fontWeight: 'bold' }}>{caloriesBurned || '620'}</Text>
-            <Text style={{ color: theme.subText, fontSize: 12, marginTop: 4 }}>kcal burned</Text>
+          ))}
+        </ScrollView>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        
+        {/* NEW CALORIES GAUGE CARD */}
+        <View style={[styles.gaugeCard, { backgroundColor: theme.card }]}>
+          <View style={styles.gaugeHeader}>
+            <Text style={[styles.gaugeTitle, { color: theme.text }]}>Calories</Text>
+            <TouchableOpacity onPress={() => router.push({ pathname: '/(tabs)/camera', params: { fromMode: 'gym' } })}>
+              <MaterialCommunityIcons name="pencil-outline" size={20} color="#00C853" />
+            </TouchableOpacity>
           </View>
 
-          {/* Time */}
-          <View style={{ width: '47.5%', backgroundColor: theme.card, padding: 18, borderRadius: 20, marginBottom: '5%', ...theme.shadow }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(37, 99, 235, 0.1)', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
-                <Ionicons name="time" size={20} color={isDark ? '#3B82F6' : '#2563EB'} />
-              </View>
-              <Text style={{ color: theme.subText, fontSize: 12, fontWeight: '600' }}>Time</Text>
+          <View style={styles.gaugeWrapper}>
+            <View style={styles.segmentsRow}>
+              {segments.map((s, i) => (
+                <View 
+                  key={i} 
+                  style={[
+                    styles.gaugeSegment, 
+                    { backgroundColor: i < filledSegments ? '#00C853' : (isDark ? '#333' : '#E0E0E0') },
+                    { transform: [{ rotate: `${(i * 15) - 82.5}deg` }, { translateY: -85 }] }
+                  ]} 
+                />
+              ))}
             </View>
-            <Text style={{ color: theme.text, fontSize: 24, fontWeight: 'bold' }}>{activeWorkout ? '15' : '45'}</Text>
-            <Text style={{ color: theme.subText, fontSize: 12, marginTop: 4 }}>mins active</Text>
+            
+            <View style={styles.gaugeCenter}>
+              <Ionicons name="flame" size={32} color="#FF6D00" />
+              <Text style={[styles.remainingValue, { color: theme.text }]}>{caloriesLeft}</Text>
+              <Text style={[styles.remainingLabel, { color: theme.subText }]}>Remaining</Text>
+            </View>
           </View>
 
-          {/* Exercises */}
-          <View style={{ width: '47.5%', backgroundColor: theme.card, padding: 18, borderRadius: 20, ...theme.shadow }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : '#E6F6EC', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
-                <MaterialCommunityIcons name="dumbbell" size={20} color="#22C55E" />
-              </View>
-              <Text style={{ color: theme.subText, fontSize: 12, fontWeight: '600' }}>Exercises</Text>
-            </View>
-            <Text style={{ color: theme.text, fontSize: 24, fontWeight: 'bold' }}>{todayWorkoutData.exercises.length}</Text>
-            <Text style={{ color: theme.subText, fontSize: 12, marginTop: 4 }}>completed</Text>
+          <View style={styles.macroRow}>
+            <LinearGradient colors={['#2563EB', '#60A5FA']} style={styles.macroGradientCard}>
+              <MaterialCommunityIcons name="dumbbell" size={24} color="#FFF" />
+              <Text style={[styles.macroValue, { color: '#FFF' }]}>{proteinLeft}g</Text>
+              <Text style={[styles.macroLabel, { color: 'rgba(255,255,255,0.8)' }]}>Protein Left</Text>
+            </LinearGradient>
+            <LinearGradient colors={['#F97316', '#FDBA74']} style={styles.macroGradientCard}>
+              <MaterialCommunityIcons name="fire" size={24} color="#FFF" />
+              <Text style={[styles.macroValue, { color: '#FFF' }]}>{fatsLeft}g</Text>
+              <Text style={[styles.macroLabel, { color: 'rgba(255,255,255,0.8)' }]}>Fats Left</Text>
+            </LinearGradient>
+            <LinearGradient colors={['#22C55E', '#86EFAC']} style={styles.macroGradientCard}>
+              <MaterialCommunityIcons name="bowl-mix-outline" size={24} color="#FFF" />
+              <Text style={[styles.macroValue, { color: '#FFF' }]}>{carbsLeft}g</Text>
+              <Text style={[styles.macroLabel, { color: 'rgba(255,255,255,0.8)' }]}>Carbs Left</Text>
+            </LinearGradient>
+          </View>
+        </View>
+
+        {/* --- REMINDER STATUS SUMMARY --- */}
+        <View style={[styles.insightCard, { backgroundColor: theme.card, borderColor: theme.border, borderLeftColor: '#2196F3', marginBottom: 15 }]}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Reminder Status</Text>
+          </View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 5 }}>
+             {(() => {
+               const counts = { Upcoming: 0, Active: 0, Completed: 0, Missed: 0 };
+               
+               const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+               const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
+               const isWeekend = ['Sat', 'Sun'].includes(todayDay);
+               
+               todayReminders?.forEach((r: any) => {
+                 if (!r.is_enabled) return;
+                 // Date filtering
+                 const repeat = r.repeat_type || 'Daily';
+                 let validToday = false;
+                 if (repeat === 'Daily') validToday = true;
+                 else if (repeat === 'Weekdays') validToday = isWeekday;
+                 else if (repeat === 'Weekends') validToday = isWeekend;
+                 else if (repeat === 'Custom' && r.repeat_days) validToday = r.repeat_days.includes(todayDay);
+                 else validToday = true;
+                 
+                 if (!validToday) return;
+
+                 let stat = (r.status || 'Upcoming').toLowerCase();
+                 if (stat === 'upcoming') counts.Upcoming++;
+                 else if (stat === 'active') counts.Active++;
+                 else if (stat === 'completed') counts.Completed++;
+                 else if (stat === 'missed') counts.Missed++;
+                 else counts.Upcoming++;
+               });
+               
+               return (
+                 <>
+                  <View style={[styles.reminderStatusBox, { backgroundColor: isDark ? 'rgba(33, 150, 243, 0.1)' : '#E3F2FD' }]}>
+                    <View style={[styles.statusIconCircle, { backgroundColor: '#2196F3' }]}>
+                      <Ionicons name="time-outline" size={20} color="#FFF" />
+                    </View>
+                    <View>
+                      <Text style={{ color: theme.text, fontWeight: 'bold' }}>Upcoming</Text>
+                      <Text style={{ color: theme.text, fontSize: 16 }}>{counts.Upcoming}</Text>
+                    </View>
+                  </View>
+                  <View style={[styles.reminderStatusBox, { backgroundColor: isDark ? 'rgba(255, 152, 0, 0.1)' : '#FFF3E0' }]}>
+                    <View style={[styles.statusIconCircle, { backgroundColor: '#FF9800' }]}>
+                      <Ionicons name="notifications-outline" size={20} color="#FFF" />
+                    </View>
+                    <View>
+                      <Text style={{ color: theme.text, fontWeight: 'bold' }}>Active</Text>
+                      <Text style={{ color: theme.text, fontSize: 16 }}>{counts.Active}</Text>
+                    </View>
+                  </View>
+                  <View style={[styles.reminderStatusBox, { backgroundColor: isDark ? 'rgba(76, 175, 80, 0.1)' : '#E8F5E9' }]}>
+                    <View style={[styles.statusIconCircle, { backgroundColor: '#4CAF50' }]}>
+                      <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" />
+                    </View>
+                    <View>
+                      <Text style={{ color: theme.text, fontWeight: 'bold' }}>Completed</Text>
+                      <Text style={{ color: theme.text, fontSize: 16 }}>{counts.Completed}</Text>
+                    </View>
+                  </View>
+                  <View style={[styles.reminderStatusBox, { backgroundColor: isDark ? 'rgba(244, 67, 54, 0.1)' : '#FFEBEE' }]}>
+                    <View style={[styles.statusIconCircle, { backgroundColor: '#F44336' }]}>
+                      <Ionicons name="warning-outline" size={20} color="#FFF" />
+                    </View>
+                    <View>
+                      <Text style={{ color: theme.text, fontWeight: 'bold' }}>Missed</Text>
+                      <Text style={{ color: theme.text, fontSize: 16 }}>{counts.Missed}</Text>
+                    </View>
+                  </View>
+                 </>
+               );
+            })()}
+          </View>
+        </View>
+
+        {/* --- TODAY'S REMINDERS --- */}
+        <View style={[styles.insightCard, { backgroundColor: theme.card, borderColor: theme.border, borderLeftColor: '#00C853', marginBottom: 15 }]}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Today's Reminders</Text>
+            <TouchableOpacity onPress={() => router.push('/notifications')}>
+              <Text style={styles.linkText}>Edit</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Protein */}
-          <View style={{ width: '47.5%', backgroundColor: theme.card, padding: 18, borderRadius: 20, ...theme.shadow }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDark ? 'rgba(168, 85, 247, 0.15)' : '#F3E8FF', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
-                <MaterialCommunityIcons name="shaker" size={20} color="#A855F7" />
-              </View>
-              <Text style={{ color: theme.subText, fontSize: 12, fontWeight: '600' }}>Protein</Text>
+          {(() => {
+            const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'short' }); // e.g., 'Mon', 'Tue'
+            const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
+            const isWeekend = ['Sat', 'Sun'].includes(todayDay);
+            
+            const filteredReminders = todayReminders?.filter((r: any) => {
+              if (!r.is_enabled) return false;
+              
+              // Date filtering
+              const repeat = r.repeat_type || 'Daily';
+              if (repeat === 'Daily') return true;
+              if (repeat === 'Weekdays') return isWeekday;
+              if (repeat === 'Weekends') return isWeekend;
+              if (repeat === 'Custom' && r.repeat_days) {
+                return r.repeat_days.includes(todayDay);
+              }
+              return true; // Fallback
+            }) || [];
+            
+            console.log("Filtered reminders for dashboard:", filteredReminders);
+            
+            return filteredReminders.map((reminder: any, index: number) => {
+              let iconName: any = 'clock-outline';
+              let iconColor = '#2196F3';
+              let title = reminder.reminder_type || 'Reminder';
+              
+              switch(reminder.reminder_type?.toLowerCase()) {
+                case 'workout': iconName = 'dumbbell'; iconColor = '#9C27B0'; title = 'Workout Reminder'; break;
+                case 'breakfast': iconName = 'food-croissant'; iconColor = '#FF9800'; title = 'Breakfast Reminder'; break;
+                case 'lunch': iconName = 'silverware-fork-knife'; iconColor = '#4CAF50'; title = 'Lunch Reminder'; break;
+                case 'dinner': iconName = 'food-steak'; iconColor = '#F44336'; title = 'Dinner Reminder'; break;
+                case 'snack': iconName = 'food-apple'; iconColor = '#FF5252'; title = 'Snack Reminder'; break;
+                case 'water': iconName = 'water-drop'; iconColor = '#00BCD4'; title = 'Water Reminder'; break;
+                case 'sleep': iconName = 'moon-waning-crescent'; iconColor = '#3F51B5'; title = 'Sleep Reminder'; break;
+              }
+              
+              let status = reminder.status || 'Upcoming';
+              if (!status || status.trim() === '') status = 'Upcoming';
+              
+              const statusColor = status === 'Missed' ? '#F44336' : status === 'Completed' ? '#4CAF50' : status === 'Active' ? '#FF9800' : '#2196F3';
+              
+              return (
+                <View key={index} style={[styles.mealItem, { flexDirection: 'column', alignItems: 'stretch' }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={[styles.reminderIconBox, { backgroundColor: iconColor + '20' }]}>
+                      <MaterialCommunityIcons name={iconName} size={24} color={iconColor} />
+                    </View>
+                    <View style={{flex: 1, marginLeft: 15}}>
+                      <Text style={[styles.mealName, {color: theme.text}]}>{title}</Text>
+                      <Text style={[styles.mealTime, { color: statusColor }]}>
+                        {reminder.reminder_time || reminder.title}
+                      </Text>
+                      <Text style={{ color: statusColor, fontSize: 12, marginTop: 2 }}>Status: {status}</Text>
+                    </View>
+                    <Ionicons name={status === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={status === 'Completed' ? "#4CAF50" : statusColor} />
+                    <TouchableOpacity 
+                      style={{ marginLeft: 10 }}
+                      onPress={() => {
+                        Alert.alert("Delete Reminder", "Are you sure?", [
+                          { text: "Cancel", style: "cancel" },
+                          { text: "Delete", style: "destructive", onPress: async () => {
+                              await useAppStore.getState().deleteReminder(reminder.id);
+                              Alert.alert("Success", "Reminder deleted.");
+                          }}
+                        ]);
+                      }}
+                    >
+                      <Ionicons name="trash-outline" size={20} color="#FF5252" />
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10, gap: 10 }}>
+                    {status !== 'Completed' && (
+                      <TouchableOpacity 
+                        style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#4CAF50', borderRadius: 4 }}
+                        onPress={() => useAppStore.getState().markReminderDone(reminder.id)}
+                      >
+                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>Done</Text>
+                      </TouchableOpacity>
+                    )}
+                    {(status === 'Active' || status === 'Upcoming' || status === 'Snoozed') && (
+                      <TouchableOpacity 
+                        style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#FF9800', borderRadius: 4 }}
+                        onPress={() => useAppStore.getState().snoozeReminder(reminder.id, 10)}
+                      >
+                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>Remind Later</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity 
+                      style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#757575', borderRadius: 4 }}
+                      onPress={() => useAppStore.getState().dismissReminder(reminder.id)}
+                    >
+                      <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>Dismiss</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            });
+          })()}
+
+          {(!todayReminders || (() => {
+            const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+            const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
+            const isWeekend = ['Sat', 'Sun'].includes(todayDay);
+            return todayReminders.filter((r: any) => {
+              if (!r.is_enabled) return false;
+              const repeat = r.repeat_type || 'Daily';
+              if (repeat === 'Daily') return true;
+              if (repeat === 'Weekdays') return isWeekday;
+              if (repeat === 'Weekends') return isWeekend;
+              if (repeat === 'Custom' && r.repeat_days) return r.repeat_days.includes(todayDay);
+              return true;
+            }).length === 0;
+          })()) && (
+            <View style={{ alignItems: 'center', paddingVertical: 15 }}>
+              <Text style={{color: theme.subText, fontSize: 13, fontStyle: 'italic', textAlign: 'center'}}>No reminders for today</Text>
             </View>
-            <Text style={{ color: theme.text, fontSize: 24, fontWeight: 'bold' }}>{totalProtein || '82'}<Text style={{ fontSize: 16 }}>g</Text></Text>
-            <Text style={{ color: theme.subText, fontSize: 12, marginTop: 4 }}>intake today</Text>
+          )}
+        </View>
+
+        <View style={styles.statRowCompact}>
+          <TouchableOpacity 
+            style={[styles.compactStat, { backgroundColor: isDark ? '#1E1E1E' : '#FFF', borderColor: theme.border, borderWidth: 1 }]}
+            onPress={handleStepsPress}
+          >
+            <View style={[styles.iconCircle, { backgroundColor: 'rgba(255, 152, 0, 0.1)' }]}>
+              <Ionicons name="footsteps" size={20} color="#FF9800" />
+            </View>
+            <View style={{ marginLeft: 12 }}>
+              <Text style={[styles.compactVal, { color: theme.text }]}>{steps}</Text>
+              <Text style={[styles.compactLabel, { color: theme.subText }]}>Steps</Text>
+            </View>
+          </TouchableOpacity>
+          <View style={[styles.compactStat, { backgroundColor: isDark ? '#1E1E1E' : '#FFF', borderColor: theme.border, borderWidth: 1 }]}>
+            <View style={[styles.iconCircle, { backgroundColor: 'rgba(244, 67, 54, 0.1)' }]}>
+              <Ionicons name="flame" size={20} color="#F44336" />
+            </View>
+            <View style={{ marginLeft: 12 }}>
+              <Text style={[styles.compactVal, { color: theme.text }]}>{totalCaloriesBurned}</Text>
+              <Text style={[styles.compactLabel, { color: theme.subText }]}>Burned</Text>
+            </View>
           </View>
         </View>
 
         {/* TODAY'S MEALS SECTION */}
-        <View style={{ backgroundColor: theme.card, padding: 22, borderRadius: 24, marginBottom: 20, ...theme.shadow }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
-            <Text style={{ color: theme.text, fontSize: 15, fontWeight: 'bold' }}>Today's Meals</Text>
+        <View style={[styles.insightCard, { backgroundColor: theme.card, borderColor: theme.border, borderLeftColor: '#00C853' }]}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Today's Meals</Text>
             <TouchableOpacity onPress={() => router.push({ pathname: '/(tabs)/camera', params: { fromMode: 'gym' } })}>
-              <Text style={{ color: isDark ? '#F97316' : '#2563EB', fontSize: 13, fontWeight: '600' }}>+ Add</Text>
+              <Text style={styles.linkText}>+ Add</Text>
             </TouchableOpacity>
           </View>
           {gymMeals.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 10, gap: 15 }}>
               {gymMeals.map((item: any, index: number) => (
-                <View key={index} style={[styles.mealItemHorizontal, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', width: 220, borderRadius: 16, overflow: 'hidden' }]}>
+                <View key={index} style={[styles.mealItemHorizontal, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
                   {item.imageUri ? (
-                    <Image source={{ uri: item.imageUri }} style={{ width: '100%', height: 100 }} />
+                    <Image source={{ uri: item.imageUri }} style={styles.mealThumbLarge} />
                   ) : item.image_url ? (
-                    <Image source={{ uri: item.image_url }} style={{ width: '100%', height: 100 }} />
+                    <Image source={{ uri: item.image_url }} style={styles.mealThumbLarge} />
                   ) : (
-                    <View style={{ width: '100%', height: 100, backgroundColor: isDark ? '#333' : '#E0E0E0', justifyContent: 'center', alignItems: 'center' }}>
-                      <Text style={{ fontSize: 32 }}>{item.emoji || '🍽️'}</Text>
+                    <View style={[styles.mealThumbLarge, { backgroundColor: isDark ? '#333' : '#E0E0E0', justifyContent: 'center', alignItems: 'center' }]}>
+                      <Text style={{ fontSize: 28 }}>{item.emoji || '🍽️'}</Text>
                     </View>
                   )}
                   <View style={{ padding: 12 }}>
-                    <Text style={{ color: theme.text, fontSize: 14, fontWeight: '700' }} numberOfLines={1}>{item.name}</Text>
-                    <Text style={{ color: '#2563EB', fontSize: 11, marginTop: 2, fontWeight: '600' }}>{getMealType(item.time)}</Text>
-                    <Text style={{ color: theme.subText, fontSize: 12, marginTop: 2 }}>{item.time}</Text>
-                    <Text style={{ color: theme.subText, fontSize: 12, fontWeight: '600', marginTop: 4 }}>{item.calories} kcal</Text>
+                    <Text style={[styles.mealNameHorizontal, { color: theme.text }]} numberOfLines={1}>{item.name}</Text>
+                    <Text style={[styles.mealTime, { color: theme.subText, marginTop: 4 }]}>{item.time}</Text>
+                    <Text style={styles.mealCalsHorizontal}>{item.calories} kcal</Text>
                   </View>
                 </View>
               ))}
@@ -852,76 +1019,163 @@ export default function GymHomeScreen() {
           )}
         </View>
 
-        {/* WEEKLY PROGRESS */}
-        <View style={{ backgroundColor: theme.card, padding: 22, borderRadius: 24, marginBottom: 20, ...theme.shadow, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: theme.text, fontSize: 15, fontWeight: 'bold', marginBottom: 12 }}>Weekly Progress</Text>
-            <Text style={{ color: theme.text, fontSize: 32, fontWeight: '900' }}>75%</Text>
-            <Text style={{ color: theme.subText, fontSize: 13, marginTop: 4 }}>of weekly goal completed</Text>
-            
-            {/* Progress bar */}
-            <View style={{ width: '80%', height: 8, backgroundColor: isDark ? '#334155' : '#E2E8F0', borderRadius: 4, marginTop: 15, overflow: 'hidden' }}>
-              <View style={{ width: '75%', height: '100%', backgroundColor: isDark ? '#F97316' : '#2563EB', borderRadius: 4 }} />
+        {/* PROGRESS CARD */}
+        <TouchableOpacity>
+          <LinearGradient colors={['#F97316', '#2563EB']} style={styles.transformCard}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.transformTitle}>Transformation Progress</Text>
+              <Text style={styles.transformSub}>Track your muscle gains</Text>
+            </View>
+            <MaterialCommunityIcons name="chart-timeline-variant" size={32} color="#FFF" />
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* WATER INTAKE CARD */}
+        <View style={[styles.waterCard, { backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}>
+          <View style={styles.waterHeaderRow}>
+            <View style={styles.waterHeaderLeft}>
+              <View style={[styles.waterIconCircle, { backgroundColor: '#E3F2FD' }]}>
+                <Ionicons name="water" size={20} color="#2196F3" />
+              </View>
+              <View style={{ marginLeft: 12 }}>
+                <Text style={[styles.waterCardTitle, { color: theme.text }]}>Recommended Water Goal</Text>
+                <Text style={[styles.waterCardSubTitle, { color: theme.subText }]}>{waterData.waterIntake} / {waterData.waterGoal} ml</Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={() => setShowWaterModal(true)}>
+              <Ionicons name="add-circle-outline" size={24} color="#2196F3" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.waterProgressContainer}>
+            <View style={[styles.waterProgressBarBase, { backgroundColor: isDark ? '#333' : '#F0F0F0' }]}>
+              <View 
+                style={[
+                  styles.waterProgressBarFill, 
+                  { 
+                    width: `${Math.min(100, (waterData.waterIntake / waterData.waterGoal) * 100)}%`,
+                    backgroundColor: '#2196F3'
+                  }
+                ]} 
+              />
             </View>
           </View>
-          
-          {/* Mock Bar Chart */}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 60, gap: 6 }}>
-            {[30, 50, 20, 60, 45].map((height, i) => (
-              <View key={i} style={{ width: 12, height, backgroundColor: isDark ? (i === 4 ? '#F97316' : '#334155') : (i === 4 ? '#2563EB' : '#CBD5E1'), borderRadius: 6 }} />
+
+          <View style={styles.waterQuickAddRow}>
+            {[250, 500, 750].map(amount => (
+              <TouchableOpacity 
+                key={amount}
+                style={[styles.waterQuickAddBtn, { backgroundColor: isDark ? '#1A2633' : '#E3F2FD' }]}
+                onPress={() => addWater(amount)}
+              >
+                <Text style={[styles.waterQuickAddText, { color: '#2196F3' }]}>+{amount}ml</Text>
+              </TouchableOpacity>
             ))}
           </View>
+          <Text style={[styles.waterFooterText, { color: theme.subText }]}>Based on your age, weight, and activity level.</Text>
         </View>
 
-        {/* MUSCLE FOCUS */}
-        <View style={{ backgroundColor: theme.card, padding: 22, borderRadius: 24, marginBottom: 20, ...theme.shadow }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <Text style={{ color: theme.text, fontSize: 15, fontWeight: 'bold' }}>Muscle Focus</Text>
-            <Text style={{ color: isDark ? '#F97316' : '#2563EB', fontSize: 13, fontWeight: '600' }}>View all</Text>
-          </View>
-          
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {/* Mock Anatomy Image placeholder */}
-            <View style={{ width: 120, height: 160, backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F1F5F9', borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginRight: 20 }}>
-              <Ionicons name="body" size={80} color={isDark ? '#334155' : '#CBD5E1'} />
-            </View>
-            
-            {/* Progress Bars */}
-            <View style={{ flex: 1, gap: 15 }}>
-              {[
-                { name: 'Chest', val: 80, color: '#F97316' },
-                { name: 'Back', val: 70, color: isDark ? '#3B82F6' : '#2563EB' },
-                { name: 'Arms', val: 65, color: '#A855F7' },
-                { name: 'Legs', val: 75, color: '#22C55E' }
-              ].map((m, i) => (
-                <View key={i}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <Text style={{ color: theme.text, fontSize: 13, fontWeight: '600' }}>{m.name}</Text>
-                    <Text style={{ color: theme.text, fontSize: 13, fontWeight: 'bold' }}>{m.val}%</Text>
-                  </View>
-                  <View style={{ width: '100%', height: 4, backgroundColor: isDark ? '#334155' : '#E2E8F0', borderRadius: 2 }}>
-                    <View style={{ width: `${m.val}%`, height: '100%', backgroundColor: m.color, borderRadius: 2 }} />
-                  </View>
+        {/* MEAL GUIDES (DYNAMIC PROMINENCE) */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Nutrition Focus</Text>
+        </View>
+        <View style={[styles.row, { marginBottom: 25 }]}>
+          {workoutStatus === 'Completed' ? (
+            <>
+              {/* Post-Workout first if completed */}
+              <TouchableOpacity style={[styles.guideCard, { backgroundColor: theme.card, borderColor: '#2196F3', borderLeftWidth: 4 }]} onPress={() => router.push('/post-workout')}>
+                <View style={[styles.iconCircle, {backgroundColor: isDark ? '#2A343D' : '#E3F2FD'}]}><Ionicons name="checkmark-circle-outline" size={20} color="#2196F3" /></View>
+                <View>
+                  <Text style={[styles.guideTitle, { color: theme.text }]}>Post-Workout</Text>
+                  <Text style={{ fontSize: 10, color: theme.subText }}>Recommended Now</Text>
                 </View>
-              ))}
-            </View>
-          </View>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.guideCard, { backgroundColor: theme.card, borderColor: theme.border }]} onPress={() => router.push('/pre-workout')}>
+                <View style={[styles.iconCircle, {backgroundColor: isDark ? '#2E3D31' : '#E8F5E9'}]}><Ionicons name="time-outline" size={20} color="#00C853" /></View>
+                <Text style={[styles.guideTitle, { color: theme.text }]}>Pre-Workout</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              {/* Pre-Workout first if not started */}
+              <TouchableOpacity style={[styles.guideCard, { backgroundColor: theme.card, borderColor: '#00C853', borderLeftWidth: 4 }]} onPress={() => router.push('/pre-workout')}>
+                <View style={[styles.iconCircle, {backgroundColor: isDark ? '#2E3D31' : '#E8F5E9'}]}><Ionicons name="time-outline" size={20} color="#00C853" /></View>
+                <View>
+                  <Text style={[styles.guideTitle, { color: theme.text }]}>Pre-Workout</Text>
+                  <Text style={{ fontSize: 10, color: theme.subText }}>Fuel Up Now</Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.guideCard, { backgroundColor: theme.card, borderColor: theme.border }]} onPress={() => router.push('/post-workout')}>
+                <View style={[styles.iconCircle, {backgroundColor: isDark ? '#2A343D' : '#E3F2FD'}]}><Ionicons name="checkmark-circle-outline" size={20} color="#2196F3" /></View>
+                <Text style={[styles.guideTitle, { color: theme.text }]}>Post-Workout</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
-        {/* UPCOMING WORKOUT */}
-        <View style={{ marginBottom: 40 }}>
-          <Text style={{ color: theme.text, fontSize: 15, fontWeight: 'bold', marginBottom: 12 }}>Upcoming Workout</Text>
-          <View style={{ backgroundColor: theme.card, padding: 20, borderRadius: 20, ...theme.shadow, flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: isDark ? 'rgba(249, 115, 22, 0.15)' : 'rgba(37, 99, 235, 0.1)', justifyContent: 'center', alignItems: 'center', marginRight: 15 }}>
-              <Ionicons name="calendar" size={24} color={isDark ? "#F97316" : "#2563EB"} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: theme.subText, fontSize: 12, fontWeight: '600', marginBottom: 4 }}>Tomorrow, 6:00 PM</Text>
-              <Text style={{ color: theme.text, fontSize: 16, fontWeight: 'bold', marginBottom: 2 }}>Leg Day</Text>
-              <Text style={{ color: theme.subText, fontSize: 12 }}>Quads • Hamstrings • Calves</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.subText} />
+        {/* TODAY'S WORKOUT (OR REST DAY TIPS) */}
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>{todayName === 'Sunday' ? "Sunday Recovery" : "Today's Workout"}</Text>
+            {todayName !== 'Sunday' && (
+              <TouchableOpacity onPress={() => router.push('/plans')}>
+                  <Text style={styles.linkText}>View Plan</Text>
+              </TouchableOpacity>
+            )}
           </View>
+
+          {todayName === 'Sunday' ? (
+            <View style={[styles.insightCard, { backgroundColor: '#F1FBF2', borderLeftColor: '#00C853', marginBottom: 0 }]}>
+               <View style={styles.insightHeader}>
+                  <Ionicons name="sunny-outline" size={20} color="#00C853" />
+                  <Text style={[styles.insightTitle, { color: '#333' }]}>Recovery Tips</Text>
+               </View>
+               <Text style={[styles.insightBody, { color: '#555' }]}>
+                  • Focus on mobility and stretching for 15 mins.{"\n"}
+                  • Stay hydrated and maintain light activity like walking.{"\n"}
+                  • Allow your muscles to repair and grow today.
+               </Text>
+            </View>
+          ) : (
+            <TouchableOpacity 
+              style={[styles.orangeCard, workoutStatus === 'Completed' && { backgroundColor: '#00C853' }]}
+              onPress={() => router.push({ pathname: '/workout-day-detail', params: { day: todayWorkoutData.day } })}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.workoutTitle}>{todayWorkoutData.day}</Text>
+                <Text style={styles.workoutSub}>{todayWorkoutData.exercises.length} exercises • {todayWorkoutData.duration}</Text>
+                <View style={styles.burnBadge}>
+                  <Ionicons name={workoutStatus === 'Completed' ? "checkmark-circle" : "flame"} size={14} color="#FFF" />
+                  <Text style={styles.burnText}>
+                      {workoutStatus === 'Completed' ? 'Workout Completed' : `Estimated burn: ${todayWorkoutData.calories} kcal`}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                  style={styles.whiteBtn} 
+                  onPress={() => router.push({ pathname: '/workout-day-detail', params: { day: todayWorkoutData.day } })}
+              >
+                <Text style={[styles.orangeText, workoutStatus === 'Completed' && { color: '#00C853' }]}>
+                  {workoutStatus === 'Completed' ? 'View' : (workoutStatus === 'In Progress' ? 'Resume' : 'Start')}
+                </Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* SMART INSIGHT */}
+        <View style={[styles.insightCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <View style={styles.insightHeader}>
+            <MaterialCommunityIcons name="lightbulb-on-outline" size={20} color="#FFD700" />
+            <Text style={[styles.insightTitle, { color: theme.text }]}>Smart Insight</Text>
+          </View>
+          <Text style={[styles.insightBody, { color: theme.subText }]}>
+            {todayName === 'Sunday' 
+               ? "Rest is just as important as training. Enjoy your day!"
+               : (workoutStatus === 'Completed' 
+                 ? "Workout completed. Focus on recovery and protein." 
+                 : (workoutStatus === 'In Progress' ? "Workout in progress. Keep pushing!" : "Start today's workout to stay on track."))}
+          </Text>
         </View>
 
       </ScrollView>
