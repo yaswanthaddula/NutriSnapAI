@@ -485,13 +485,13 @@ export default function GymHomeScreen() {
   };
 
   const theme = {
-    gradient: isDark ? ['#0F172A', '#0F172A'] as const : ['#F8FAFC', '#F8FAFC'] as const,
-    background: isDark ? '#0F172A' : '#F8FAFC',
-    text: isDark ? '#FFFFFF' : '#1E293B',
-    subText: isDark ? '#94A3B8' : '#64748B',
-    card: isDark ? '#1E293B' : '#FFFFFF',
-    border: isDark ? '#334155' : '#E2E8F0',
-    iconColor: isDark ? '#F8FAFC' : '#334155',
+    gradient: isDark ? ['#111827', '#111827'] as const : ['#F8FAFC', '#F8FAFC'] as const,
+    background: isDark ? '#111827' : '#F8FAFC',
+    text: isDark ? '#F9FAFB' : '#111827',
+    subText: isDark ? '#9CA3AF' : '#4B5563',
+    card: isDark ? '#1F2937' : '#FFFFFF',
+    border: isDark ? '#374151' : '#E2E8F0',
+    iconColor: isDark ? '#F9FAFB' : '#1F2937',
     chatBg: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9',
     shadow: {
       shadowColor: '#000',
@@ -695,7 +695,7 @@ export default function GymHomeScreen() {
           activeOpacity={0.9}
         >
           {isDark ? (
-            <View style={{ backgroundColor: '#1E293B', padding: 24, borderRadius: 24, position: 'relative', overflow: 'hidden' }}>
+            <View style={{ backgroundColor: '#1F2937', padding: 24, borderRadius: 24, position: 'relative', overflow: 'hidden' }}>
               <View style={{ zIndex: 2, width: '65%' }}>
                 <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '600', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Today's Workout</Text>
                 <Text style={{ color: '#FFFFFF', fontSize: 26, fontWeight: 'bold', marginBottom: 4 }}>{todayWorkoutData.day}</Text>
@@ -710,7 +710,7 @@ export default function GymHomeScreen() {
               <Ionicons name="barbell" size={100} color="rgba(255,255,255,0.05)" style={{ position: 'absolute', right: -10, bottom: -20, zIndex: 1 }} />
             </View>
           ) : (
-            <LinearGradient colors={['#8B5CF6', '#3B82F6']} start={{x: 0, y: 0}} end={{x: 1, y: 1}} style={{ padding: 24, borderRadius: 24 }}>
+            <LinearGradient colors={['#60A5FA', '#2563EB']} start={{x: 0, y: 0}} end={{x: 1, y: 1}} style={{ padding: 24, borderRadius: 24 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: '600', marginBottom: 8 }}>Today's Workout</Text>
@@ -718,7 +718,7 @@ export default function GymHomeScreen() {
                   <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>{todayWorkoutData.exercises.map((e: any) => e.target).join(' • ').substring(0, 30)}...</Text>
                 </View>
                 <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 }}>
-                  <Ionicons name="chevron-forward" size={24} color="#3B82F6" />
+                  <Ionicons name="chevron-forward" size={24} color="#2563EB" />
                 </View>
               </View>
               <Ionicons name="barbell" size={120} color="rgba(255,255,255,0.1)" style={{ position: 'absolute', right: -10, bottom: -30 }} />
@@ -743,8 +743,8 @@ export default function GymHomeScreen() {
           {/* Time */}
           <View style={{ width: '47.5%', backgroundColor: theme.card, padding: 18, borderRadius: 20, marginBottom: '5%', ...theme.shadow }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : '#EBF5FF', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
-                <Ionicons name="time" size={20} color="#3B82F6" />
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(37, 99, 235, 0.1)', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
+                <Ionicons name="time" size={20} color={isDark ? '#3B82F6' : '#2563EB'} />
               </View>
               <Text style={{ color: theme.subText, fontSize: 12, fontWeight: '600' }}>Time</Text>
             </View>
@@ -786,14 +786,14 @@ export default function GymHomeScreen() {
             
             {/* Progress bar */}
             <View style={{ width: '80%', height: 8, backgroundColor: isDark ? '#334155' : '#E2E8F0', borderRadius: 4, marginTop: 15, overflow: 'hidden' }}>
-              <View style={{ width: '75%', height: '100%', backgroundColor: isDark ? '#F97316' : '#3B82F6', borderRadius: 4 }} />
+              <View style={{ width: '75%', height: '100%', backgroundColor: isDark ? '#F97316' : '#2563EB', borderRadius: 4 }} />
             </View>
           </View>
           
           {/* Mock Bar Chart */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 60, gap: 6 }}>
             {[30, 50, 20, 60, 45].map((height, i) => (
-              <View key={i} style={{ width: 12, height, backgroundColor: isDark ? (i === 4 ? '#F97316' : '#334155') : (i === 4 ? '#3B82F6' : '#CBD5E1'), borderRadius: 6 }} />
+              <View key={i} style={{ width: 12, height, backgroundColor: isDark ? (i === 4 ? '#F97316' : '#334155') : (i === 4 ? '#2563EB' : '#CBD5E1'), borderRadius: 6 }} />
             ))}
           </View>
         </View>
@@ -802,7 +802,7 @@ export default function GymHomeScreen() {
         <View style={{ backgroundColor: theme.card, padding: 22, borderRadius: 24, marginBottom: 20, ...theme.shadow }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <Text style={{ color: theme.text, fontSize: 15, fontWeight: 'bold' }}>Muscle Focus</Text>
-            <Text style={{ color: isDark ? '#F97316' : '#3B82F6', fontSize: 13, fontWeight: '600' }}>View all</Text>
+            <Text style={{ color: isDark ? '#F97316' : '#2563EB', fontSize: 13, fontWeight: '600' }}>View all</Text>
           </View>
           
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -815,7 +815,7 @@ export default function GymHomeScreen() {
             <View style={{ flex: 1, gap: 15 }}>
               {[
                 { name: 'Chest', val: 80, color: '#F97316' },
-                { name: 'Back', val: 70, color: '#3B82F6' },
+                { name: 'Back', val: 70, color: isDark ? '#3B82F6' : '#2563EB' },
                 { name: 'Arms', val: 65, color: '#A855F7' },
                 { name: 'Legs', val: 75, color: '#22C55E' }
               ].map((m, i) => (
@@ -837,8 +837,8 @@ export default function GymHomeScreen() {
         <View style={{ marginBottom: 40 }}>
           <Text style={{ color: theme.text, fontSize: 15, fontWeight: 'bold', marginBottom: 12 }}>Upcoming Workout</Text>
           <View style={{ backgroundColor: theme.card, padding: 20, borderRadius: 20, ...theme.shadow, flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: isDark ? 'rgba(249, 115, 22, 0.15)' : '#EBF5FF', justifyContent: 'center', alignItems: 'center', marginRight: 15 }}>
-              <Ionicons name="calendar" size={24} color={isDark ? "#F97316" : "#3B82F6"} />
+            <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: isDark ? 'rgba(249, 115, 22, 0.15)' : 'rgba(37, 99, 235, 0.1)', justifyContent: 'center', alignItems: 'center', marginRight: 15 }}>
+              <Ionicons name="calendar" size={24} color={isDark ? "#F97316" : "#2563EB"} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ color: theme.subText, fontSize: 12, fontWeight: '600', marginBottom: 4 }}>Tomorrow, 6:00 PM</Text>
