@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system';
 import { router, useGlobalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 // --- IMPORT THE THEME HOOK ---
@@ -57,12 +58,19 @@ export default function ProfileScreen() {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const uri = result.assets[0].uri;
-        useAppStore.getState().updateUserProfile('profileImage', uri);
+        
+        // Save to document directory to persist across restarts
+        const filename = uri.split('/').pop() || 'avatar.jpg';
+        const newPath = `${FileSystem.documentDirectory}${filename}`;
+        await FileSystem.copyAsync({ from: uri, to: newPath });
+
+        useAppStore.getState().updateUserProfile('profileImage', newPath);
         
         // Persist permanently for this user (so it survives logout/login)
         const currentEmail = useAppStore.getState().userProfile.email;
         if (currentEmail) {
-          AsyncStorage.setItem(`nutrisnap_avatar_${currentEmail}`, uri).catch(e => console.warn(e));
+          const normalizedEmail = currentEmail.toLowerCase();
+          AsyncStorage.setItem(`nutrisnap_avatar_${normalizedEmail}`, newPath).catch(e => console.warn(e));
         }
       }
     } catch (e) {

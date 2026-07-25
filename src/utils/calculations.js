@@ -239,3 +239,35 @@ export const calculateSuggestedMode = (profileData) => {
 
   return 'Health';
 };
+
+/**
+ * Format time to 12-hour AM/PM format
+ * @param {string} timeStr 
+ * @returns {string}
+ */
+export const formatTo12Hour = (timeStr) => {
+  if (!timeStr) return '';
+  // Check if already in 12-hour format
+  if (timeStr.match(/AM|PM/i)) return timeStr;
+  
+  // Try parsing "HH:MM"
+  const match = timeStr.match(/^(\d{1,2}):(\d{2})/);
+  if (match) {
+    let hour = parseInt(match[1]);
+    const min = match[2];
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12;
+    if (hour === 0) hour = 12;
+    return `${hour.toString().padStart(2, '0')}:${min} ${ampm}`;
+  }
+  
+  // Try treating as full date string
+  try {
+    const d = new Date(timeStr);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase();
+    }
+  } catch (e) {}
+  
+  return timeStr;
+};

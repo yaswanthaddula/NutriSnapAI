@@ -13,6 +13,7 @@ import {
   Image 
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as FileSystem from 'expo-file-system';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -69,12 +70,18 @@ export default function EditProfile() {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const uri = result.assets[0].uri;
-        useAppStore.getState().updateUserProfile('profileImage', uri);
+        
+        const filename = uri.split('/').pop() || 'avatar.jpg';
+        const newPath = `${FileSystem.documentDirectory}${filename}`;
+        await FileSystem.copyAsync({ from: uri, to: newPath });
+
+        useAppStore.getState().updateUserProfile('profileImage', newPath);
         
         // Persist permanently for this user (so it survives logout/login)
         const currentEmail = useAppStore.getState().userProfile.email;
         if (currentEmail) {
-          AsyncStorage.setItem(`nutrisnap_avatar_${currentEmail}`, uri).catch(e => console.warn(e));
+          const normalizedEmail = currentEmail.toLowerCase();
+          AsyncStorage.setItem(`nutrisnap_avatar_${normalizedEmail}`, newPath).catch(e => console.warn(e));
         }
       }
     } catch (e) {

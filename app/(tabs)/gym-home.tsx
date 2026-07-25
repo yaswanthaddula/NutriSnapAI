@@ -21,7 +21,7 @@ import { Platform as RNPlatform } from 'react-native';
 const LottieView = RNPlatform.OS !== 'web' ? require('lottie-react-native').default : null;
 import { useTheme } from '../_layout';
 import useAppStore from '../../src/store/useAppStore';
-import { calculateMealTotals } from '../../src/utils/calculations';
+import { calculateMealTotals, formatTo12Hour } from '../../src/utils/calculations';
 import { chatWithAi } from '../../src/services/chatGeminiService';
 import { WORKOUT_PLANS } from '../../src/data/workoutPlans';
 import { Pedometer } from 'expo-sensors';
@@ -454,7 +454,7 @@ export default function GymHomeScreen() {
     if (chatInput.trim() === '' || isChatLoading) return;
     
     setIsChatLoading(true);
-    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase();
     const userMsg = { id: Date.now(), text: chatInput, isAi: false, timestamp: timeStr };
     setMessages(prev => [...prev, userMsg]);
     const currentInput = chatInput;
@@ -468,7 +468,7 @@ export default function GymHomeScreen() {
         id: Date.now() + 1, 
         text: aiResponse, 
         isAi: true,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()
       };
       
       setMessages(prev => {
@@ -715,12 +715,7 @@ export default function GymHomeScreen() {
           {upcomingReminder && (
             <View style={[styles.nextReminderChip, { backgroundColor: isDark ? '#1E1E1E' : '#FFF' }]}>
               <Text style={[styles.nextReminderText, { color: theme.text }]}>
-                {upcomingReminder.reminder_type === 'breakfast' ? '🍳 Breakfast' :
-                 upcomingReminder.reminder_type === 'lunch' ? '🥗 Lunch' :
-                 upcomingReminder.reminder_type === 'dinner' ? '🍽 Dinner' :
-                 upcomingReminder.reminder_type === 'water' ? '💧 Water' :
-                 upcomingReminder.reminder_type === 'workout' ? '🏋 Workout' :
-                 '⏰ Reminder'} • {upcomingReminder.reminder_time}
+                🕒 {formatTo12Hour(upcomingReminder.reminder_time)}
               </Text>
             </View>
           )}
@@ -953,7 +948,7 @@ export default function GymHomeScreen() {
                     <View style={{flex: 1, marginLeft: 15}}>
                       <Text style={[styles.mealName, {color: theme.text}]}>{title}</Text>
                       <Text style={[styles.mealTime, { color: statusColor }]}>
-                        {reminder.reminder_time || reminder.title}
+                        {formatTo12Hour(reminder.reminder_time || reminder.title)}
                       </Text>
                       <Text style={{ color: statusColor, fontSize: 12, marginTop: 2 }}>Status: {status}</Text>
                     </View>
@@ -1070,7 +1065,7 @@ export default function GymHomeScreen() {
                   )}
                   <View style={{ padding: 12 }}>
                     <Text style={[styles.mealNameHorizontal, { color: theme.text }]} numberOfLines={1}>{item.name}</Text>
-                    <Text style={[styles.mealTime, { color: theme.subText, marginTop: 4 }]}>{item.time}</Text>
+                    <Text style={[styles.mealTime, { color: theme.subText, marginTop: 4 }]}>{formatTo12Hour(item.time)}</Text>
                     <Text style={styles.mealCalsHorizontal}>{item.calories} kcal</Text>
                   </View>
                 </View>

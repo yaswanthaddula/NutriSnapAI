@@ -87,7 +87,7 @@ export default function NotificationCenterScreen() {
   const formatTime = (dateStr: string) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase();
   };
 
   const handleClearAll = () => {
