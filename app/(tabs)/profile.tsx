@@ -56,7 +56,7 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        useAppStore.getState().updateProfile('profileImage', result.assets[0].uri);
+        useAppStore.getState().updateUserProfile('profileImage', result.assets[0].uri);
       }
     } catch (e) {
       console.warn("Error picking image:", e);
