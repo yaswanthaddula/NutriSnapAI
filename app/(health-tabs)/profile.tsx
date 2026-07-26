@@ -200,9 +200,9 @@ export default function ProfileScreen() {
             </View>
           )}
 
-          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: theme.border }]} onPress={() => router.push('/notifications')}>
+          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: theme.border }]} onPress={() => router.push({ pathname: '/notifications', params: { fromMode: 'health' } })}>
             <Ionicons name="notifications-outline" size={22} color={theme.text} />
-            <Text style={[styles.menuLabel, { color: theme.text }]}>Notifications</Text>
+            <Text style={[styles.menuLabel, { color: theme.text }]}>Notification Settings</Text>
             <Ionicons name="chevron-forward" size={20} color="#CCC" />
           </TouchableOpacity>
 

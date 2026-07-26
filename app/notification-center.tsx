@@ -110,12 +110,19 @@ export default function NotificationCenterScreen() {
   const activeNotifs = notifications.filter(n => n.status !== 'cleared');
 
   const filteredNotifications = activeNotifs.filter((n) => {
+    // Health Dashboard should not prioritize workout notifications
+    if (fromMode === 'health' && activeFilter === 'All') {
+       if (n.type?.includes('workout') || n.type?.includes('gym') || n.title?.toLowerCase().includes('workout')) {
+           return false;
+       }
+    }
+    
     if (activeFilter === 'All') return true;
     if (activeFilter === 'Unread') return !n.isRead;
     if (activeFilter === 'Meals') return n.type?.includes('meal') || n.title?.toLowerCase().includes('meal');
-    if (activeFilter === 'Fitness') return n.type?.includes('workout') || n.type?.includes('gym');
-    if (activeFilter === 'Health') return n.type?.includes('water') || n.type?.includes('sleep');
-    if (activeFilter === 'Achievements') return n.type?.includes('streak') || n.type?.includes('goal');
+    if (activeFilter === 'Fitness') return n.type?.includes('workout') || n.type?.includes('gym') || n.title?.toLowerCase().includes('workout');
+    if (activeFilter === 'Health') return n.type?.includes('water') || n.type?.includes('sleep') || n.type?.includes('insight');
+    if (activeFilter === 'Achievements') return n.type?.includes('streak') || n.type?.includes('goal') || n.title?.toLowerCase().includes('achiev');
     return true;
   });
 

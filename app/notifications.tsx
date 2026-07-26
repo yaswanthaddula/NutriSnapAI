@@ -618,21 +618,21 @@ export default function NotificationsScreen() {
   const renderSleepSection = () => (
     <>
       <NotificationOption 
-        title="Sleep Reminder" 
-        sub="Time to sleep and recover" 
+        title={fromMode === 'gym' ? "Recovery Reminder" : "Sleep Reminder"} 
+        sub="Time to rest and recover" 
         value={notificationPrefs.sleep} 
         onToggle={(val: boolean) => handleTogglePref('sleep', val)} 
       />
       {notificationPrefs.sleep && localProfile && (
         <View style={[styles.expandedConfig, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <CustomTimePicker
-            label="Bedtime Reminder"
+            label={fromMode === 'gym' ? "Recovery Time" : "Bedtime Reminder"}
             value={localProfile.sleepReminderTime}
             onChange={(val: string) => handleAutoSave({ sleepReminderTime: val })}
             theme={theme}
           />
           <RepeatPicker value={localProfile.sleepRepeat} onChange={(val: string) => handleAutoSave({ sleepRepeat: val })} theme={theme} />
-          <ReminderPreview title="Sleep Reminder" time={localProfile.sleepReminderTime} repeat={localProfile.sleepRepeat} theme={theme} onDelete={() => handleDeleteReminder('sleep')} />
+          <ReminderPreview title={fromMode === 'gym' ? "Recovery Reminder" : "Sleep Reminder"} time={localProfile.sleepReminderTime} repeat={localProfile.sleepRepeat} theme={theme} onDelete={() => handleDeleteReminder('sleep')} />
         </View>
       )}
     </>
@@ -640,8 +640,8 @@ export default function NotificationsScreen() {
 
   const renderGoalsSection = () => (
     <NotificationOption 
-      title="Goal Achievements" 
-      sub="Celebrate your milestones" 
+      title={fromMode === 'gym' ? "Workout Goals & Achievements" : "Daily Nutrition Goal"} 
+      sub={fromMode === 'gym' ? "Celebrate your fitness milestones" : "Celebrate your nutrition milestones"}
       value={notificationPrefs.goals} 
       onToggle={(val: boolean) => handleTogglePref('goals', val)} 
     />
@@ -649,7 +649,7 @@ export default function NotificationsScreen() {
 
   const renderReportsSection = () => (
     <NotificationOption 
-      title="Weekly Reports" 
+      title={fromMode === 'gym' ? "Weekly Fitness Report" : "Weekly Health Report"} 
       sub="Get weekly progress summaries" 
       value={notificationPrefs.reports} 
       onToggle={(val: boolean) => handleTogglePref('reports', val)} 
@@ -658,8 +658,8 @@ export default function NotificationsScreen() {
 
   const renderQuotesSection = () => (
     <NotificationOption 
-      title="Motivational Quotes" 
-      sub="Daily inspiration" 
+      title={fromMode === 'gym' ? "AI Fitness Tips" : "AI Health Tips"} 
+      sub={fromMode === 'gym' ? "Personalized workout recommendations" : "Personalized nutrition recommendations"}
       value={notificationPrefs.quotes} 
       onToggle={(val: boolean) => handleTogglePref('quotes', val)} 
     />
@@ -685,8 +685,6 @@ export default function NotificationsScreen() {
             <>
               {renderWorkoutSection()}
               {renderGoalsSection()}
-              {renderMealSection()}
-              {renderWaterSection()}
               {renderSleepSection()}
               {renderReportsSection()}
               {renderQuotesSection()}
@@ -695,11 +693,10 @@ export default function NotificationsScreen() {
             <>
               {renderMealSection()}
               {renderWaterSection()}
-              {renderGoalsSection()}
-              {renderReportsSection()}
-              {renderWorkoutSection()}
               {renderSleepSection()}
+              {renderGoalsSection()}
               {renderQuotesSection()}
+              {renderReportsSection()}
             </>
           )}
         </View>

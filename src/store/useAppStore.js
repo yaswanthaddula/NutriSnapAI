@@ -510,30 +510,59 @@ const useAppStore = create((set, get) => ({
       return 'Dinner';
     };
 
+    const calculateMealTotals = (mealList) => {
+      let c = 0; let p = 0; let cb = 0; let f = 0;
+      mealList.forEach(m => {
+        c += parseInt(m.calories) || 0;
+        p += parseInt(m.protein) || 0;
+        cb += parseInt(m.carbs) || 0;
+        f += parseInt(m.fats) || 0;
+      });
+      return { c, p, cb, f };
+    };
+
     if (notificationPrefs?.meals !== false) {
       const breakfastTime = parseTime(userProfile.breakfastReminderTime || '08:00 AM');
-      if (breakfastTime && now >= breakfastTime) {
+      if (breakfastTime) {
         const hasBreakfast = meals.some(m => m.date === todayStr && getMealType(m.time) === 'Breakfast');
-        if (!hasBreakfast) {
-          addNotification({ title: 'Breakfast Reminder', message: `Good Morning!\nIt's ${userProfile.breakfastReminderTime || '8:00 AM'}.\nTime to log your breakfast.`, type: 'meal_breakfast', mode: 'health' });
+        if (hasBreakfast) {
+          addNotification({ title: 'Breakfast Logged', message: `Great job!\nYou successfully logged your breakfast.`, type: 'meal_breakfast_logged', mode: 'health', icon: 'egg-fried', color: '#10B981' });
+        } else if (now >= breakfastTime) {
+          const missedByHours = (now.getTime() - breakfastTime.getTime()) / 3600000;
+          if (missedByHours > 2) {
+             addNotification({ title: 'Breakfast Missed', message: `⚠️ Breakfast was not logged today.\nRemember that it's the most important meal!`, type: 'meal_breakfast_missed', mode: 'health', icon: 'alert', color: '#EF4444' });
+          } else {
+             addNotification({ title: 'Breakfast Reminder', message: `Good Morning!\nIt's ${userProfile.breakfastReminderTime || '8:00 AM'}.\nTime to log your breakfast.`, type: 'meal_breakfast', mode: 'health', icon: 'egg-fried' });
+          }
         }
       }
       
       const lunchTime = parseTime(userProfile.lunchReminderTime || '01:00 PM');
-      if (lunchTime && now >= lunchTime) {
+      if (lunchTime) {
         const hasLunch = meals.some(m => m.date === todayStr && getMealType(m.time) === 'Lunch');
-        if (!hasLunch) {
-          addNotification({ title: 'Lunch Reminder', message: `It's ${userProfile.lunchReminderTime || '1:00 PM'}.\nTime for lunch.`, type: 'meal_lunch', mode: 'health' });
+        if (hasLunch) {
+          addNotification({ title: 'Lunch Logged', message: `Awesome!\nYou logged your lunch.`, type: 'meal_lunch_logged', mode: 'health', icon: 'food-variant', color: '#10B981' });
+        } else if (now >= lunchTime) {
+          addNotification({ title: 'Lunch Reminder', message: `It's ${userProfile.lunchReminderTime || '1:00 PM'}.\nTime for lunch.`, type: 'meal_lunch', mode: 'health', icon: 'food-variant' });
         }
       }
 
       const dinnerTime = parseTime(userProfile.dinnerReminderTime || '08:00 PM');
-      if (dinnerTime && now >= dinnerTime) {
+      if (dinnerTime) {
         const hasDinner = meals.some(m => m.date === todayStr && getMealType(m.time) === 'Dinner');
-        if (!hasDinner) {
-          addNotification({ title: 'Dinner Reminder', message: `It's ${userProfile.dinnerReminderTime || '8:00 PM'}.\nTime to log your dinner.`, type: 'meal_dinner', mode: 'health' });
+        if (hasDinner) {
+          addNotification({ title: 'Dinner Logged', message: `Perfect!\nYou logged your dinner.`, type: 'meal_dinner_logged', mode: 'health', icon: 'silverware-fork-knife', color: '#10B981' });
+        } else if (now >= dinnerTime) {
+          addNotification({ title: 'Dinner Reminder', message: `It's ${userProfile.dinnerReminderTime || '8:00 PM'}.\nTime to log your dinner.`, type: 'meal_dinner', mode: 'health', icon: 'silverware-fork-knife' });
         }
       }
+    }
+    
+    // Check Goals
+    const todayMeals = meals.filter(m => m.date === todayStr);
+    const { c: totalCalories } = calculateMealTotals(todayMeals);
+    if (userProfile.calorieTarget > 0 && totalCalories >= userProfile.calorieTarget) {
+       addNotification({ title: 'Daily Nutrition Goal Completed', message: `🎯 Congratulations!\nYou reached today's calorie goal.`, type: 'goal_calories_met', mode: 'health', icon: 'trophy', color: '#F59E0B' });
     }
 
     if (notificationPrefs?.workout !== false) {

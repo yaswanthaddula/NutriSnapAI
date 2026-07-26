@@ -113,8 +113,12 @@ export default function EditProfile() {
       selected_mode: userProfile.selected_mode
     });
 
+    // Fetch the freshest store state just before saving so we don't overwrite the picked image
+    const currentState = useAppStore.getState().userProfile;
+    
     const updatedProfile = {
       ...userProfile,
+      profileImage: currentState.profileImage, // Grab the latest image
       name,
       age: nAge,
       height: nHeight,
