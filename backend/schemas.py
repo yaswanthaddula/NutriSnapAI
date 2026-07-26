@@ -45,6 +45,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     created_at: datetime
     last_active_platform: Optional[str] = None
+    profile_image_url: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -116,6 +117,7 @@ class MealResponse(MealBase):
     user_id: int
     date: date
     time: time
+    meal_image_url: Optional[str] = None
 
     class Config:
         from_attributes = True

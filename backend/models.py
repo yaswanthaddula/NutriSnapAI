@@ -22,6 +22,7 @@ class User(Base):
     reset_code_expires: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     last_active_platform: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    profile_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     profile: Mapped["Profile"] = relationship("Profile", back_populates="user", uselist=False)
     meals: Mapped[List["Meal"]] = relationship("Meal", back_populates="user")
@@ -71,6 +72,7 @@ class Meal(Base):
     date: Mapped[dt_date] = mapped_column(Date, default=lambda: datetime.now(timezone.utc).date())
     time: Mapped[dt_time] = mapped_column(Time, default=lambda: datetime.now(timezone.utc).time())
     mode: Mapped[str] = mapped_column(String, default="health")
+    meal_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="meals")
 
