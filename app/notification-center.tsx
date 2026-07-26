@@ -13,7 +13,7 @@ import {
   Alert
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useTheme } from './_layout';
 import useAppStore from '../src/store/useAppStore';
 
@@ -80,8 +80,17 @@ export default function NotificationCenterScreen() {
   const { isDark } = useTheme();
   const { notifications, markAsRead, markAllAsRead, clearNotification, fetchNotifications } = useAppStore();
   
+  const { fromMode } = useLocalSearchParams();
   const [activeFilter, setActiveFilter] = useState('All');
   const filters = ['All', 'Meals', 'Fitness', 'Health', 'Achievements', 'Unread'];
+
+  useEffect(() => {
+    if (fromMode === 'gym') {
+      setActiveFilter('Fitness');
+    } else if (fromMode === 'health') {
+      setActiveFilter('Health');
+    }
+  }, [fromMode]);
 
   // Ensure notifications are up to date
   useEffect(() => {

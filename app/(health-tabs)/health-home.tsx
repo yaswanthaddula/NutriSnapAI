@@ -793,7 +793,7 @@ export default function HealthHomeScreen() {
 
             <TouchableOpacity 
               style={styles.notifBtn} 
-              onPress={() => router.push('/notification-center')}
+              onPress={() => router.push({ pathname: '/notification-center', params: { fromMode: 'health' } })}
               activeOpacity={0.7}
             >
               <Animated.View style={[

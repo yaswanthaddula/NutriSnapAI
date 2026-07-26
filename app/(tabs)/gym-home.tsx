@@ -732,7 +732,7 @@ export default function GymHomeScreen() {
 
           <TouchableOpacity 
             style={styles.notifBtn} 
-            onPress={() => router.push('/notification-center')}
+            onPress={() => router.push({ pathname: '/notification-center', params: { fromMode: 'gym' } })}
             activeOpacity={0.7}
           >
             <Animated.View style={[

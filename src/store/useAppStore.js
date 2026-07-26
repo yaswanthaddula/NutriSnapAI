@@ -480,6 +480,91 @@ const useAppStore = create((set, get) => ({
     }
   },
 
+  generateSmartNotifications: () => {
+    const { userProfile, meals, workouts, waterData, addNotification, notificationPrefs, reminders } = get();
+    const todayStr = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const currentHour = now.getHours();
+    
+    const parseTime = (timeStr) => {
+      if (!timeStr) return null;
+      const ampmMatch = timeStr.match(/^(\d{1,2})[:.](\d{2})\s*(AM|PM)$/i);
+      if (ampmMatch) {
+        let h = parseInt(ampmMatch[1], 10);
+        if (ampmMatch[3].toUpperCase() === 'PM' && h < 12) h += 12;
+        if (ampmMatch[3].toUpperCase() === 'AM' && h === 12) h = 0;
+        const d = new Date();
+        d.setHours(h, parseInt(ampmMatch[2], 10), 0, 0);
+        return d;
+      }
+      return null;
+    };
+
+    const getMealType = (timeStr) => {
+      if (!timeStr) return 'Snack';
+      const [h] = timeStr.split(':');
+      const hour = parseInt(h);
+      if (hour >= 5 && hour < 11) return 'Breakfast';
+      if (hour >= 11 && hour < 15) return 'Lunch';
+      if (hour >= 15 && hour < 19) return 'Snack';
+      return 'Dinner';
+    };
+
+    if (notificationPrefs?.meals !== false) {
+      const breakfastTime = parseTime(userProfile.breakfastReminderTime || '08:00 AM');
+      if (breakfastTime && now >= breakfastTime) {
+        const hasBreakfast = meals.some(m => m.date === todayStr && getMealType(m.time) === 'Breakfast');
+        if (!hasBreakfast) {
+          addNotification({ title: 'Breakfast Reminder', message: `Good Morning!\nIt's ${userProfile.breakfastReminderTime || '8:00 AM'}.\nTime to log your breakfast.`, type: 'meal_breakfast', mode: 'health' });
+        }
+      }
+      
+      const lunchTime = parseTime(userProfile.lunchReminderTime || '01:00 PM');
+      if (lunchTime && now >= lunchTime) {
+        const hasLunch = meals.some(m => m.date === todayStr && getMealType(m.time) === 'Lunch');
+        if (!hasLunch) {
+          addNotification({ title: 'Lunch Reminder', message: `It's ${userProfile.lunchReminderTime || '1:00 PM'}.\nTime for lunch.`, type: 'meal_lunch', mode: 'health' });
+        }
+      }
+
+      const dinnerTime = parseTime(userProfile.dinnerReminderTime || '08:00 PM');
+      if (dinnerTime && now >= dinnerTime) {
+        const hasDinner = meals.some(m => m.date === todayStr && getMealType(m.time) === 'Dinner');
+        if (!hasDinner) {
+          addNotification({ title: 'Dinner Reminder', message: `It's ${userProfile.dinnerReminderTime || '8:00 PM'}.\nTime to log your dinner.`, type: 'meal_dinner', mode: 'health' });
+        }
+      }
+    }
+
+    if (notificationPrefs?.workout !== false) {
+      const workoutTime = parseTime(userProfile.workoutReminderTime || '06:00 PM');
+      if (workoutTime && now >= workoutTime) {
+        const hasWorkout = workouts.some(w => w.date === todayStr);
+        if (!hasWorkout) {
+          addNotification({ title: 'Workout Reminder', message: "Time to complete today's workout.", type: 'workout_pending', mode: 'gym' });
+        }
+      }
+    }
+
+    if (notificationPrefs?.water !== false) {
+      if (currentHour >= 12 && waterData.waterIntake < (waterData.waterGoal * 0.3)) {
+        addNotification({ title: 'Water Reminder', message: "Drink one glass of water.", type: 'water_reminder', mode: 'health' });
+      }
+    }
+
+    if (reminders && reminders.length > 0) {
+      reminders.forEach(r => {
+        if (r.is_enabled) {
+          const rTime = parseTime(r.reminder_time);
+          if (rTime && now >= rTime) {
+            const rMode = (r.reminder_type === 'workout' || r.reminder_type === 'gym') ? 'gym' : 'health';
+            addNotification({ title: r.title, message: `${r.reminder_time}\n${r.title}`, type: 'custom_reminder', mode: rMode });
+          }
+        }
+      });
+    }
+  },
+
   notifications: [], // [{ id, title, message, type, createdAt, isRead, key }]
   
   addNotification: (notif) => {
@@ -501,7 +586,7 @@ const useAppStore = create((set, get) => ({
     if (isRecentDuplicate) return;
 
     const newNotif = { 
-      id: Date.now() + Math.random(), 
+      id: 'local_' + Date.now() + '_' + Math.random(), 
       createdAt: new Date().toISOString(), 
       isRead: false,
       status: 'unread',
@@ -530,18 +615,30 @@ const useAppStore = create((set, get) => ({
     try {
       const fetched = await apiService.getNotifications();
       console.log("Notification bell response:", fetched);
-      // Map backend fields to frontend fields if needed, but if backend matches, just set it
-      // Backend returns: id, title, message, status, type, created_at, delivered_at
-      const mapped = fetched.map((n) => ({
-        ...n,
-        isRead: n.status === 'Read' || n.status === 'read',
-        createdAt: n.created_at || n.createdAt
-      }));
-      set({ notifications: mapped });
-      get().saveStoredData();
+      if (fetched && Array.isArray(fetched)) {
+        const mapped = fetched.map(n => ({
+          ...n,
+          isRead: n.status === 'Read' || n.status === 'read',
+          createdAt: n.created_at || n.createdAt
+        }));
+        
+        // Merge with existing local notifications to prevent losing them
+        const { notifications } = get();
+        const existingLocals = notifications.filter(n => n.id && n.id.toString().startsWith('local_'));
+        
+        const merged = [...mapped, ...existingLocals].reduce((acc, current) => {
+          const x = acc.find(item => item.title === current.title && item.message === current.message && item.type === current.type);
+          if (!x) return acc.concat([current]);
+          return acc;
+        }, []);
+
+        set({ notifications: merged });
+        get().saveStoredData();
+      }
     } catch (e) {
       console.log('Error fetching notifications:', e);
     }
+    get().generateSmartNotifications();
   },
 
   markAsRead: async (id) => {
@@ -626,6 +723,23 @@ const useAppStore = create((set, get) => ({
     const storedReminderStatuses = await storage.getData('reminderStatuses');
     const storedReminders = await storage.getData('reminders');
     
+    let avatar = null;
+    if (storedProfile && storedProfile.email) {
+      try {
+        const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+        avatar = await AsyncStorage.getItem(`nutrisnap_avatar_${storedProfile.email.toLowerCase()}`);
+      } catch (e) {
+        console.log("Failed to load avatar in loadStoredData", e);
+      }
+    }
+
+    let mealImageCache = {};
+    try {
+      const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+      const cacheData = await AsyncStorage.getItem('nutrisnap_meal_images');
+      if (cacheData) mealImageCache = JSON.parse(cacheData);
+    } catch (e) {}
+    
     if (storedProfile) {
       // Handle missing fields for legacy users
       // Capitalize for consistency
@@ -634,11 +748,30 @@ const useAppStore = create((set, get) => ({
       if (!storedProfile.suggested_mode || storedProfile.suggested_mode === null) {
         storedProfile.suggested_mode = calculateSuggestedMode(storedProfile);
       }
+      
+      if (avatar) {
+        storedProfile.profileImage = avatar;
+      }
+
       set({ userProfile: storedProfile });
     }
-    if (storedMeals) set({ meals: storedMeals });
+
+    if (storedMeals) {
+      // Hydrate meals with their actual cached images
+      const hydratedMeals = storedMeals.map(meal => {
+        const key = `${meal.name}_${meal.time}`;
+        if (mealImageCache[key]) {
+          return { ...meal, imageUri: mealImageCache[key] };
+        }
+        return meal;
+      });
+      set({ meals: hydratedMeals });
+    }
     if (storedTheme) set({ themeMode: storedTheme });
     if (storedSteps !== null) set({ steps: storedSteps });
+    
+    get().generateSmartNotifications();
+    
     if (storedCaloriesBurned !== null) set({ caloriesBurned: storedCaloriesBurned });
     
     const storedStepDate = await storage.getData('lastStepDate');
