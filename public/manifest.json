@@ -3,13 +3,13 @@
   "name": "NutriSnap AI",
   "icons": [
     {
-      "src": "/icon-192.png?v=3",
+      "src": "/icon-192.png?v=4",
       "type": "image/png",
       "sizes": "any",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png?v=3",
+      "src": "/icon-512.png?v=4",
       "type": "image/png",
       "sizes": "any",
       "purpose": "any maskable"
