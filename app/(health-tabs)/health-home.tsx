@@ -254,7 +254,7 @@ export default function HealthHomeScreen() {
             quantity: bm.quantity,
             unit: bm.unit,
             emoji: localMatch?.emoji || '🍽️',
-            imageUri: localMatch?.imageUri || cachedImage || bm.image_url,
+            imageUri: bm.meal_image_url || localMatch?.imageUri || cachedImage || bm.image_url,
             mode: 'health',
             time: formattedTime,
             date: bm.date

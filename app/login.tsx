@@ -91,6 +91,7 @@ export default function LoginScreen() {
       const userData = userRespResult.value.data;
       const userName = userData.name;
       const userEmail = userData.email;
+      const userProfileImage = userData.profile_image_url;
 
       // 3. CHECK FOR PROFILE
       if (profileRespResult.status === 'fulfilled') {
@@ -99,19 +100,12 @@ export default function LoginScreen() {
         console.log("Backend profile:", profileData);
         console.log("Selected mode:", profileData.selected_mode);
 
-        // Check if there is a saved profile image from a previous session
-        let savedImage = null;
-        try {
-          const normalizedEmail = (userEmail || email).toLowerCase();
-          savedImage = await AsyncStorage.getItem(`nutrisnap_avatar_${normalizedEmail}`);
-        } catch (e) {}
-
         // Save profile to store with recalculated fields
         setUserProfile({
           ...profileData,
           name: userName,
           email: userEmail,
-          profileImage: savedImage || null
+          profileImage: userProfileImage || null
         });
         
         await saveStoredData();
@@ -166,7 +160,7 @@ export default function LoginScreen() {
         if (profileErr.response?.status === 404) {
           // No profile yet -> go to Setup
           console.log("No profile found, redirecting to setup.");
-          setUserProfile({ name: userName, email: userEmail || email });
+          setUserProfile({ name: userName, email: userEmail || email, profileImage: userProfileImage || null });
           await saveStoredData();
           router.push('/profile-setup');
         } else {

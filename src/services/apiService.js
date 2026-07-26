@@ -100,6 +100,42 @@ export const apiService = {
     return await api.post('/auth/reset-password', { email, code, new_password: newPassword });
   },
 
+  // File Uploads
+  uploadProfilePhoto: async (imageUri) => {
+    const formData = new FormData();
+    const filename = imageUri.split('/').pop();
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : `image`;
+    
+    formData.append('file', {
+      uri: Platform.OS === 'android' ? imageUri : imageUri.replace('file://', ''),
+      name: filename,
+      type,
+    });
+    
+    return await api.post('/upload/profile-photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  uploadMealPhoto: async (mealId, imageUri) => {
+    const formData = new FormData();
+    const filename = imageUri.split('/').pop();
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : `image`;
+    
+    formData.append('meal_id', mealId);
+    formData.append('file', {
+      uri: Platform.OS === 'android' ? imageUri : imageUri.replace('file://', ''),
+      name: filename,
+      type,
+    });
+    
+    return await api.post('/upload/meal-photo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
   checkEmail: async (email) => {
     return await api.post('/auth/check-email', { email });
   },

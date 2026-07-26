@@ -104,7 +104,18 @@ export default function HealthNutritionScreen() {
 
         console.log("Meal payload:", backendPayload);
 
-        await apiService.addMeal(backendPayload);
+        const addResp = await apiService.addMeal(backendPayload);
+        
+        // Upload image if available
+        const uploadUri = params.foodImage || params.imageUri;
+        if (addResp && addResp.data && addResp.data.id && uploadUri) {
+           try {
+              const uploadResp = await apiService.uploadMealPhoto(addResp.data.id, uploadUri);
+              if (uploadResp.data && uploadResp.data.url) {
+                  mealObject.meal_image_url = uploadResp.data.url;
+              }
+           } catch(e) { console.log('Image upload failed', e); }
+        }
       } catch (error) {
         console.warn("Backend meal sync failed, saved locally only.");
       }
