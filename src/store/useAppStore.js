@@ -39,19 +39,29 @@ const useAppStore = create((set, get) => ({
   workouts: [],
   activeWorkout: null, // { id, name, startTime, pausedAt, totalPausedTime, status: 'running'|'paused'|'completed' }
   notificationPrefs: {
-    meals: false,
-    workout: false,
-    water: false,
+    meals: true,
+    workout: true,
+    water: true,
     sleep: false,
-    goals: false,
-    reports: false,
-    quotes: false,
+    goals: true,
+    reports: true,
+    quotes: true,
     breakfastRepeat: 'Daily',
     lunchRepeat: 'Daily',
     dinnerRepeat: 'Daily',
     snackRepeat: 'Daily',
     workoutRepeat: 'Daily',
     sleepRepeat: 'Daily'
+  },
+  healthNotificationSound: 'default_bell',
+  gymNotificationSound: 'default_bell',
+  setHealthNotificationSound: (sound) => {
+    set({ healthNotificationSound: sound });
+    get().saveStoredData();
+  },
+  setGymNotificationSound: (sound) => {
+    set({ gymNotificationSound: sound });
+    get().saveStoredData();
   },
   waterData: {
     date: new Date().toISOString().split('T')[0],
@@ -66,6 +76,15 @@ const useAppStore = create((set, get) => ({
   activityHistory: [], // [{ date: '2023-01-01', steps: 5000, caloriesBurned: 200 }]
   waterHistory: [], // [{ date: '2023-01-01', amount: 2000 }]
   reminders: [], // Array of Reminder objects from backend
+  medicineReminders: [],
+  addMedicineReminder: (reminder) => {
+    set((state) => ({ medicineReminders: [...(state.medicineReminders || []), { id: Date.now().toString(), ...reminder }] }));
+    get().saveStoredData();
+  },
+  deleteMedicineReminder: (id) => {
+    set((state) => ({ medicineReminders: (state.medicineReminders || []).filter(r => r.id !== id) }));
+    get().saveStoredData();
+  },
   todayReminders: [], // Reminders explicitly for today
   
   fetchTodayReminders: async () => {
@@ -592,6 +611,16 @@ const useAppStore = create((set, get) => ({
         }
       });
     }
+    if (medicineReminders && medicineReminders.length > 0) {
+      medicineReminders.forEach(r => {
+        if (r.enabled !== false) {
+          const rTime = parseTime(r.time);
+          if (rTime && now >= rTime) {
+            addNotification({ title: 'Medicine Reminder', message: `It's time to take your medicine:\n${r.name}`, type: 'medicine_reminder', mode: 'health', icon: 'pill' });
+          }
+        }
+      });
+    }
   },
 
   notifications: [], // [{ id, title, message, type, createdAt, isRead, key }]
@@ -751,6 +780,8 @@ const useAppStore = create((set, get) => ({
     const storedWaterHistory = await storage.getData('waterHistory');
     const storedReminderStatuses = await storage.getData('reminderStatuses');
     const storedReminders = await storage.getData('reminders');
+    const storedHealthSound = await storage.getData('healthNotificationSound');
+    const storedGymSound = await storage.getData('gymNotificationSound');
     
     let avatar = null;
     if (storedProfile && storedProfile.email) {
@@ -825,6 +856,11 @@ const useAppStore = create((set, get) => ({
     if (storedWaterHistory) set({ waterHistory: storedWaterHistory });
     if (storedReminderStatuses) set({ reminderStatuses: storedReminderStatuses });
     if (storedReminders) set({ reminders: storedReminders });
+    if (storedHealthSound) set({ healthNotificationSound: storedHealthSound });
+    if (storedGymSound) set({ gymNotificationSound: storedGymSound });
+    
+    const storedMedicineReminders = await storage.getData('medicineReminders');
+    if (storedMedicineReminders) set({ medicineReminders: storedMedicineReminders });
     
     
     if (storedLastActiveDate) set({ lastActiveDate: storedLastActiveDate });
@@ -958,6 +994,7 @@ const useAppStore = create((set, get) => ({
       activityHistory: [],
       waterHistory: [],
       reminders: [],
+      medicineReminders: [],
       todayReminders: [],
       reminderStatuses: {},
       notifications: [],
@@ -967,13 +1004,16 @@ const useAppStore = create((set, get) => ({
         breakfastRepeat: 'Daily', lunchRepeat: 'Daily', dinnerRepeat: 'Daily',
         snackRepeat: 'Daily', workoutRepeat: 'Daily', sleepRepeat: 'Daily'
       },
+      healthNotificationSound: 'default_bell',
+      gymNotificationSound: 'default_bell',
     });
 
     const keys = [
       'userProfile', 'meals', 'themeMode', 'steps', 'caloriesBurned', 'lastStepDate', 
       'workouts', 'activeWorkout', 'weightHistory', 'notifications', 'notificationPrefs',
       'waterData', 'streak', 'lastStreakDate', 'todayMood', 'todaySleep', 'lastActiveDate',
-      'activityHistory', 'waterHistory', 'reminderStatuses', 'reminders', 'todayReminders'
+      'activityHistory', 'waterHistory', 'reminderStatuses', 'reminders', 'todayReminders',
+      'healthNotificationSound', 'gymNotificationSound'
     ];
     for (const key of keys) {
       await storage.removeData(key);
@@ -983,8 +1023,8 @@ const useAppStore = create((set, get) => ({
   saveStoredData: async () => {
     const { 
       userProfile, meals, themeMode, steps, caloriesBurned, lastStepDate, 
-      workouts, activeWorkout, weightHistory, notifications, notificationPrefs,       waterData, streak, lastStreakDate, todayMood, todaySleep, lastActiveDate,
-      activityHistory, waterHistory, reminderStatuses, reminders
+      workouts, activeWorkout, weightHistory, notifications, notificationPrefs, healthNotificationSound, gymNotificationSound, waterData, streak, lastStreakDate, todayMood, todaySleep, lastActiveDate,
+      activityHistory, waterHistory, reminderStatuses, reminders, medicineReminders
     } = get();
     await storage.saveData('userProfile', userProfile);
     await storage.saveData('meals', meals);
@@ -997,6 +1037,8 @@ const useAppStore = create((set, get) => ({
     await storage.saveData('weightHistory', weightHistory);
     await storage.saveData('notifications', notifications);
     await storage.saveData('notificationPrefs', notificationPrefs);
+    await storage.saveData('healthNotificationSound', healthNotificationSound);
+    await storage.saveData('gymNotificationSound', gymNotificationSound);
     await storage.saveData('waterData', waterData);
     await storage.saveData('streak', streak);
     await storage.saveData('lastStreakDate', lastStreakDate);
@@ -1007,6 +1049,7 @@ const useAppStore = create((set, get) => ({
     await storage.saveData('waterHistory', waterHistory);
     await storage.saveData('reminderStatuses', reminderStatuses);
     await storage.saveData('reminders', reminders);
+    await storage.saveData('medicineReminders', medicineReminders);
     await storage.saveData('todayReminders', get().todayReminders);
   }
 }));

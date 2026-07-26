@@ -623,7 +623,7 @@ export const notificationService = {
                 mode: rule.mode,
                 screen: screenRoute
               },
-              sound: true,
+              sound: (rule.mode === 'gym' ? state.gymNotificationSound : state.healthNotificationSound) + '.wav',
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
               channelId: 'high_priority_v2',
@@ -779,7 +779,7 @@ export const notificationService = {
             const content = {
               title: item.title,
               body: item.body,
-              sound: true,
+              sound: (currentMode === 'gym' ? state.gymNotificationSound : state.healthNotificationSound) + '.wav',
               autoDismiss: false,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,

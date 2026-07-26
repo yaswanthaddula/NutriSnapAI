@@ -9,7 +9,8 @@ import {
   Switch, 
   Platform,
   Alert,
-  Modal
+  Modal,
+  TextInput
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -386,8 +387,16 @@ export default function NotificationsScreen() {
     border: isDark ? '#333333' : '#F0F0F0',
   };
 
-  const { notificationPrefs, updateNotificationPrefs, userProfile, setUserProfile, reminders, deleteReminder } = useAppStore();
+  const { notificationPrefs, updateNotificationPrefs, userProfile, setUserProfile, reminders, deleteReminder, medicineReminders, addMedicineReminder, deleteMedicineReminder } = useAppStore();
   const [localProfile, setLocalProfile] = useState<any>(null);
+  
+  // Medicine Form State
+  const [showMedicineForm, setShowMedicineForm] = useState(false);
+  const [medicineName, setMedicineName] = useState('');
+  const [medicineTime, setMedicineTime] = useState('09:00 AM');
+  const [medicineRepeat, setMedicineRepeat] = useState('Daily');
+  const [medicineNotes, setMedicineNotes] = useState('');
+
   const handleDeleteReminder = (typeStr: string) => {
     const activeReminder = reminders?.find((r: any) => r.reminder_type === typeStr && r.is_enabled);
     if (!activeReminder) {
@@ -574,7 +583,7 @@ export default function NotificationsScreen() {
   const renderWorkoutSection = () => (
     <>
       <NotificationOption 
-        title="Workout Reminders" 
+        title="Workout & Exercise Reminders" 
         sub="Daily workout notifications" 
         value={notificationPrefs.workout} 
         onToggle={(val: boolean) => handleTogglePref('workout', val)} 
@@ -638,6 +647,84 @@ export default function NotificationsScreen() {
     </>
   );
 
+  const renderMedicineSection = () => (
+    <>
+      <View style={[styles.optionContainer, { borderBottomColor: theme.border }]}>
+        <View style={styles.optionTextContainer}>
+          <Text style={[styles.optionTitle, { color: theme.text }]}>Medicine / Tablet Reminder</Text>
+          <Text style={[styles.optionSubtitle, { color: theme.subText }]}>Never miss your medication</Text>
+        </View>
+        <TouchableOpacity style={styles.addButton} onPress={() => setShowMedicineForm(!showMedicineForm)}>
+          <Ionicons name={showMedicineForm ? "close" : "add"} size={20} color="#FFF" />
+          <Text style={styles.addButtonText}>{showMedicineForm ? "Close" : "Add"}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {showMedicineForm && (
+        <View style={[styles.expandedConfig, { backgroundColor: theme.card, borderColor: theme.border, padding: 15 }]}>
+          <Text style={{color: theme.text, marginBottom: 5, fontWeight: 'bold'}}>Medicine Name</Text>
+          <TextInput 
+            style={{backgroundColor: isDark ? '#333' : '#F0F0F0', color: theme.text, padding: 10, borderRadius: 8, marginBottom: 15}}
+            placeholder="e.g. Vitamin D"
+            placeholderTextColor={theme.subText}
+            value={medicineName}
+            onChangeText={setMedicineName}
+          />
+          <CustomTimePicker
+            label="Time"
+            value={medicineTime}
+            onChange={(val: string) => setMedicineTime(val)}
+            theme={theme}
+          />
+          <RepeatPicker value={medicineRepeat} onChange={(val: string) => setMedicineRepeat(val)} theme={theme} />
+          
+          <Text style={{color: theme.text, marginTop: 15, marginBottom: 5, fontWeight: 'bold'}}>Notes (Optional)</Text>
+          <TextInput 
+            style={{backgroundColor: isDark ? '#333' : '#F0F0F0', color: theme.text, padding: 10, borderRadius: 8, marginBottom: 15}}
+            placeholder="e.g. After breakfast"
+            placeholderTextColor={theme.subText}
+            value={medicineNotes}
+            onChangeText={setMedicineNotes}
+          />
+
+          <TouchableOpacity style={[styles.saveButton, {marginTop: 10}]} onPress={() => {
+            if(!medicineName.trim()) {
+               Alert.alert("Required", "Please enter a medicine name");
+               return;
+            }
+            addMedicineReminder({
+              name: medicineName,
+              time: medicineTime,
+              repeat: medicineRepeat,
+              notes: medicineNotes,
+              enabled: true
+            });
+            setMedicineName('');
+            setMedicineNotes('');
+            setShowMedicineForm(false);
+          }}>
+            <Text style={styles.saveButtonText}>Save Medicine Reminder</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {medicineReminders && medicineReminders.map((med: any) => (
+        <View key={med.id} style={[styles.expandedConfig, { backgroundColor: theme.card, borderColor: theme.border, marginTop: 10 }]}>
+           <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+             <View>
+               <Text style={{color: theme.text, fontSize: 16, fontWeight: 'bold'}}>{med.name}</Text>
+               <Text style={{color: theme.subText, fontSize: 14}}>{med.time} • {med.repeat}</Text>
+               {med.notes ? <Text style={{color: theme.subText, fontSize: 12, marginTop: 4}}>{med.notes}</Text> : null}
+             </View>
+             <TouchableOpacity onPress={() => deleteMedicineReminder(med.id)}>
+               <Ionicons name="trash-outline" size={24} color="#EF4444" />
+             </TouchableOpacity>
+           </View>
+        </View>
+      ))}
+    </>
+  );
+
   const renderGoalsSection = () => (
     <NotificationOption 
       title={fromMode === 'gym' ? "Workout Goals & Achievements" : "Daily Nutrition Goal"} 
@@ -676,8 +763,8 @@ export default function NotificationsScreen() {
  
         {/* Title Section */}
         <View style={styles.headerText}>
-          <Text style={[styles.title, { color: theme.text }]}>Notifications</Text>
-          <Text style={[styles.subtitle, { color: theme.subText }]}>Manage your notification preferences</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Reminders</Text>
+          <Text style={[styles.subtitle, { color: theme.subText }]}>Manage your reminder preferences</Text>
         </View>
 
         <View style={styles.listContainer}>
@@ -693,6 +780,7 @@ export default function NotificationsScreen() {
             <>
               {renderMealSection()}
               {renderWaterSection()}
+              {renderMedicineSection()}
               {renderSleepSection()}
               {renderGoalsSection()}
               {renderQuotesSection()}
@@ -760,6 +848,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
+  optionContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1 },
+  optionTextContainer: { flex: 1 },
+  optionSubtitle: { fontSize: 14, marginTop: 4 },
+  addButton: { paddingVertical: 6, paddingHorizontal: 12, backgroundColor: '#00C853', borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  addButtonText: { color: '#FFF', fontWeight: 'bold' },
+  saveButton: { backgroundColor: '#00C853', padding: 12, borderRadius: 8, alignItems: 'center' },
+  saveButtonText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
   timePickerValueText: {
     fontSize: 16,
     fontWeight: '500',

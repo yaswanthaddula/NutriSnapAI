@@ -202,7 +202,13 @@ export default function ProfileScreen() {
 
           <TouchableOpacity style={[styles.menuItem, { borderBottomColor: theme.border }]} onPress={() => router.push({ pathname: '/notifications', params: { fromMode: 'health' } })}>
             <Ionicons name="notifications-outline" size={22} color={theme.text} />
-            <Text style={[styles.menuLabel, { color: theme.text }]}>Notification Settings</Text>
+            <Text style={[styles.menuLabel, { color: theme.text }]}>Reminders</Text>
+            <Ionicons name="chevron-forward" size={20} color="#CCC" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: theme.border }]} onPress={() => router.push({ pathname: '/notification-sound', params: { fromMode: 'health' } })}>
+            <Ionicons name="musical-notes-outline" size={22} color={theme.text} />
+            <Text style={[styles.menuLabel, { color: theme.text }]}>Notification Sound</Text>
             <Ionicons name="chevron-forward" size={20} color="#CCC" />
           </TouchableOpacity>
 

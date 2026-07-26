@@ -73,7 +73,7 @@ export default function EditProfile() {
         let finalPath = uri;
         
         if (Platform.OS !== 'web') {
-          const filename = uri.split('/').pop() || 'avatar.jpg';
+          const filename = `avatar_${Date.now()}.jpg`;
           finalPath = `${FileSystem.documentDirectory}${filename}`;
           await FileSystem.copyAsync({ from: uri, to: finalPath });
         }
