@@ -1,5 +1,5 @@
 import React, { useState, createContext, useContext } from 'react';
-import { Stack, Head } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, LogBox, Alert, View, Text, TouchableOpacity } from 'react-native';
 
@@ -91,11 +91,6 @@ export default function RootLayout() {
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
-      <Head>
-        <link rel="manifest" href="/manifest.json?v=5" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=5" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=5" />
-      </Head>
       <Stack screenOptions={{ headerShown: false }}>
         {/* Onboarding Flow */}
         <Stack.Screen name="index" />
