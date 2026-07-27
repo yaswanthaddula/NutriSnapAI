@@ -259,12 +259,10 @@ def register(user: schemas.UserCreate, req: Request, db: Session = Depends(datab
             db.commit()
             db.refresh(new_user)
 
-        print(f"--- DEBUG: Final DB verification_code for {user.email}: {new_user.verification_code} ---")
-        
         # Send Real Email
-        email_sent = email_service.send_verification_email(user.email, v_code)
+        email_sent = email_service.send_verification_email(new_user.email, v_code)
         if not email_sent:
-            print(f"--- FAILED to send verification email to {user.email} ---")
+            print(f"--- FAILED to send verification email to {new_user.email} ---")
         
         print(f"[AUTH ROUTE LOG] POST /register response: user_id={new_user.id}, email={new_user.email}")
         return new_user
