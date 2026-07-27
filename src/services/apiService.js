@@ -103,15 +103,21 @@ export const apiService = {
   // File Uploads
   uploadProfilePhoto: async (imageUri) => {
     const formData = new FormData();
-    const filename = imageUri.split('/').pop();
+    const filename = imageUri.split('/').pop() || 'profile.jpg';
     const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `image/${match[1]}` : `image`;
+    const type = match ? `image/${match[1]}` : `image/jpeg`;
     
-    formData.append('file', {
-      uri: Platform.OS === 'android' ? imageUri : imageUri.replace('file://', ''),
-      name: filename,
-      type,
-    });
+    if (Platform.OS === 'web') {
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      formData.append('file', blob, filename);
+    } else {
+      formData.append('file', {
+        uri: Platform.OS === 'android' ? imageUri : imageUri.replace('file://', ''),
+        name: filename,
+        type,
+      });
+    }
     
     return await api.post('/upload/profile-photo', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -120,16 +126,23 @@ export const apiService = {
 
   uploadMealPhoto: async (mealId, imageUri) => {
     const formData = new FormData();
-    const filename = imageUri.split('/').pop();
+    const filename = imageUri.split('/').pop() || 'meal.jpg';
     const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `image/${match[1]}` : `image`;
+    const type = match ? `image/${match[1]}` : `image/jpeg`;
     
     formData.append('meal_id', mealId);
-    formData.append('file', {
-      uri: Platform.OS === 'android' ? imageUri : imageUri.replace('file://', ''),
-      name: filename,
-      type,
-    });
+    
+    if (Platform.OS === 'web') {
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      formData.append('file', blob, filename);
+    } else {
+      formData.append('file', {
+        uri: Platform.OS === 'android' ? imageUri : imageUri.replace('file://', ''),
+        name: filename,
+        type,
+      });
+    }
     
     return await api.post('/upload/meal-photo', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
