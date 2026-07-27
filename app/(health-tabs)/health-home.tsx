@@ -246,7 +246,7 @@ export default function HealthHomeScreen() {
 
           return {
             id: bm.id,
-            name: bm.food_name,
+            name: bm.food_name || bm.name || 'Unknown Food',
             calories: bm.calories,
             protein: bm.protein,
             carbs: bm.carbs,
@@ -254,7 +254,7 @@ export default function HealthHomeScreen() {
             quantity: bm.quantity,
             unit: bm.unit,
             emoji: localMatch?.emoji || '🍽️',
-            imageUri: bm.meal_image_url || localMatch?.imageUri || cachedImage || bm.image_url,
+            imageUri: bm.meal_image_url || localMatch?.imageUri || cachedImage || bm.image_url || null,
             mode: 'health',
             time: formattedTime,
             date: bm.date

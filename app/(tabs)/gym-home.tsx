@@ -232,7 +232,7 @@ export default function GymHomeScreen() {
 
           return {
             id: bm.id,
-            name: bm.food_name,
+            name: bm.food_name || bm.name || 'Unknown Food',
             calories: bm.calories,
             protein: bm.protein,
             carbs: bm.carbs,
@@ -240,7 +240,7 @@ export default function GymHomeScreen() {
             quantity: bm.quantity,
             unit: bm.unit,
             emoji: localMatch?.emoji || '💪',
-            imageUri: bm.meal_image_url || localMatch?.imageUri || cachedImage || bm.image_url,
+            imageUri: bm.meal_image_url || localMatch?.imageUri || cachedImage || bm.image_url || null,
             mode: 'gym',
             time: formattedTime,
             date: bm.date
