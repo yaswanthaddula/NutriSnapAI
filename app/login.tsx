@@ -94,18 +94,17 @@ export default function LoginScreen() {
       const userProfileImage = userData.profile_image_url;
 
       // 3. CHECK FOR PROFILE
+      let savedImage = null;
+      try {
+        const normalizedEmail = (userEmail || email).toLowerCase();
+        savedImage = await AsyncStorage.getItem(`nutrisnap_avatar_${normalizedEmail}`);
+      } catch (e) {}
+
       if (profileRespResult.status === 'fulfilled') {
         const profileData = profileRespResult.value.data;
         
         console.log("Backend profile:", profileData);
         console.log("Selected mode:", profileData.selected_mode);
-
-        // Check if there is a saved profile image from a previous session
-        let savedImage = null;
-        try {
-          const normalizedEmail = (userEmail || email).toLowerCase();
-          savedImage = await AsyncStorage.getItem(`nutrisnap_avatar_${normalizedEmail}`);
-        } catch (e) {}
 
         // Save profile to store with recalculated fields
         setUserProfile({
