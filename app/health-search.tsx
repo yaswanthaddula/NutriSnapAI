@@ -10,7 +10,6 @@ import {
   FlatList,
   Platform,
   KeyboardAvoidingView,
-  KeyboardAvoidingView,
   Keyboard
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
