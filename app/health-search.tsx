@@ -10,7 +10,7 @@ import {
   FlatList,
   Platform,
   KeyboardAvoidingView,
-  TouchableWithoutFeedback,
+  KeyboardAvoidingView,
   Keyboard
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -110,7 +110,6 @@ export default function HealthSearchScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.content}>
             
             {/* HEADER */}
@@ -181,7 +180,6 @@ export default function HealthSearchScreen() {
               )}
             />
           </View>
-        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
