@@ -357,7 +357,8 @@ def login(request: Request, user_credentials: schemas.UserLogin, db: Session = D
         print(f"[AUTH ROUTE LOG] POST /login response: user_id={user.id}, email={user.email}, token_type=bearer")
         return {
             "access_token": access_token, 
-            "token_type": "bearer"
+            "token_type": "bearer",
+            "user": user
         }
     except HTTPException as he:
         raise he
