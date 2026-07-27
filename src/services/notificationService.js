@@ -888,7 +888,6 @@ export const notificationService = {
           const permission = await window.Notification.requestPermission();
           if (permission === 'granted') {
              console.log("[DEBUG] Permission Granted");
-             alert('Notifications enabled! Note: Depending on your browser, you may need to keep this tab running in the background for exact timing.');
           } else {
              console.log("[DEBUG] Permission Denied");
           }
