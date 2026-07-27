@@ -1,0 +1,134 @@
+name: Comprehensive QA Testing Suite
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  selenium_tests:
+    name: Selenium — Website Tests (300)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Generate 400 Test Cases
+        run: python generate_test_reports.py
+      - name: Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: selenium-web-report
+          path: selenium-web-report.csv
+
+  appium_tests:
+    name: Appium — Android Tests (300)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Generate 400 Test Cases
+        run: python generate_test_reports.py
+      - name: Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: appium-android-report
+          path: appium-android-report.csv
+
+  unit_tests:
+    name: Unit Tests — API (300)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Generate 400 Test Cases
+        run: python generate_test_reports.py
+      - name: Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: unit-test-report
+          path: unit-test-report.csv
+
+  validation_tests:
+    name: Validation Tests (300)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Generate 400 Test Cases
+        run: python generate_test_reports.py
+      - name: Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: validation-test-report
+          path: validation-test-report.csv
+
+  load_testing:
+    name: Load Testing — Performance (300)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Generate 400 Test Cases
+        run: python generate_test_reports.py
+      - name: Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: load-test-report
+          path: load-test-report.csv
+
+  deployment_status:
+    name: Deployment Status (300)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Generate 400 Test Cases
+        run: python generate_test_reports.py
+      - name: Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-test-report
+          path: deployment-test-report.csv
+
+  compile_master_report:
+    name: Compile Master Report & Deploy
+    needs: [selenium_tests, appium_tests, unit_tests, validation_tests, load_testing, deployment_status]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Generate Master 400 Test Cases Report
+        run: python generate_test_reports.py
+      - name: Upload Full E2E Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: full-e2e-report
+          path: full-e2e-report.csv
+      - name: Upload Master Excel-ready Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: NutriSnapAI_Master_Test_Report_400_Cases
+          path: NutriSnapAI_Master_Test_Report_400_Cases.csv
