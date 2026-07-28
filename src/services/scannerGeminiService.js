@@ -1,6 +1,6 @@
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Platform } from 'react-native';
-import { SCANNER_GEMINI_API_KEY, SCANNER_GEMINI_API_KEY_ALT } from '../config/apiConfig';
+import { SCANNER_GEMINI_API_KEY, SCANNER_GEMINI_API_KEY_ALT, API_BASE_URL } from '../config/apiConfig';
 
 let isScanning = false;
 let cooldownActive = false;
@@ -163,6 +163,7 @@ export const analyzeImage = async (imageUri) => {
               }
               const parsed = JSON.parse(cleanedText);
               if (parsed.food_name) {
+                console.log("[LOG: Gemini Success]");
                 console.log("AI Response Received");
                 startCooldown();
                 isScanning = false;
@@ -190,6 +191,37 @@ export const analyzeImage = async (imageUri) => {
           lastError = err.message;
         }
       }
+    }
+
+    console.log("[LOG: Gemini Failure] Trying Offline Fallback...");
+    try {
+      const fallbackResponse = await fetch(`${API_BASE_URL}/ai/detect-offline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_base64: base64Image })
+      });
+      
+      if (fallbackResponse.ok) {
+        const fallbackData = await fallbackResponse.json();
+        if (fallbackData.confidence >= 65) {
+          console.log(`[LOG: Offline Model Success] Predicted: ${fallbackData.food_name} (${fallbackData.confidence.toFixed(1)}%)`);
+          startCooldown();
+          isScanning = false;
+          return {
+            food_name: fallbackData.food_name,
+            quantity: 1,
+            unit: 'serving',
+            confidence: fallbackData.confidence,
+            estimated_nutrition: null
+          };
+        } else {
+          console.log(`[LOG: Offline Model Failure] Confidence too low: ${fallbackData.confidence.toFixed(1)}% < 65%`);
+        }
+      } else {
+        console.log(`[LOG: Offline Model Failure] Backend returned ${fallbackResponse.status}`);
+      }
+    } catch (fallbackErr) {
+      console.log(`[LOG: Offline Model Failure] Network error: ${fallbackErr.message}`);
     }
 
     throw new Error(lastError || 'AI Scanner is currently busy. Please try again or search manually.');

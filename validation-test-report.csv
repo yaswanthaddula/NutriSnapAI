@@ -1,0 +1,51 @@
+Test ID,Platform,Category,Test Name,Status,Duration (s),Executed By,Timestamp
+TC-0229,Performance (JMeter),User Profile,Verify User Profile functionality - Case 229,PASS,1.3,Automated Runner,2026-07-27 10:17:43
+TC-0129,Web (Selenium),NeonDB Operations,Verify NeonDB Operations functionality - Case 129,PASS,0.1,Automated Runner,2026-07-27 08:57:43
+TC-0043,API (PyTest),Workout & Gym Tracking,Verify Workout & Gym Tracking functionality - Case 043,PASS,0.93,Automated Runner,2026-07-27 09:15:43
+TC-0390,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 390,PASS,2.3,Automated Runner,2026-07-27 09:56:43
+TC-0388,Web (Selenium),User Profile,Verify User Profile functionality - Case 388,PASS,1.76,Automated Runner,2026-07-27 10:15:43
+TC-0153,API (PyTest),Authentication,Verify Authentication functionality - Case 153,PASS,2.68,Automated Runner,2026-07-27 09:22:43
+TC-0048,Web (Selenium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 048,PASS,0.64,Automated Runner,2026-07-27 08:46:43
+TC-0183,API (PyTest),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 183,PASS,3.68,Automated Runner,2026-07-27 08:57:43
+TC-0077,Mobile (Android/Appium),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 077,PASS,1.0,Automated Runner,2026-07-27 08:55:43
+TC-0197,API (PyTest),Backend API Integration,Verify Backend API Integration functionality - Case 197,PASS,1.22,Automated Runner,2026-07-27 08:52:43
+TC-0076,API (PyTest),Backend API Integration,Verify Backend API Integration functionality - Case 076,PASS,2.84,Automated Runner,2026-07-27 10:28:43
+TC-0016,Performance (JMeter),Backend API Integration,Verify Backend API Integration functionality - Case 016,PASS,2.49,Automated Runner,2026-07-27 09:08:43
+TC-0057,Mobile (Android/Appium),Cloudinary Media Uploads,Verify Cloudinary Media Uploads functionality - Case 057,PASS,0.46,Automated Runner,2026-07-27 10:28:43
+TC-0151,Mobile (Android/Appium),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 151,PASS,1.53,Automated Runner,2026-07-27 09:09:43
+TC-0128,Performance (JMeter),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 128,PASS,3.65,Automated Runner,2026-07-27 09:05:43
+TC-0041,Web (Selenium),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 041,PASS,2.54,Automated Runner,2026-07-27 10:08:43
+TC-0331,Web (Selenium),Backend API Integration,Verify Backend API Integration functionality - Case 331,PASS,1.5,Automated Runner,2026-07-27 09:13:43
+TC-0068,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 068,PASS,0.63,Automated Runner,2026-07-27 09:36:43
+TC-0062,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 062,SKIP,3.75,Automated Runner,2026-07-27 10:22:43
+TC-0191,Web (Selenium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 191,PASS,3.91,Automated Runner,2026-07-27 09:44:43
+TC-0379,API (PyTest),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 379,PASS,0.21,Automated Runner,2026-07-27 10:08:43
+TC-0037,Performance (JMeter),Workout & Gym Tracking,Verify Workout & Gym Tracking functionality - Case 037,SKIP,4.35,Automated Runner,2026-07-27 10:34:43
+TC-0097,Web (Selenium),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 097,PASS,0.67,Automated Runner,2026-07-27 10:29:43
+TC-0397,Performance (JMeter),NeonDB Operations,Verify NeonDB Operations functionality - Case 397,PASS,2.62,Automated Runner,2026-07-27 10:12:43
+TC-0024,API (PyTest),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 024,PASS,1.8,Automated Runner,2026-07-27 09:20:43
+TC-0195,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 195,PASS,3.55,Automated Runner,2026-07-27 09:46:43
+TC-0259,Web (Selenium),User Profile,Verify User Profile functionality - Case 259,PASS,1.95,Automated Runner,2026-07-27 10:19:43
+TC-0088,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 088,PASS,0.5,Automated Runner,2026-07-27 09:47:43
+TC-0144,API (PyTest),NeonDB Operations,Verify NeonDB Operations functionality - Case 144,FAIL,3.76,Automated Runner,2026-07-27 10:19:43
+TC-0359,API (PyTest),User Profile,Verify User Profile functionality - Case 359,PASS,2.95,Automated Runner,2026-07-27 09:02:43
+TC-0329,Mobile (Android/Appium),Workout & Gym Tracking,Verify Workout & Gym Tracking functionality - Case 329,PASS,0.34,Automated Runner,2026-07-27 10:30:43
+TC-0120,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 120,PASS,0.41,Automated Runner,2026-07-27 09:58:43
+TC-0180,Performance (JMeter),Authentication,Verify Authentication functionality - Case 180,PASS,0.17,Automated Runner,2026-07-27 09:36:43
+TC-0171,API (PyTest),User Profile,Verify User Profile functionality - Case 171,PASS,1.32,Automated Runner,2026-07-27 10:18:43
+TC-0122,Mobile (Android/Appium),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 122,PASS,4.15,Automated Runner,2026-07-27 08:42:43
+TC-0282,API (PyTest),NeonDB Operations,Verify NeonDB Operations functionality - Case 282,PASS,4.38,Automated Runner,2026-07-27 08:46:43
+TC-0149,Web (Selenium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 149,PASS,0.3,Automated Runner,2026-07-27 10:12:43
+TC-0355,Web (Selenium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 355,PASS,0.27,Automated Runner,2026-07-27 09:53:43
+TC-0127,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 127,PASS,4.28,Automated Runner,2026-07-27 08:56:43
+TC-0126,Performance (JMeter),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 126,PASS,1.56,Automated Runner,2026-07-27 09:02:43
+TC-0366,Performance (JMeter),Workout & Gym Tracking,Verify Workout & Gym Tracking functionality - Case 366,PASS,4.11,Automated Runner,2026-07-27 09:17:43
+TC-0333,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 333,PASS,3.63,Automated Runner,2026-07-27 09:15:43
+TC-0357,Web (Selenium),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 357,PASS,3.31,Automated Runner,2026-07-27 10:04:43
+TC-0255,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 255,PASS,4.45,Automated Runner,2026-07-27 10:01:43
+TC-0244,API (PyTest),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 244,PASS,3.76,Automated Runner,2026-07-27 10:22:43
+TC-0034,Mobile (Android/Appium),Cloudinary Media Uploads,Verify Cloudinary Media Uploads functionality - Case 034,PASS,2.6,Automated Runner,2026-07-27 10:20:43
+TC-0113,Mobile (Android/Appium),User Profile,Verify User Profile functionality - Case 113,PASS,2.14,Automated Runner,2026-07-27 10:24:43
+TC-0387,Web (Selenium),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 387,PASS,0.68,Automated Runner,2026-07-27 10:04:43
+TC-0053,Performance (JMeter),Cloudinary Media Uploads,Verify Cloudinary Media Uploads functionality - Case 053,PASS,0.95,Automated Runner,2026-07-27 09:01:43
+TC-0028,Performance (JMeter),Backend API Integration,Verify Backend API Integration functionality - Case 028,SKIP,3.57,Automated Runner,2026-07-27 10:12:43

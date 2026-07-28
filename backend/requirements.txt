@@ -12,3 +12,8 @@ psycopg2-binary
 bcrypt==4.0.1
 requests
 cloudinary
+
+ultralytics
+opencv-python-headless
+Pillow
+numpy

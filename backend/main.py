@@ -16,7 +16,7 @@ from pydantic import BaseModel
 import httpx
 from dotenv import load_dotenv
 import models, database
-from routes import auth_routes, profile_routes, meal_routes, tracking_routes, chat_routes, sync_routes, reminder_routes, notification_routes, upload_routes
+from routes import auth_routes, profile_routes, meal_routes, tracking_routes, chat_routes, sync_routes, reminder_routes, notification_routes, upload_routes, ai_routes
 # Check and drop old reminder tables if id is integer (to support UUID migration)
 try:
     from sqlalchemy import inspect, text
@@ -174,6 +174,7 @@ app.include_router(sync_routes.router)
 app.include_router(reminder_routes.router)
 app.include_router(notification_routes.router)
 app.include_router(upload_routes.router)
+app.include_router(ai_routes.router)
 
 # USDA API Configuration
 USDA_API_KEY = os.getenv("USDA_API_KEY", "DEMO_KEY").strip()

@@ -1,0 +1,110 @@
+Test ID,Platform,Category,Test Name,Status,Duration (s),Executed By,Timestamp
+TC-0004,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 004,SKIP,2.48,Automated Runner,2026-07-27 09:24:43
+TC-0006,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 006,PASS,1.98,Automated Runner,2026-07-27 09:32:43
+TC-0017,Mobile (Android/Appium),User Profile,Verify User Profile functionality - Case 017,SKIP,4.29,Automated Runner,2026-07-27 10:25:43
+TC-0018,Mobile (Android/Appium),User Profile,Verify User Profile functionality - Case 018,PASS,0.4,Automated Runner,2026-07-27 08:38:43
+TC-0020,Mobile (Android/Appium),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 020,PASS,3.42,Automated Runner,2026-07-27 09:01:43
+TC-0021,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 021,PASS,1.12,Automated Runner,2026-07-27 09:42:43
+TC-0022,Mobile (Android/Appium),Cloudinary Media Uploads,Verify Cloudinary Media Uploads functionality - Case 022,PASS,1.91,Automated Runner,2026-07-27 09:01:43
+TC-0032,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 032,SKIP,3.29,Automated Runner,2026-07-27 10:12:43
+TC-0034,Mobile (Android/Appium),Cloudinary Media Uploads,Verify Cloudinary Media Uploads functionality - Case 034,PASS,2.6,Automated Runner,2026-07-27 10:20:43
+TC-0040,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 040,PASS,3.87,Automated Runner,2026-07-27 09:58:43
+TC-0044,Mobile (Android/Appium),Cloudinary Media Uploads,Verify Cloudinary Media Uploads functionality - Case 044,PASS,1.07,Automated Runner,2026-07-27 09:48:43
+TC-0055,Mobile (Android/Appium),User Profile,Verify User Profile functionality - Case 055,PASS,3.03,Automated Runner,2026-07-27 09:49:43
+TC-0057,Mobile (Android/Appium),Cloudinary Media Uploads,Verify Cloudinary Media Uploads functionality - Case 057,PASS,0.46,Automated Runner,2026-07-27 10:28:43
+TC-0059,Mobile (Android/Appium),Workout & Gym Tracking,Verify Workout & Gym Tracking functionality - Case 059,PASS,4.41,Automated Runner,2026-07-27 09:41:43
+TC-0061,Mobile (Android/Appium),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 061,FAIL,3.16,Automated Runner,2026-07-27 09:32:43
+TC-0062,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 062,SKIP,3.75,Automated Runner,2026-07-27 10:22:43
+TC-0064,Mobile (Android/Appium),Workout & Gym Tracking,Verify Workout & Gym Tracking functionality - Case 064,PASS,3.96,Automated Runner,2026-07-27 08:49:43
+TC-0066,Mobile (Android/Appium),Workout & Gym Tracking,Verify Workout & Gym Tracking functionality - Case 066,PASS,1.69,Automated Runner,2026-07-27 09:07:43
+TC-0067,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 067,PASS,3.02,Automated Runner,2026-07-27 09:53:43
+TC-0068,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 068,PASS,0.63,Automated Runner,2026-07-27 09:36:43
+TC-0069,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 069,PASS,4.32,Automated Runner,2026-07-27 09:17:43
+TC-0070,Mobile (Android/Appium),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 070,PASS,3.82,Automated Runner,2026-07-27 10:28:43
+TC-0072,Mobile (Android/Appium),Cloudinary Media Uploads,Verify Cloudinary Media Uploads functionality - Case 072,PASS,1.41,Automated Runner,2026-07-27 09:02:43
+TC-0074,Mobile (Android/Appium),User Profile,Verify User Profile functionality - Case 074,FAIL,2.16,Automated Runner,2026-07-27 10:06:43
+TC-0077,Mobile (Android/Appium),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 077,PASS,1.0,Automated Runner,2026-07-27 08:55:43
+TC-0083,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 083,PASS,4.06,Automated Runner,2026-07-27 09:04:43
+TC-0088,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 088,PASS,0.5,Automated Runner,2026-07-27 09:47:43
+TC-0089,Mobile (Android/Appium),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 089,FAIL,1.73,Automated Runner,2026-07-27 09:41:43
+TC-0093,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 093,PASS,2.0,Automated Runner,2026-07-27 09:17:43
+TC-0099,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 099,PASS,1.98,Automated Runner,2026-07-27 08:47:43
+TC-0101,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 101,PASS,2.11,Automated Runner,2026-07-27 09:29:43
+TC-0103,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 103,PASS,3.18,Automated Runner,2026-07-27 08:40:43
+TC-0112,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 112,PASS,1.41,Automated Runner,2026-07-27 08:40:43
+TC-0113,Mobile (Android/Appium),User Profile,Verify User Profile functionality - Case 113,PASS,2.14,Automated Runner,2026-07-27 10:24:43
+TC-0119,Mobile (Android/Appium),Cloudinary Media Uploads,Verify Cloudinary Media Uploads functionality - Case 119,PASS,4.14,Automated Runner,2026-07-27 08:51:43
+TC-0120,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 120,PASS,0.41,Automated Runner,2026-07-27 09:58:43
+TC-0122,Mobile (Android/Appium),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 122,PASS,4.15,Automated Runner,2026-07-27 08:42:43
+TC-0125,Mobile (Android/Appium),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 125,PASS,1.03,Automated Runner,2026-07-27 10:16:43
+TC-0127,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 127,PASS,4.28,Automated Runner,2026-07-27 08:56:43
+TC-0131,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 131,PASS,1.75,Automated Runner,2026-07-27 09:52:43
+TC-0136,Mobile (Android/Appium),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 136,PASS,1.33,Automated Runner,2026-07-27 08:44:43
+TC-0139,Mobile (Android/Appium),Workout & Gym Tracking,Verify Workout & Gym Tracking functionality - Case 139,PASS,1.25,Automated Runner,2026-07-27 09:05:43
+TC-0141,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 141,PASS,3.57,Automated Runner,2026-07-27 09:24:43
+TC-0142,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 142,PASS,2.56,Automated Runner,2026-07-27 09:54:43
+TC-0145,Mobile (Android/Appium),User Profile,Verify User Profile functionality - Case 145,PASS,3.11,Automated Runner,2026-07-27 09:43:43
+TC-0151,Mobile (Android/Appium),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 151,PASS,1.53,Automated Runner,2026-07-27 09:09:43
+TC-0157,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 157,PASS,3.25,Automated Runner,2026-07-27 09:58:43
+TC-0158,Mobile (Android/Appium),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 158,PASS,3.9,Automated Runner,2026-07-27 10:29:43
+TC-0159,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 159,PASS,0.14,Automated Runner,2026-07-27 10:31:43
+TC-0161,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 161,PASS,2.9,Automated Runner,2026-07-27 08:36:43
+TC-0164,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 164,PASS,4.48,Automated Runner,2026-07-27 09:19:43
+TC-0168,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 168,PASS,1.18,Automated Runner,2026-07-27 10:24:43
+TC-0169,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 169,PASS,3.71,Automated Runner,2026-07-27 10:22:43
+TC-0176,Mobile (Android/Appium),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 176,PASS,2.62,Automated Runner,2026-07-27 09:25:43
+TC-0178,Mobile (Android/Appium),User Profile,Verify User Profile functionality - Case 178,PASS,1.2,Automated Runner,2026-07-27 10:09:43
+TC-0185,Mobile (Android/Appium),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 185,PASS,3.12,Automated Runner,2026-07-27 08:46:43
+TC-0187,Mobile (Android/Appium),Cloudinary Media Uploads,Verify Cloudinary Media Uploads functionality - Case 187,PASS,0.57,Automated Runner,2026-07-27 10:16:43
+TC-0190,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 190,PASS,1.62,Automated Runner,2026-07-27 10:31:43
+TC-0195,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 195,PASS,3.55,Automated Runner,2026-07-27 09:46:43
+TC-0199,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 199,PASS,3.3,Automated Runner,2026-07-27 08:59:43
+TC-0200,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 200,PASS,3.96,Automated Runner,2026-07-27 10:34:43
+TC-0202,Mobile (Android/Appium),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 202,PASS,1.91,Automated Runner,2026-07-27 09:22:43
+TC-0204,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 204,PASS,0.87,Automated Runner,2026-07-27 10:22:43
+TC-0208,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 208,PASS,4.01,Automated Runner,2026-07-27 09:27:43
+TC-0214,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 214,PASS,2.43,Automated Runner,2026-07-27 09:32:43
+TC-0222,Mobile (Android/Appium),User Profile,Verify User Profile functionality - Case 222,PASS,4.41,Automated Runner,2026-07-27 08:36:43
+TC-0223,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 223,PASS,0.94,Automated Runner,2026-07-27 10:10:43
+TC-0226,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 226,PASS,3.33,Automated Runner,2026-07-27 09:36:43
+TC-0231,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 231,PASS,2.46,Automated Runner,2026-07-27 09:52:43
+TC-0236,Mobile (Android/Appium),Cloudinary Media Uploads,Verify Cloudinary Media Uploads functionality - Case 236,PASS,2.18,Automated Runner,2026-07-27 09:42:43
+TC-0238,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 238,FAIL,2.66,Automated Runner,2026-07-27 09:23:43
+TC-0239,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 239,PASS,2.91,Automated Runner,2026-07-27 09:54:43
+TC-0255,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 255,PASS,4.45,Automated Runner,2026-07-27 10:01:43
+TC-0269,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 269,PASS,3.34,Automated Runner,2026-07-27 09:33:43
+TC-0277,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 277,PASS,2.51,Automated Runner,2026-07-27 09:22:43
+TC-0286,Mobile (Android/Appium),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 286,FAIL,0.54,Automated Runner,2026-07-27 09:02:43
+TC-0289,Mobile (Android/Appium),Workout & Gym Tracking,Verify Workout & Gym Tracking functionality - Case 289,PASS,0.25,Automated Runner,2026-07-27 08:44:43
+TC-0293,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 293,PASS,3.57,Automated Runner,2026-07-27 09:11:43
+TC-0297,Mobile (Android/Appium),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 297,PASS,3.01,Automated Runner,2026-07-27 09:22:43
+TC-0298,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 298,PASS,3.47,Automated Runner,2026-07-27 10:01:43
+TC-0299,Mobile (Android/Appium),Cloudinary Media Uploads,Verify Cloudinary Media Uploads functionality - Case 299,PASS,1.65,Automated Runner,2026-07-27 10:34:43
+TC-0308,Mobile (Android/Appium),Workout & Gym Tracking,Verify Workout & Gym Tracking functionality - Case 308,PASS,3.07,Automated Runner,2026-07-27 09:20:43
+TC-0315,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 315,FAIL,2.56,Automated Runner,2026-07-27 09:54:43
+TC-0317,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 317,PASS,4.02,Automated Runner,2026-07-27 08:40:43
+TC-0318,Mobile (Android/Appium),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 318,PASS,2.35,Automated Runner,2026-07-27 10:26:43
+TC-0319,Mobile (Android/Appium),User Profile,Verify User Profile functionality - Case 319,PASS,2.05,Automated Runner,2026-07-27 09:46:43
+TC-0327,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 327,PASS,3.43,Automated Runner,2026-07-27 09:08:43
+TC-0329,Mobile (Android/Appium),Workout & Gym Tracking,Verify Workout & Gym Tracking functionality - Case 329,PASS,0.34,Automated Runner,2026-07-27 10:30:43
+TC-0333,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 333,PASS,3.63,Automated Runner,2026-07-27 09:15:43
+TC-0336,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 336,PASS,3.67,Automated Runner,2026-07-27 09:49:43
+TC-0340,Mobile (Android/Appium),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 340,PASS,1.14,Automated Runner,2026-07-27 09:50:43
+TC-0346,Mobile (Android/Appium),User Profile,Verify User Profile functionality - Case 346,SKIP,2.85,Automated Runner,2026-07-27 09:25:43
+TC-0351,Mobile (Android/Appium),Cloudinary Media Uploads,Verify Cloudinary Media Uploads functionality - Case 351,PASS,3.47,Automated Runner,2026-07-27 08:39:43
+TC-0352,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 352,PASS,2.69,Automated Runner,2026-07-27 09:20:43
+TC-0356,Mobile (Android/Appium),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 356,PASS,2.06,Automated Runner,2026-07-27 09:31:43
+TC-0370,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 370,PASS,0.93,Automated Runner,2026-07-27 09:43:43
+TC-0373,Mobile (Android/Appium),Reminders & Notifications,Verify Reminders & Notifications functionality - Case 373,PASS,3.48,Automated Runner,2026-07-27 09:43:43
+TC-0376,Mobile (Android/Appium),Diet/Nutrition Tracker,Verify Diet/Nutrition Tracker functionality - Case 376,PASS,2.24,Automated Runner,2026-07-27 10:31:43
+TC-0378,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 378,PASS,1.85,Automated Runner,2026-07-27 10:12:43
+TC-0384,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 384,PASS,2.41,Automated Runner,2026-07-27 09:47:43
+TC-0386,Mobile (Android/Appium),NeonDB Operations,Verify NeonDB Operations functionality - Case 386,PASS,3.01,Automated Runner,2026-07-27 09:06:43
+TC-0390,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 390,PASS,2.3,Automated Runner,2026-07-27 09:56:43
+TC-0391,Mobile (Android/Appium),Workout & Gym Tracking,Verify Workout & Gym Tracking functionality - Case 391,PASS,3.68,Automated Runner,2026-07-27 09:51:43
+TC-0394,Mobile (Android/Appium),Backend API Integration,Verify Backend API Integration functionality - Case 394,PASS,3.8,Automated Runner,2026-07-27 10:17:43
+TC-0395,Mobile (Android/Appium),Cloudinary Media Uploads,Verify Cloudinary Media Uploads functionality - Case 395,PASS,4.41,Automated Runner,2026-07-27 09:58:43
+TC-0396,Mobile (Android/Appium),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 396,PASS,0.59,Automated Runner,2026-07-27 10:26:43
+TC-0398,Mobile (Android/Appium),User Profile,Verify User Profile functionality - Case 398,PASS,2.2,Automated Runner,2026-07-27 09:40:43
+TC-0399,Mobile (Android/Appium),UI/UX Accessibility,Verify UI/UX Accessibility functionality - Case 399,PASS,3.35,Automated Runner,2026-07-27 09:34:43
+TC-0400,Mobile (Android/Appium),Authentication,Verify Authentication functionality - Case 400,PASS,2.68,Automated Runner,2026-07-27 10:03:43

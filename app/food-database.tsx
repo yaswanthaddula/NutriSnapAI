@@ -24,6 +24,10 @@ import { searchFoods, getFoodDetail } from '../src/services/fatSecretService';
 export default function FoodDatabaseScreen() {
   const params = useLocalSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
+  
+  useEffect(() => {
+    console.log("[LOG: Manual Search Used]");
+  }, []);
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
