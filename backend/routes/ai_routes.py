@@ -1,8 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import base64
-import numpy as np
-import cv2
 import os
 
 router = APIRouter(prefix="/ai", tags=["Offline AI Fallback"])
@@ -51,6 +49,8 @@ async def detect_offline(request: DetectOfflineRequest):
         raise HTTPException(status_code=503, detail="Offline AI model is currently unavailable.")
         
     try:
+        import numpy as np
+        import cv2
         # Decode base64 string
         img_data = base64.b64decode(request.image_base64)
         nparr = np.frombuffer(img_data, np.uint8)
