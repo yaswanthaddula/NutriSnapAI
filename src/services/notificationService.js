@@ -623,7 +623,7 @@ export const notificationService = {
                 mode: rule.mode,
                 screen: screenRoute
               },
-              sound: (rule.mode === 'gym' ? state.gymNotificationSound : state.healthNotificationSound) + '.wav',
+              sound: true,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
               channelId: 'high_priority_v2',
@@ -732,28 +732,18 @@ export const notificationService = {
           }
         });
         
-        return new Promise((resolve) => {
-          Promise.all(promises).then(async (results) => {
-            const hasError = results.find(r => r && r.error);
-            const newReminders = results.filter(r => r && r.data);
-            console.log("Successfully saved reminder responses:", newReminders.length);
-            
-            // Trigger strict fetch right after save
-            await useAppStore.getState().fetchAndSyncReminders();
-            if (useAppStore.getState().fetchTodayReminders) {
-               await useAppStore.getState().fetchTodayReminders();
-            }
-            
-            if (hasError) {
-                resolve({ success: false, error: hasError.error });
-            } else {
-                resolve({ success: true });
-            }
-          });
-        });
+        const results = await Promise.all(promises);
+        const hasError = results.find(r => r && r.error);
+        const newReminders = results.filter(r => r && r.data);
+        console.log("Successfully saved reminder responses:", newReminders.length);
+        
+        // Trigger strict fetch right after save
+        await useAppStore.getState().fetchAndSyncReminders();
+        if (useAppStore.getState().fetchTodayReminders) {
+           await useAppStore.getState().fetchTodayReminders();
+        }
       } catch (e) {
         console.log('Error initiating reminder backend sync:', e);
-        return false;
       }
 
       const channelId = Platform.OS === 'android' ? 'nutrisnap-reminders' : undefined;
@@ -762,6 +752,9 @@ export const notificationService = {
         console.log("Skipping native push notifications scheduling on Web or unsupported platform.");
         return;
       }
+
+      // Clear previously scheduled ghost notifications to prevent incorrect times or duplicates
+      await Notifications.cancelAllScheduledNotificationsAsync();
 
       // 1. Meals Reminders
       if (prefs.meals) {
@@ -779,7 +772,7 @@ export const notificationService = {
             const content = {
               title: item.title,
               body: item.body,
-              sound: (currentMode === 'gym' ? state.gymNotificationSound : state.healthNotificationSound) + '.wav',
+              sound: true,
               autoDismiss: false,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
