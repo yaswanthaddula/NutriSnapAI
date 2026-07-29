@@ -120,7 +120,9 @@ export const apiService = {
     }
     
     return await api.post('/upload/profile-photo', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: {
+        'Accept': 'application/json'
+      }
     });
   },
 
@@ -145,7 +147,9 @@ export const apiService = {
     }
     
     return await api.post('/upload/meal-photo', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: {
+        'Accept': 'application/json'
+      }
     });
   },
 
