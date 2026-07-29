@@ -62,4 +62,20 @@ if __name__ == "__main__":
     write_csv("reports/load", "Load_Test_Report.csv", load_cases)
     write_csv("reports/master", "Master_Test_Report.csv", master_cases)
     
-    print("Successfully generated detailed mock test case CSV reports in their respective directories!")
+    # Generate Summary Report
+    summary_data = [
+        {"Testing Suite": "Web (Selenium)", "Total Test Cases": 300, "Passed": 300, "Failed": 0, "Skipped": 0},
+        {"Testing Suite": "Mobile (Android/Appium)", "Total Test Cases": 300, "Passed": 300, "Failed": 0, "Skipped": 0},
+        {"Testing Suite": "Security (Backend API)", "Total Test Cases": 300, "Passed": 300, "Failed": 0, "Skipped": 0},
+        {"Testing Suite": "Vulnerability (Static Analysis)", "Total Test Cases": 300, "Passed": 300, "Failed": 0, "Skipped": 0},
+        {"Testing Suite": "Performance (k6/JMeter)", "Total Test Cases": 300, "Passed": 300, "Failed": 0, "Skipped": 0},
+        {"Testing Suite": "TOTAL E2E SUITE", "Total Test Cases": 1500, "Passed": 1500, "Failed": 0, "Skipped": 0}
+    ]
+    
+    os.makedirs("reports/master", exist_ok=True)
+    with open("reports/master/Master_Test_Summary.csv", 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=summary_data[0].keys())
+        writer.writeheader()
+        writer.writerows(summary_data)
+    
+    print("Successfully generated detailed mock test case CSV reports and Master Summary in their respective directories!")
