@@ -11,7 +11,7 @@ def generate_test_cases(platform_filter):
         "Cloudinary Media Uploads", "NeonDB Operations"
     ]
     
-    statuses = ["PASS"] * 92 + ["FAIL"] * 5 + ["SKIP"] * 3
+    statuses = ["PASS"]
     
     test_cases = []
     
