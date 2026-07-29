@@ -150,15 +150,17 @@ export default function NotificationCenterScreen() {
   const getIconForType = (type: string, title: string) => {
     const t = (type || '').toLowerCase();
     const txt = (title || '').toLowerCase();
-    if (t.includes('breakfast')) return { name: 'egg-fried', color: '#F59E0B' };
-    if (t.includes('lunch')) return { name: 'food-variant', color: '#10B981' };
-    if (t.includes('dinner')) return { name: 'silverware-fork-knife', color: '#8B5CF6' };
-    if (t.includes('water')) return { name: 'water-drop', color: '#3B82F6', isMaterial: false };
-    if (t.includes('workout') || t.includes('gym')) return { name: 'dumbbell', color: '#EF4444' };
-    if (t.includes('insight') || txt.includes('ai')) return { name: 'robot', color: '#6366F1' };
-    if (t.includes('streak') || txt.includes('achieve')) return { name: 'trophy', color: '#F59E0B' };
-    if (t.includes('report')) return { name: 'chart-box', color: '#10B981' };
-    return { name: 'bell-outline', color: themeColors.accent };
+    if (t.includes('breakfast')) return { emoji: '🍳', color: '#F59E0B' };
+    if (t.includes('lunch')) return { emoji: '🍱', color: '#10B981' };
+    if (t.includes('dinner')) return { emoji: '🍽️', color: '#8B5CF6' };
+    if (t.includes('water')) return { emoji: '💧', color: '#3B82F6' };
+    if (t.includes('medicine') || t.includes('pill')) return { emoji: '💊', color: '#EF4444' };
+    if (t.includes('workout') || t.includes('gym')) return { emoji: '🏋', color: '#EF4444' };
+    if (t.includes('insight') || txt.includes('ai')) return { emoji: '🤖', color: '#6366F1' };
+    if (t.includes('streak') || txt.includes('achieve')) return { emoji: '🏆', color: '#F59E0B' };
+    if (t.includes('report')) return { emoji: '📊', color: '#10B981' };
+    if (t.includes('sleep') || t.includes('recover')) return { emoji: '😴', color: '#8B5CF6' };
+    return { emoji: '🔔', color: themeColors.accent };
   };
 
   const formatTime = (dateStr: string) => {
@@ -258,24 +260,20 @@ export default function NotificationCenterScreen() {
                         onRead={() => { if (!notif.isRead) markAsRead(notif.id); }}
                         onClear={() => clearNotification(notif.id)}
                       >
-                        <View style={styles.cardLeft}>
-                          <View style={[styles.iconCircle, { backgroundColor: iconInfo.color + '15' }]}>
-                            {iconInfo.isMaterial === false ? (
-                              <Ionicons name={iconInfo.name as any} size={22} color={iconInfo.color} />
-                            ) : (
-                              <MaterialCommunityIcons name={iconInfo.name as any} size={22} color={iconInfo.color} />
-                            )}
-                          </View>
-                        </View>
                         <View style={styles.cardBody}>
-                          <Text style={[styles.cardTitle, { color: themeColors.text, fontWeight: notif.isRead ? '600' : '800' }]}>
-                            {notif.title}
-                          </Text>
-                          <Text style={[styles.cardDesc, { color: themeColors.subText }]}>
-                            {notif.message}
-                          </Text>
+                          <View style={styles.cardHeaderRow}>
+                            <Text style={styles.emojiIcon}>{iconInfo.emoji}</Text>
+                            <Text style={[styles.cardTitle, { color: themeColors.text, fontWeight: notif.isRead ? '600' : '800' }]}>
+                              {notif.title}
+                            </Text>
+                          </View>
+                          
                           <Text style={[styles.cardTime, { color: themeColors.accent }]}>
                             {formatTime(notif.createdAt)}
+                          </Text>
+                          
+                          <Text style={[styles.cardDesc, { color: themeColors.subText }]}>
+                            {notif.message}
                           </Text>
                         </View>
                         
@@ -320,15 +318,15 @@ const styles = StyleSheet.create({
   emptySub: { fontSize: 15 },
   groupContainer: { marginBottom: 25 },
   groupTitle: { fontSize: 18, fontWeight: '700', marginBottom: 15, marginLeft: 5 },
-  card: { flexDirection: 'row', borderRadius: 16, padding: 18, marginBottom: 12, borderWidth: 1, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 },
-  unreadCard: { shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 },
-  cardLeft: { marginRight: 15 },
-  iconCircle: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center' },
+  card: { flexDirection: 'row', borderRadius: 20, padding: 20, marginBottom: 15, borderWidth: 1, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 10 },
+  unreadCard: { shadowOpacity: 0.15, shadowRadius: 15, elevation: 8, borderColor: 'rgba(59, 130, 246, 0.3)' },
   cardBody: { flex: 1, justifyContent: 'center' },
-  cardTitle: { fontSize: 17, marginBottom: 6 },
-  cardDesc: { fontSize: 14, lineHeight: 22, marginBottom: 8 },
-  cardTime: { fontSize: 12, fontWeight: 'bold' },
-  unreadBadge: { backgroundColor: '#3B82F6', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, position: 'absolute', top: -10, left: -5 },
+  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  emojiIcon: { fontSize: 22, marginRight: 8 },
+  cardTitle: { fontSize: 18, flex: 1 },
+  cardTime: { fontSize: 13, fontWeight: '700', marginBottom: 10, letterSpacing: 0.5 },
+  cardDesc: { fontSize: 15, lineHeight: 22, fontWeight: '400' },
+  unreadBadge: { backgroundColor: '#3B82F6', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, position: 'absolute', top: 15, right: 15 },
   unreadBadgeText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
-  deleteInlineBtn: { padding: 5, justifyContent: 'center', alignItems: 'center', marginLeft: 10 }
+  deleteInlineBtn: { padding: 5, justifyContent: 'center', alignItems: 'center', position: 'absolute', bottom: 15, right: 15 }
 });

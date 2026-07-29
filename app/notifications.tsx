@@ -464,10 +464,7 @@ export default function NotificationsScreen() {
 
       // Save to backend silently
       apiService.saveProfile(toSave).catch(e => console.log("Silent backend save error:", e));
-      
-      // Reschedule Native Notifications instantly
-      await notificationService.scheduleReminderNotifications();
-      console.log("Reminder Auto-Saved & Rescheduled Instantly!");
+      console.log("Reminder Preferences Auto-Saved to Profile locally.");
     } catch (err) {
       console.error("Failed to auto-save reminder:", err);
     }
@@ -496,27 +493,20 @@ export default function NotificationsScreen() {
         );
         // Revert toggle
         updateNotificationPrefs(key, false);
-        return;
       }
     }
-    
+  };
+
+  const handleSaveReminder = async () => {
     try {
-      // Fire scheduleReminderNotifications which maps and posts to backend
-      // But we will catch any failure and revert
       const result = await notificationService.scheduleReminderNotifications();
       if (!result || result.success === false) {
         throw new Error(result?.error || "Backend save failed");
       }
-      
-      if (val) {
-        Alert.alert("Success", "Reminder Saved Successfully");
-      }
-      // If success, fetchAndSyncReminders is already called inside scheduleReminderNotifications
-      // which will log "Refetched reminders:" inside useAppStore
+      Alert.alert("Success", "✅ Reminder Saved Successfully");
     } catch (error: any) {
       console.log("Reminder save failed:", error);
       Alert.alert("Error", error.message || "Failed to save reminder. Please try again.");
-      updateNotificationPrefs(key, !val); // revert toggle
     }
   };
 
@@ -575,6 +565,9 @@ export default function NotificationsScreen() {
           />
           <RepeatPicker value={localProfile.dinnerRepeat} onChange={(val: string) => handleAutoSave({ dinnerRepeat: val })} theme={theme} />
           <ReminderPreview title="Dinner Reminder" time={localProfile.dinnerReminderTime} repeat={localProfile.dinnerRepeat} theme={theme} onDelete={() => handleDeleteReminder('dinner')} />
+          <TouchableOpacity style={[styles.saveButton, { marginTop: 20 }]} onPress={handleSaveReminder}>
+            <Text style={styles.saveButtonText}>Save Reminder</Text>
+          </TouchableOpacity>
         </View>
       )}
     </>
@@ -598,6 +591,9 @@ export default function NotificationsScreen() {
           />
           <RepeatPicker value={localProfile.workoutRepeat} onChange={(val: string) => handleAutoSave({ workoutRepeat: val })} theme={theme} />
           <ReminderPreview title="Workout Reminder" time={localProfile.workoutReminderTime} repeat={localProfile.workoutRepeat} theme={theme} onDelete={() => handleDeleteReminder('workout')} />
+          <TouchableOpacity style={[styles.saveButton, { marginTop: 20 }]} onPress={handleSaveReminder}>
+            <Text style={styles.saveButtonText}>Save Reminder</Text>
+          </TouchableOpacity>
         </View>
       )}
     </>
@@ -619,6 +615,9 @@ export default function NotificationsScreen() {
             theme={theme}
           />
           <ReminderPreview title="Water Reminder" time={localProfile.waterReminderInterval} repeat="Daily" theme={theme} onDelete={() => handleDeleteReminder('water')} />
+          <TouchableOpacity style={[styles.saveButton, { marginTop: 20 }]} onPress={handleSaveReminder}>
+            <Text style={styles.saveButtonText}>Save Reminder</Text>
+          </TouchableOpacity>
         </View>
       )}
     </>
@@ -642,6 +641,9 @@ export default function NotificationsScreen() {
           />
           <RepeatPicker value={localProfile.sleepRepeat} onChange={(val: string) => handleAutoSave({ sleepRepeat: val })} theme={theme} />
           <ReminderPreview title={fromMode === 'gym' ? "Recovery Reminder" : "Sleep Reminder"} time={localProfile.sleepReminderTime} repeat={localProfile.sleepRepeat} theme={theme} onDelete={() => handleDeleteReminder('sleep')} />
+          <TouchableOpacity style={[styles.saveButton, { marginTop: 20 }]} onPress={handleSaveReminder}>
+            <Text style={styles.saveButtonText}>Save Reminder</Text>
+          </TouchableOpacity>
         </View>
       )}
     </>

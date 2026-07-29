@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Body, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -160,7 +161,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         
     return JSONResponse(
         status_code=422,
-        content={"detail": "Validation Error", "errors": exc.errors()},
+        content={"detail": "Validation Error", "errors": jsonable_encoder(exc.errors())},
     )
 
 
