@@ -1,0 +1,19 @@
+name: Master Report
+on:
+  workflow_run:
+    workflows: ["Security Review", "Vulnerability Review", "Load Testing"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  master-report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: reports/
+      - name: Generate Master Report
+        run: python scripts/generate_master_report.py
