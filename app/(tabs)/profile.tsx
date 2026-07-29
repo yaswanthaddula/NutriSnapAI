@@ -113,16 +113,17 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       
-      {/* --- TOP GREEN HEADER (Stays Green) --- */}
-      <LinearGradient colors={['#4CAF50', '#2E7D32']} style={styles.greenHeader}>
+      {/* --- TOP LIGHT BLUE HEADER --- */}
+      <LinearGradient colors={['#4fc3f7', '#0288d1']} style={styles.greenHeader}>
         <View style={styles.userInfoArea}>
           <View style={styles.avatarRing}>
             <TouchableOpacity style={styles.avatarCircle} onPress={pickImage} activeOpacity={0.8}>
               {userProfile.profileImage ? (
                 <Image 
                   source={{ uri: userProfile.profileImage }} 
-                  style={styles.avatarImage} 
+                  style={[styles.avatarImage, { overflow: 'hidden' }]} 
                   resizeMode="cover"
+                  onError={(e) => console.log('Image failed to load', e.nativeEvent.error)}
                 />
               ) : (
                 <Text style={{fontSize: 40}}>👤</Text>

@@ -76,7 +76,16 @@ const SwipeableCard = ({ notif, children, onClear, onRead, themeColors }: any) =
           }}
           style={[
             styles.card, 
-            { backgroundColor: notif.isRead ? themeColors.card : (themeColors.accent + '10'), borderColor: notif.isRead ? themeColors.border : themeColors.accent, marginBottom: 0 }
+            { 
+              backgroundColor: notif.isRead ? themeColors.card : (themeColors.accent + '15'), 
+              borderColor: notif.isRead ? themeColors.border : themeColors.accent, 
+              marginBottom: 0,
+              shadowColor: notif.isRead ? '#000' : themeColors.accent,
+              shadowOffset: { width: 0, height: notif.isRead ? 4 : 8 },
+              shadowOpacity: notif.isRead ? 0.05 : 0.2,
+              shadowRadius: notif.isRead ? 10 : 15,
+              elevation: notif.isRead ? 3 : 8
+            }
           ]}
         >
           {children}
@@ -91,15 +100,13 @@ export default function NotificationCenterScreen() {
   const { notifications, markAsRead, markAllAsRead, clearNotification, fetchNotifications } = useAppStore();
   
   const { fromMode } = useLocalSearchParams();
-  const [activeFilter, setActiveFilter] = useState('All');
+  const initialFilter = fromMode === 'gym' ? 'Fitness' : (fromMode === 'health' ? 'Health' : 'All');
+  const [activeFilter, setActiveFilter] = useState(initialFilter);
   const filters = ['All', 'Health', 'Fitness'];
 
   useEffect(() => {
-    if (fromMode === 'gym') {
-      setActiveFilter('Fitness');
-    } else if (fromMode === 'health') {
-      setActiveFilter('Health');
-    }
+    if (fromMode === 'gym') setActiveFilter('Fitness');
+    else if (fromMode === 'health') setActiveFilter('Health');
   }, [fromMode]);
 
   // Ensure notifications are up to date
@@ -228,11 +235,15 @@ export default function NotificationCenterScreen() {
       <View style={[styles.header, { borderBottomColor: themeColors.border }]}>
         <View style={styles.headerTop}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={themeColors.text} />
+            <View style={styles.iconCircle}>
+              <Ionicons name="arrow-back" size={22} color={themeColors.text} />
+            </View>
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: themeColors.text }]}>🔔 Notifications</Text>
+          <Text style={[styles.headerTitle, { color: themeColors.text }]}>Notifications</Text>
           <TouchableOpacity onPress={handleClearAll} style={styles.clearBtn}>
-            <MaterialCommunityIcons name="playlist-remove" size={26} color={themeColors.subText} />
+            <View style={styles.iconCircle}>
+              <MaterialCommunityIcons name="playlist-remove" size={24} color={themeColors.subText} />
+            </View>
           </TouchableOpacity>
         </View>
         <Text style={[styles.headerSubtitle, { color: themeColors.subText }]}>
@@ -325,29 +336,30 @@ export default function NotificationCenterScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingTop: Platform.OS === 'android' ? 40 : 10, paddingBottom: 15, borderBottomWidth: 1 },
+  header: { paddingTop: Platform.OS === 'android' ? 50 : 20, paddingBottom: 20, borderBottomWidth: 0, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 5, backgroundColor: 'rgba(255,255,255,0.9)' },
   headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20 },
   backBtn: { padding: 5, marginLeft: -5 },
-  headerTitle: { fontSize: 22, fontWeight: '800' },
+  iconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.05)', justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { fontSize: 24, fontWeight: '900', letterSpacing: 0.5 },
   clearBtn: { padding: 5, marginRight: -5 },
-  headerSubtitle: { fontSize: 14, paddingHorizontal: 20, marginTop: 8 },
-  filterScrollWrapper: { marginTop: 20 },
-  filterScroll: { paddingHorizontal: 15, paddingBottom: 5 },
-  filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginHorizontal: 5, borderWidth: 1 },
-  filterText: { fontSize: 14 },
-  listContent: { padding: 20, paddingBottom: 50 },
-  emptyState: { alignItems: 'center', justifyContent: 'center', marginTop: 100 },
-  emptyTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
-  emptySub: { fontSize: 15 },
-  groupContainer: { marginBottom: 25 },
-  groupTitle: { fontSize: 18, fontWeight: '700', marginBottom: 15, marginLeft: 5 },
-  card: { flexDirection: 'row', borderRadius: 20, padding: 20, marginBottom: 15, borderWidth: 1, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 10 },
-  unreadCard: { shadowOpacity: 0.15, shadowRadius: 15, elevation: 8, borderColor: 'rgba(59, 130, 246, 0.3)' },
+  headerSubtitle: { fontSize: 14, paddingHorizontal: 25, marginTop: 12, fontWeight: '500' },
+  filterScrollWrapper: { marginTop: 25 },
+  filterScroll: { paddingHorizontal: 20, paddingBottom: 10 },
+  filterChip: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 25, marginHorizontal: 6, borderWidth: 0, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  filterText: { fontSize: 14, letterSpacing: 0.3 },
+  listContent: { padding: 20, paddingBottom: 80 },
+  emptyState: { alignItems: 'center', justifyContent: 'center', marginTop: 120 },
+  emptyTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 10, letterSpacing: 0.5 },
+  emptySub: { fontSize: 16 },
+  groupContainer: { marginBottom: 30 },
+  groupTitle: { fontSize: 18, fontWeight: '800', marginBottom: 16, marginLeft: 5, letterSpacing: 0.5, opacity: 0.8 },
+  card: { flexDirection: 'row', borderRadius: 24, padding: 20, marginBottom: 15, borderWidth: 1 },
+  unreadCard: { shadowOpacity: 0.2, shadowRadius: 20, elevation: 10, borderColor: 'rgba(59, 130, 246, 0.4)' },
   cardBody: { flex: 1, justifyContent: 'center' },
-  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  emojiIcon: { fontSize: 22, marginRight: 8 },
+  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  emojiIcon: { fontSize: 24, marginRight: 12, backgroundColor: 'rgba(0,0,0,0.03)', padding: 8, borderRadius: 16, overflow: 'hidden' },
   cardTitleContainer: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 10 },
-  cardTitle: { fontSize: 17, flexShrink: 1 },
-  cardTime: { fontSize: 13, fontWeight: '500' },
-  cardDesc: { fontSize: 15, lineHeight: 22, fontWeight: '400', marginTop: 4 }
+  cardTitle: { fontSize: 17, flexShrink: 1, letterSpacing: 0.3 },
+  cardTime: { fontSize: 12, fontWeight: '600', opacity: 0.7 },
+  cardDesc: { fontSize: 15, lineHeight: 22, fontWeight: '500', marginTop: 2 }
 });

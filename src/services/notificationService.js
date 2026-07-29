@@ -752,7 +752,7 @@ export const notificationService = {
 
       const channelId = Platform.OS === 'android' ? 'nutrisnap-reminders' : undefined;
 
-      if (!Notifications) {
+      if (!Notifications || Platform.OS === 'web') {
         console.log("Skipping native push notifications scheduling on Web or unsupported platform.");
         return;
       }
