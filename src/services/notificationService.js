@@ -734,6 +734,10 @@ export const notificationService = {
         
         const results = await Promise.all(promises);
         const hasError = results.find(r => r && r.error);
+        if (hasError) {
+          console.log("Sync error:", hasError.error);
+          return { success: false, error: hasError.error };
+        }
         const newReminders = results.filter(r => r && r.data);
         console.log("Successfully saved reminder responses:", newReminders.length);
         
@@ -865,7 +869,10 @@ export const notificationService = {
       }
     } catch (e) {
       console.log("Error scheduling reminder notifications:", e);
+      return { success: false, error: e.message };
     }
+    
+    return { success: true };
   },
 
   scheduleDailyReminders: async () => {
