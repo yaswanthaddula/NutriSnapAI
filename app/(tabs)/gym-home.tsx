@@ -40,7 +40,11 @@ export default function GymHomeScreen() {
     addWater, setWaterIntake, recalculateWaterGoal, fetchTodayReminders, todayReminders, reminders, checkNewDay, markAllAsRead
   } = useAppStore();
   
-  const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'gym')).length;
+  const unreadCount = notifications.filter((n: any) => {
+    if (n.isRead || n.status === 'cleared') return false;
+    const isGym = n.type?.match(/workout|gym|protein|exercise|calorie|streak/i) || n.title?.match(/workout|gym|protein|exercise|calorie|streak/i);
+    return isGym;
+  }).length;
 
   // Helper to get nearest upcoming reminder
   const getNextReminder = () => {

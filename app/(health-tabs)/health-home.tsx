@@ -50,7 +50,11 @@ export default function HealthHomeScreen() {
     notifications, notificationPrefs, reminderStatuses, fetchTodayReminders, todayReminders, reminders, checkNewDay, markAllAsRead
   } = useAppStore();
 
-  const unreadCount = notifications.filter((n: any) => !n.isRead && n.status !== 'cleared' && (!n.mode || n.mode === 'health')).length;
+  const unreadCount = notifications.filter((n: any) => {
+    if (n.isRead || n.status === 'cleared') return false;
+    const isHealth = n.type?.match(/meal|breakfast|lunch|dinner|snack|water|medicine|pill|sleep|recover|insight|bmi/i) || n.title?.match(/meal|breakfast|lunch|dinner|snack|water|medicine|pill|sleep|recover|insight|bmi/i);
+    return isHealth;
+  }).length;
 
   // Helper to get nearest upcoming reminder
   const getNextReminder = () => {

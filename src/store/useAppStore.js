@@ -606,7 +606,7 @@ const useAppStore = create((set, get) => ({
           const rTime = parseTime(r.reminder_time);
           if (rTime && now >= rTime) {
             const rMode = (r.reminder_type === 'workout' || r.reminder_type === 'gym') ? 'gym' : 'health';
-            addNotification({ title: r.title, message: `${r.reminder_time}\n${r.title}`, type: 'custom_reminder', mode: rMode });
+            addNotification({ title: r.title, message: `Time for your ${r.title.toLowerCase()}.`, type: 'custom_reminder', mode: rMode });
           }
         }
       });

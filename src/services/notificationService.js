@@ -4,6 +4,21 @@ import { router } from 'expo-router';
 import useAppStore from '../store/useAppStore';
 import { api } from './apiService';
 import apiService from './apiService';
+import { Audio } from 'expo-av';
+
+// Pre-define sounds mapping to ensure they are statically bundleable
+const SOUND_FILES = {
+  'default_bell': require('../../assets/sounds/default_bell.wav'),
+  'soft_bell': require('../../assets/sounds/soft_bell.wav'),
+  'gentle_chime': require('../../assets/sounds/gentle_chime.wav'),
+  'water_drop': require('../../assets/sounds/water_drop.wav'),
+  'alert_tone': require('../../assets/sounds/alert_tone.wav'),
+  'alarm': require('../../assets/sounds/alarm.wav'),
+  'heartbeat': require('../../assets/sounds/heartbeat.wav'),
+  'gym_bell': require('../../assets/sounds/gym_bell.wav'),
+  'classic_notification': require('../../assets/sounds/classic_notification.wav'),
+  'digital_bell': require('../../assets/sounds/digital_bell.wav'),
+};
 
 // Helper to parse AM/PM or 24h times
 const parseTime = (timeStr) => {
@@ -984,8 +999,29 @@ export const notificationService = {
 
   setupListeners: () => {
     // Listener for when a notification is received while the app is foregrounded
-    const foregroundSubscription = Notifications ? Notifications.addNotificationReceivedListener(notification => {
+    const foregroundSubscription = Notifications ? Notifications.addNotificationReceivedListener(async notification => {
       console.log("[DEBUG] Reminder Triggered / Notification Delivered (Mobile Foreground):", notification.request.content);
+      
+      try {
+        const data = notification.request.content.data;
+        const mode = data?.mode || 'health';
+        const prefs = useAppStore.getState();
+        const soundFile = mode === 'gym' ? prefs.gymNotificationSound : prefs.healthNotificationSound;
+        
+        if (soundFile && SOUND_FILES[soundFile]) {
+          const { sound } = await Audio.Sound.createAsync(SOUND_FILES[soundFile]);
+          await sound.playAsync();
+          // Optional: Unload after playing
+          setTimeout(() => {
+            sound.unloadAsync();
+          }, 5000);
+        } else if (SOUND_FILES['default_bell']) {
+          const { sound } = await Audio.Sound.createAsync(SOUND_FILES['default_bell']);
+          await sound.playAsync();
+        }
+      } catch (err) {
+        console.log("Error manually playing notification sound", err);
+      }
     }) : { remove: () => {} };
 
     // Listener for when a user interacts with a notification (clicked)
