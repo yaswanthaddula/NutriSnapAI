@@ -267,7 +267,7 @@ export default function LoginScreen() {
                   <View style={styles.passwordContainer}>
                     <TextInput 
                       style={styles.passwordInput} 
-                      placeholder="••••••••" 
+                      placeholder="Enter password" 
                       secureTextEntry={!showPassword}
                       value={password}
                       onChangeText={setPassword}

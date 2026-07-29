@@ -150,7 +150,7 @@ export default function SignUpScreen() {
             <View style={styles.passwordContainer}>
               <TextInput 
                 style={styles.passwordInput} 
-                placeholder="••••••••" 
+                placeholder="Enter password" 
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
@@ -171,7 +171,7 @@ export default function SignUpScreen() {
             <View style={styles.passwordContainer}>
               <TextInput 
                 style={styles.passwordInput} 
-                placeholder="••••••••" 
+                placeholder="Confirm password" 
                 secureTextEntry={!showConfirmPassword}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
