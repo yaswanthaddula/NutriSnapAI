@@ -663,7 +663,7 @@ export const notificationService = {
       for (const day of days) {
         await Notifications.scheduleNotificationAsync({
           content,
-          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'nutrisnap-reminders' }
+          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId: channelId || 'nutrisnap-reminders' }
         });
       }
     } else if (repeatType === 'Weekends') {
@@ -671,14 +671,14 @@ export const notificationService = {
       for (const day of days) {
         await Notifications.scheduleNotificationAsync({
           content,
-          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'nutrisnap-reminders' }
+          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId: channelId || 'nutrisnap-reminders' }
         });
       }
     } else {
       // Daily or Custom Days (fallback to daily)
       await Notifications.scheduleNotificationAsync({
         content,
-        trigger: { hour: parsed.hour, minute: parsed.minute, repeats: true, channelId: channelId || 'nutrisnap-reminders' }
+        trigger: { hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId: channelId || 'nutrisnap-reminders' }
       });
     }
   },

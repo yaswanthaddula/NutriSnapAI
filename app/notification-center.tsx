@@ -63,10 +63,20 @@ const SwipeableCard = ({ notif, children, onClear, onRead, themeColors }: any) =
         <TouchableOpacity 
           activeOpacity={0.9}
           onPress={() => onRead()}
+          onLongPress={() => {
+            Alert.alert(
+              "Notification Options",
+              notif.title,
+              [
+                { text: "Cancel", style: "cancel" },
+                { text: notif.isRead ? "Mark Unread" : "Mark Read", onPress: () => onRead() },
+                { text: "Delete", style: "destructive", onPress: () => onClear() }
+              ]
+            );
+          }}
           style={[
             styles.card, 
-            { backgroundColor: themeColors.card, borderColor: themeColors.border, marginBottom: 0 },
-            !notif.isRead && styles.unreadCard
+            { backgroundColor: notif.isRead ? themeColors.card : (themeColors.accent + '10'), borderColor: notif.isRead ? themeColors.border : themeColors.accent, marginBottom: 0 }
           ]}
         >
           {children}
@@ -82,7 +92,7 @@ export default function NotificationCenterScreen() {
   
   const { fromMode } = useLocalSearchParams();
   const [activeFilter, setActiveFilter] = useState('All');
-  const filters = ['All', 'Meals', 'Fitness', 'Health', 'Achievements', 'Unread'];
+  const filters = ['All', 'Health', 'Fitness'];
 
   useEffect(() => {
     if (fromMode === 'gym') {
@@ -110,19 +120,12 @@ export default function NotificationCenterScreen() {
   const activeNotifs = notifications.filter(n => n.status !== 'cleared');
 
   const filteredNotifications = activeNotifs.filter((n) => {
-    // Health Dashboard should not prioritize workout notifications
-    if (fromMode === 'health' && activeFilter === 'All') {
-       if (n.type?.includes('workout') || n.type?.includes('gym') || n.title?.toLowerCase().includes('workout')) {
-           return false;
-       }
+    if (activeFilter === 'Health') {
+      return n.type?.match(/meal|breakfast|lunch|dinner|snack|water|medicine|pill|sleep|recover|insight|bmi/i) || n.title?.match(/meal|breakfast|lunch|dinner|snack|water|medicine|pill|sleep|recover|insight|bmi/i);
     }
-    
-    if (activeFilter === 'All') return true;
-    if (activeFilter === 'Unread') return !n.isRead;
-    if (activeFilter === 'Meals') return n.type?.includes('meal') || n.title?.toLowerCase().includes('meal');
-    if (activeFilter === 'Fitness') return n.type?.includes('workout') || n.type?.includes('gym') || n.title?.toLowerCase().includes('workout');
-    if (activeFilter === 'Health') return n.type?.includes('water') || n.type?.includes('sleep') || n.type?.includes('insight');
-    if (activeFilter === 'Achievements') return n.type?.includes('streak') || n.type?.includes('goal') || n.title?.toLowerCase().includes('achiev');
+    if (activeFilter === 'Fitness') {
+      return n.type?.match(/workout|gym|protein|exercise|calorie|streak/i) || n.title?.match(/workout|gym|protein|exercise|calorie|streak/i);
+    }
     return true;
   });
 
@@ -163,10 +166,28 @@ export default function NotificationCenterScreen() {
     return { emoji: '🔔', color: themeColors.accent };
   };
 
-  const formatTime = (dateStr: string) => {
+  const getRelativeTime = (dateStr: string) => {
     if (!dateStr) return '';
-    const d = new Date(dateStr);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase();
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) {
+      if (date.getDate() === now.getDate()) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      return 'Yesterday';
+    }
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) {
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      return days[date.getDay()];
+    }
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[date.getMonth()]} ${date.getDate()}`;
   };
 
   const handleClearAll = () => {
@@ -186,6 +207,19 @@ export default function NotificationCenterScreen() {
         }
       ]
     );
+  };
+
+  const handleNotificationTap = (notif: any) => {
+    if (!notif.isRead) markAsRead(notif.id);
+    
+    const t = (notif.type || '').toLowerCase();
+    if (t.includes('meal') || t.includes('breakfast') || t.includes('lunch') || t.includes('dinner') || t.includes('snack')) {
+      router.push('/health-food-selection');
+    } else if (t.includes('workout') || t.includes('gym')) {
+      router.push('/(tabs)/gym-home');
+    } else if (t.includes('water') || t.includes('sleep') || t.includes('medicine')) {
+      router.push('/(health-tabs)/health-home');
+    }
   };
 
   return (
@@ -257,37 +291,26 @@ export default function NotificationCenterScreen() {
                         key={notif.id}
                         notif={notif}
                         themeColors={themeColors}
-                        onRead={() => { if (!notif.isRead) markAsRead(notif.id); }}
+                        onRead={() => handleNotificationTap(notif)}
                         onClear={() => clearNotification(notif.id)}
                       >
                         <View style={styles.cardBody}>
                           <View style={styles.cardHeaderRow}>
-                            <Text style={styles.emojiIcon}>{iconInfo.emoji}</Text>
-                            <Text style={[styles.cardTitle, { color: themeColors.text, fontWeight: notif.isRead ? '600' : '800' }]}>
-                              {notif.title}
+                            <View style={styles.cardTitleContainer}>
+                              <Text style={styles.emojiIcon}>{iconInfo.emoji}</Text>
+                              <Text style={[styles.cardTitle, { color: themeColors.text, fontWeight: notif.isRead ? '600' : '800' }]} numberOfLines={1}>
+                                {notif.title}
+                              </Text>
+                            </View>
+                            <Text style={[styles.cardTime, { color: themeColors.subText }]}>
+                              {getRelativeTime(notif.createdAt)}
                             </Text>
                           </View>
-                          
-                          <Text style={[styles.cardTime, { color: themeColors.accent }]}>
-                            {formatTime(notif.createdAt)}
-                          </Text>
                           
                           <Text style={[styles.cardDesc, { color: themeColors.subText }]}>
                             {notif.message}
                           </Text>
                         </View>
-                        
-                        {!notif.isRead && (
-                          <View style={styles.unreadBadge}>
-                            <Text style={styles.unreadBadgeText}>NEW</Text>
-                          </View>
-                        )}
-                        <TouchableOpacity 
-                          style={styles.deleteInlineBtn} 
-                          onPress={() => clearNotification(notif.id)}
-                        >
-                          <Ionicons name="close-circle-outline" size={24} color={themeColors.subText} />
-                        </TouchableOpacity>
                       </SwipeableCard>
                   );
                 })}
@@ -323,10 +346,8 @@ const styles = StyleSheet.create({
   cardBody: { flex: 1, justifyContent: 'center' },
   cardHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   emojiIcon: { fontSize: 22, marginRight: 8 },
-  cardTitle: { fontSize: 18, flex: 1 },
-  cardTime: { fontSize: 13, fontWeight: '700', marginBottom: 10, letterSpacing: 0.5 },
-  cardDesc: { fontSize: 15, lineHeight: 22, fontWeight: '400' },
-  unreadBadge: { backgroundColor: '#3B82F6', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, position: 'absolute', top: 15, right: 15 },
-  unreadBadgeText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
-  deleteInlineBtn: { padding: 5, justifyContent: 'center', alignItems: 'center', position: 'absolute', bottom: 15, right: 15 }
+  cardTitleContainer: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 10 },
+  cardTitle: { fontSize: 17, flexShrink: 1 },
+  cardTime: { fontSize: 13, fontWeight: '500' },
+  cardDesc: { fontSize: 15, lineHeight: 22, fontWeight: '400', marginTop: 4 }
 });
