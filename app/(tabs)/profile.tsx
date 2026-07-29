@@ -113,8 +113,8 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       
-      {/* --- TOP LIGHT BLUE HEADER --- */}
-      <LinearGradient colors={['#4fc3f7', '#0288d1']} style={styles.greenHeader}>
+      {/* --- TOP LOGIN-STYLE HEADER --- */}
+      <LinearGradient colors={['#E8F5E9', '#4CAF50']} style={styles.greenHeader}>
         <View style={styles.userInfoArea}>
           <View style={styles.avatarRing}>
             <TouchableOpacity style={styles.avatarCircle} onPress={pickImage} activeOpacity={0.8}>
@@ -134,25 +134,25 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.nameContainer}>
-            <Text style={styles.userName}>{name}</Text>
-            <Text style={styles.userAge}>{age} years old</Text>
+            <Text style={[styles.userName, { color: '#1B5E20' }]}>{name}</Text>
+            <Text style={[styles.userAge, { color: '#388E3C' }]}>{age} years old</Text>
           </View>
         </View>
 
         <View style={styles.statRow}>
-          <View style={[styles.statBox, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
-            <Text style={[styles.statNum, { color: '#FFF' }]}>{userProfile.weight}</Text>
-            <Text style={[styles.statLab, { color: 'rgba(255,255,255,0.8)' }]}>Weight</Text>
+          <View style={[styles.statBox, { backgroundColor: 'rgba(255,255,255,0.4)' }]}>
+            <Text style={[styles.statNum, { color: '#1B5E20' }]}>{userProfile.weight}</Text>
+            <Text style={[styles.statLab, { color: '#388E3C' }]}>Weight</Text>
           </View>
-          <View style={[styles.statBox, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
-            <Text style={[styles.statNum, { color: '#FFF' }]}>{userProfile.height}</Text>
-            <Text style={[styles.statLab, { color: 'rgba(255,255,255,0.8)' }]}>Height</Text>
+          <View style={[styles.statBox, { backgroundColor: 'rgba(255,255,255,0.4)' }]}>
+            <Text style={[styles.statNum, { color: '#1B5E20' }]}>{userProfile.height}</Text>
+            <Text style={[styles.statLab, { color: '#388E3C' }]}>Height</Text>
           </View>
-          <View style={[styles.statBox, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
-            <Text style={[styles.statNum, { color: '#FFF' }]}>
+          <View style={[styles.statBox, { backgroundColor: 'rgba(255,255,255,0.4)' }]}>
+            <Text style={[styles.statNum, { color: '#1B5E20' }]}>
               {((userProfile.weight / ((userProfile.height / 100) ** 2)) || 0).toFixed(1)}
             </Text>
-            <Text style={[styles.statLab, { color: 'rgba(255,255,255,0.8)' }]}>BMI</Text>
+            <Text style={[styles.statLab, { color: '#388E3C' }]}>BMI</Text>
           </View>
         </View>
       </LinearGradient>

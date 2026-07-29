@@ -78,43 +78,28 @@ if (Notifications) {
   // Set up categories for actionable notifications
   Notifications.setNotificationCategoryAsync('REMINDER_ACTIONS', [
     {
-      identifier: 'ACTION_DONE',
-      buttonTitle: 'Done',
-      options: { opensAppToForeground: false },
-    },
-    {
-      identifier: 'ACTION_LATER',
-      buttonTitle: 'Remind Later',
+      identifier: 'ACTION_COMPLETE',
+      buttonTitle: '✅ Complete',
       options: { opensAppToForeground: false },
     },
     {
       identifier: 'ACTION_DISMISS',
-      buttonTitle: 'Dismiss',
+      buttonTitle: '❌ Dismiss',
       options: { isDestructive: true, opensAppToForeground: false },
     },
   ]);
 
   if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync('high_priority_v2', {
-      name: 'Reminders',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
-      sound: true,
-      enableVibrate: true,
-      showBadge: true,
-      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC
-    });
-    
     Notifications.setNotificationChannelAsync('nutrisnap-reminders', {
       name: 'General Reminders',
       importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
+      vibrationPattern: [0, 500, 200, 500],
       lightColor: '#00C853',
       sound: true,
       enableVibrate: true,
       showBadge: true,
-      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      bypassDnd: true
     });
   }
 }
@@ -754,7 +739,7 @@ export const notificationService = {
 
       if (!Notifications || Platform.OS === 'web') {
         console.log("Skipping native push notifications scheduling on Web or unsupported platform.");
-        return;
+        return { success: true };
       }
 
       // Clear previously scheduled ghost notifications to prevent incorrect times or duplicates
@@ -968,12 +953,17 @@ export const notificationService = {
       const actionId = response.actionIdentifier;
       console.log("[DEBUG] Notification Clicked/Action:", actionId, data);
 
-      if (actionId === 'ACTION_DONE') {
-        if (data?.reminderId) useAppStore.getState().markReminderDone(data.reminderId);
-      } else if (actionId === 'ACTION_LATER') {
-        if (data?.reminderId) useAppStore.getState().snoozeReminder(data.reminderId, 10);
+      if (actionId === 'ACTION_COMPLETE') {
+        if (data?.reminderId) {
+          useAppStore.getState().markReminderDone(data.reminderId);
+        }
+        if (data?.screen) router.push(data.screen);
       } else if (actionId === 'ACTION_DISMISS') {
-        if (data?.reminderId) useAppStore.getState().dismissReminder(data.reminderId);
+        if (data?.reminderId) {
+          useAppStore.getState().dismissReminder(data.reminderId);
+        }
+      } else if (actionId === Notifications?.DEFAULT_ACTION_IDENTIFIER || actionId === 'expo.modules.notifications.actions.DEFAULT') {
+        if (data?.screen) router.push(data.screen);
       } else if (data?.screen) {
         router.push(data.screen);
       }

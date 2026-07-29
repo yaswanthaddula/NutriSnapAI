@@ -722,13 +722,6 @@ export default function GymHomeScreen() {
         </View>
         
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          {upcomingReminder && (
-            <View style={[styles.nextReminderChip, { backgroundColor: isDark ? '#1E1E1E' : '#FFF' }]}>
-              <Text style={[styles.nextReminderText, { color: theme.text }]}>
-                🕒 {formatTo12Hour(upcomingReminder.reminder_time)}
-              </Text>
-            </View>
-          )}
 
           <TouchableOpacity 
             style={styles.notifBtn} 
@@ -828,9 +821,7 @@ export default function GymHomeScreen() {
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 5 }}>
              {(() => {
-               const counts = { Upcoming: 0, Active: 0, Completed: 0, Missed: 0 };
-               
-               const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+               const counts = { Upcoming: 0, Active: 0, Completed: 0, Dismissed: 0 };
                const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
                const isWeekend = ['Sat', 'Sun'].includes(todayDay);
                
@@ -851,7 +842,7 @@ export default function GymHomeScreen() {
                  if (stat === 'upcoming') counts.Upcoming++;
                  else if (stat === 'active') counts.Active++;
                  else if (stat === 'completed') counts.Completed++;
-                 else if (stat === 'missed') counts.Missed++;
+                 else if (stat === 'dismissed' || stat === 'missed') counts.Dismissed++;
                  else counts.Upcoming++;
                });
                
@@ -889,8 +880,8 @@ export default function GymHomeScreen() {
                       <Ionicons name="warning-outline" size={20} color="#FFF" />
                     </View>
                     <View>
-                      <Text style={{ color: theme.text, fontWeight: 'bold' }}>Missed</Text>
-                      <Text style={{ color: theme.text, fontSize: 16 }}>{counts.Missed}</Text>
+                      <Text style={{ color: theme.text, fontWeight: 'bold' }}>Dismissed</Text>
+                      <Text style={{ color: theme.text, fontSize: 16 }}>{counts.Dismissed}</Text>
                     </View>
                   </View>
                  </>
@@ -951,8 +942,7 @@ export default function GymHomeScreen() {
               
               let status = reminder.status || 'Upcoming';
               if (!status || status.trim() === '') status = 'Upcoming';
-              
-              const statusColor = status === 'Missed' ? '#F44336' : status === 'Completed' ? '#4CAF50' : status === 'Active' ? '#FF9800' : '#2196F3';
+              const statusColor = status === 'Dismissed' || status === 'Missed' ? '#F44336' : status === 'Completed' ? '#4CAF50' : status === 'Active' ? '#FF9800' : '#2196F3';
               
               return (
                 <View key={index} style={[styles.mealItem, { flexDirection: 'column', alignItems: 'stretch' }]}>
@@ -962,10 +952,7 @@ export default function GymHomeScreen() {
                     </View>
                     <View style={{flex: 1, marginLeft: 15}}>
                       <Text style={[styles.mealName, {color: theme.text}]}>{title}</Text>
-                      <Text style={[styles.mealTime, { color: statusColor }]}>
-                        {formatTo12Hour(reminder.reminder_time || reminder.title)}
-                      </Text>
-                      <Text style={{ color: statusColor, fontSize: 12, marginTop: 2 }}>Status: {status}</Text>
+                      <Text style={{ color: statusColor, fontSize: 13, marginTop: 4, fontWeight: 'bold' }}>Status: {status}</Text>
                     </View>
                     <Ionicons name={status === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={status === 'Completed' ? "#4CAF50" : statusColor} />
                     <TouchableOpacity 

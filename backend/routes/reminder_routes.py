@@ -198,7 +198,7 @@ def dismiss_reminder(reminder_id: uuid.UUID, db: Session = Depends(get_db), curr
         raise HTTPException(status_code=404, detail="Reminder not found")
 
     now = datetime.now(timezone.utc)
-    reminder.status = "Missed"  # Or keep Active but dismiss notification
+    reminder.status = "Dismissed"
     reminder.missed_at = now
     reminder.updated_at = now
 
