@@ -126,7 +126,9 @@ export default function ProfileScreen() {
                   onError={(e) => console.log('Image failed to load', e.nativeEvent.error)}
                 />
               ) : (
-                <Text style={{fontSize: 40}}>👤</Text>
+                <Text style={{fontSize: 40, color: '#1B5E20', fontWeight: 'bold'}}>
+                  {name ? name.charAt(0).toUpperCase() : '👤'}
+                </Text>
               )}
               <View style={styles.editIconBadge}>
                 <Ionicons name="camera" size={14} color="#FFF" />
