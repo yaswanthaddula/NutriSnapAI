@@ -599,6 +599,25 @@ export const notificationService = {
       if (newNotif) {
         showWebNotification(rule.title, message, screenRoute, rule.type);
         try {
+          let channelId = 'high_priority_v2';
+          if (Platform.OS === 'android') {
+            const soundFile = rule.mode === 'gym' ? prefs.gymNotificationSound : prefs.healthNotificationSound;
+            if (soundFile && soundFile !== 'default' && soundFile !== 'default_bell') {
+              channelId = `nutrisnap-${soundFile}`;
+              await Notifications.setNotificationChannelAsync(channelId, {
+                name: `Smart Events (${soundFile})`,
+                importance: Notifications.AndroidImportance.MAX,
+                vibrationPattern: [0, 250, 250, 250],
+                lightColor: '#FF231F7C',
+                sound: `${soundFile}.wav`,
+                enableVibrate: true,
+                showBadge: true,
+                lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+                bypassDnd: true
+              });
+            }
+          }
+
           await Notifications.scheduleNotificationAsync({
             content: {
               title: `NutriSnap AI: ${rule.title}`,
@@ -608,12 +627,12 @@ export const notificationService = {
                 mode: rule.mode,
                 screen: screenRoute
               },
-              sound: true,
+              sound: channelId === 'high_priority_v2' ? true : undefined,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
-              channelId: 'high_priority_v2',
+              channelId: channelId,
             },
-            trigger: { seconds: 1, channelId: 'high_priority_v2' },
+            trigger: { seconds: 1, channelId: channelId },
           });
         } catch (e) {
           console.log("Event notification failed:", e.message);
@@ -641,29 +660,51 @@ export const notificationService = {
 
   scheduleWithRepeat: async (content, parsed, repeatType) => {
     if (!Notifications) return;
-    const channelId = Platform.OS === 'android' ? 'nutrisnap-reminders' : undefined;
+    let channelId = Platform.OS === 'android' ? 'nutrisnap-reminders' : undefined;
+    
+    if (Platform.OS === 'android') {
+      const mode = content.data?.mode || 'health';
+      const prefs = useAppStore.getState();
+      const soundFile = mode === 'gym' ? prefs.gymNotificationSound : prefs.healthNotificationSound;
+      
+      if (soundFile && soundFile !== 'default' && soundFile !== 'default_bell') {
+        const dynamicChannelId = `nutrisnap-${soundFile}`;
+        await Notifications.setNotificationChannelAsync(dynamicChannelId, {
+          name: `Reminders (${soundFile})`,
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 500, 200, 500],
+          lightColor: '#00C853',
+          sound: `${soundFile}.wav`, // Android requires extension for custom sounds
+          enableVibrate: true,
+          showBadge: true,
+          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+          bypassDnd: true
+        });
+        channelId = dynamicChannelId;
+      }
+    }
     
     if (repeatType === 'Weekdays') {
       const days = [2, 3, 4, 5, 6]; // Monday to Friday
       for (const day of days) {
         await Notifications.scheduleNotificationAsync({
-          content,
-          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId: channelId || 'nutrisnap-reminders' }
+          content: { ...content, sound: channelId ? undefined : true },
+          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId }
         });
       }
     } else if (repeatType === 'Weekends') {
       const days = [1, 7]; // Sunday, Saturday
       for (const day of days) {
         await Notifications.scheduleNotificationAsync({
-          content,
-          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId: channelId || 'nutrisnap-reminders' }
+          content: { ...content, sound: channelId ? undefined : true },
+          trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId }
         });
       }
     } else {
       // Daily or Custom Days (fallback to daily)
       await Notifications.scheduleNotificationAsync({
-        content,
-        trigger: { hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId: channelId || 'nutrisnap-reminders' }
+        content: { ...content, sound: channelId ? undefined : true },
+        trigger: { hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId }
       });
     }
   },

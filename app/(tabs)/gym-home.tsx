@@ -909,9 +909,9 @@ export default function GymHomeScreen() {
               if (!r.is_enabled) return false;
               
               const type = (r.reminder_type || r.title || '').toLowerCase();
-              if (type.includes('breakfast') || type.includes('lunch') || type.includes('dinner') || type.includes('snack') || type.includes('water') || type.includes('health') || type.includes('nutrition')) {
-                  return false; // Hide health reminders from Gym dashboard
-              }
+              const gymAllowed = ['workout', 'gym', 'exercise', 'protein', 'fitness', 'calories'];
+              const isGym = gymAllowed.some(kw => type.includes(kw));
+              if (!isGym) return false; // Strictly Gym Dashboard
               
               // Date filtering
               const repeat = r.repeat_type || 'Daily';

@@ -1048,9 +1048,9 @@ export default function HealthHomeScreen() {
               if (!r.is_enabled) return false;
               
               const type = (r.reminder_type || r.title || '').toLowerCase();
-              if (type.includes('workout') || type.includes('gym') || type.includes('exercise') || type.includes('fitness')) {
-                  return false; // Hide gym reminders from Health dashboard
-              }
+              const healthAllowed = ['breakfast', 'lunch', 'dinner', 'snack', 'water', 'medicine', 'sleep', 'bmi', 'health', 'nutrition', 'tips'];
+              const isHealth = healthAllowed.some(kw => type.includes(kw));
+              if (!isHealth) return false; // Strictly Health Dashboard
               
               // Date filtering
               const repeat = r.repeat_type || 'Daily';
