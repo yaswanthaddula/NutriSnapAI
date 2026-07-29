@@ -822,6 +822,7 @@ export default function GymHomeScreen() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 5 }}>
              {(() => {
                const counts = { Upcoming: 0, Active: 0, Completed: 0, Dismissed: 0 };
+               const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'short' });
                const isWeekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(todayDay);
                const isWeekend = ['Sat', 'Sun'].includes(todayDay);
                
