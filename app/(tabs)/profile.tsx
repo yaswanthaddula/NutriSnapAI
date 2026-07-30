@@ -123,7 +123,7 @@ export default function ProfileScreen() {
                 <Image source={{ uri: userProfile.profileImage }} style={{ width: '100%', height: '100%', borderRadius: 42 }} />
               ) : (
                 <View style={[styles.avatarImage, { backgroundColor: getAvatarColor(userProfile.name), justifyContent: 'center', alignItems: 'center', borderRadius: 42 }]}>
-                  <Text style={{ fontSize: 40, fontWeight: 'bold', color: '#006064' }}>
+                  <Text style={{ fontSize: 40, fontWeight: 'bold', color: '#FFF' }}>
                     {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
                   </Text>
                 </View>

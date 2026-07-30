@@ -668,8 +668,7 @@ export default function GymHomeScreen() {
                 const filteredReminders = todayReminders?.filter((r: any) => {
                   if (!r.is_enabled) return false;
 
-                  const isGym = ['workout', 'gym', 'fitness'].includes((r.reminder_type || '').toLowerCase());
-                  if (!isGym && !r.title?.toLowerCase().includes('workout') && !r.title?.toLowerCase().includes('gym')) return false;
+                  if (r.mode !== 'gym') return false;
 
                   const repeat = r.repeat_type || 'Daily';
                   if (repeat === 'Daily') return true;
@@ -920,10 +919,7 @@ export default function GymHomeScreen() {
             const filteredReminders = todayReminders?.filter((r: any) => {
               if (!r.is_enabled) return false;
               
-              const type = (r.reminder_type || r.title || '').toLowerCase();
-              const gymAllowed = ['workout', 'gym', 'exercise', 'protein', 'fitness', 'calories'];
-              const isGym = gymAllowed.some(kw => type.includes(kw));
-              if (!isGym) return false; // Strictly Gym Dashboard
+              if (r.mode !== 'gym') return false; // Strictly Gym Dashboard
               
               // Date filtering
               const repeat = r.repeat_type || 'Daily';
@@ -1061,6 +1057,7 @@ export default function GymHomeScreen() {
             const isWeekend = ['Sat', 'Sun'].includes(todayDay);
             return todayReminders.filter((r: any) => {
               if (!r.is_enabled) return false;
+              if (r.mode !== 'gym') return false;
               const repeat = r.repeat_type || 'Daily';
               if (repeat === 'Daily') return true;
               if (repeat === 'Weekdays') return isWeekday;

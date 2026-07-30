@@ -50,7 +50,19 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#00C853"
+          "color": "#00C853",
+          "sounds": [
+            "./assets/sounds/default_bell.wav",
+            "./assets/sounds/soft_bell.wav",
+            "./assets/sounds/gentle_chime.wav",
+            "./assets/sounds/water_drop.wav",
+            "./assets/sounds/alert_tone.wav",
+            "./assets/sounds/alarm.wav",
+            "./assets/sounds/heartbeat.wav",
+            "./assets/sounds/gym_bell.wav",
+            "./assets/sounds/classic_notification.wav",
+            "./assets/sounds/digital_bell.wav"
+          ]
         }
       ],
       "@react-native-community/datetimepicker"

@@ -46,6 +46,7 @@ class UserResponse(BaseModel):
     created_at: datetime
     last_active_platform: Optional[str] = None
     profile_image_url: Optional[str] = None
+    profile: Optional["ProfileResponse"] = None
 
     class Config:
         from_attributes = True

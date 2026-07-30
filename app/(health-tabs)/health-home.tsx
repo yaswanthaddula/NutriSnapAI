@@ -729,8 +729,7 @@ export default function HealthHomeScreen() {
                 const filteredReminders = todayReminders?.filter((r: any) => {
                   if (!r.is_enabled) return false;
                   
-                  const isHealth = ['breakfast', 'lunch', 'dinner', 'snack', 'water', 'sleep', 'nutrition'].includes((r.reminder_type || '').toLowerCase());
-                  if (!isHealth && !r.title?.toLowerCase().includes('health')) return false;
+                  if (r.mode !== 'health') return false;
 
                   const repeat = r.repeat_type || 'Daily';
                   if (repeat === 'Daily') return true;
@@ -1059,10 +1058,7 @@ export default function HealthHomeScreen() {
             const filteredReminders = todayReminders?.filter((r: any) => {
               if (!r.is_enabled) return false;
               
-              const type = (r.reminder_type || r.title || '').toLowerCase();
-              const healthAllowed = ['breakfast', 'lunch', 'dinner', 'snack', 'water', 'medicine', 'sleep', 'bmi', 'health', 'nutrition', 'tips'];
-              const isHealth = healthAllowed.some(kw => type.includes(kw));
-              if (!isHealth) return false; // Strictly Health Dashboard
+              if (r.mode !== 'health') return false; // Strictly Health Dashboard
               
               // Date filtering
               const repeat = r.repeat_type || 'Daily';
@@ -1200,6 +1196,7 @@ export default function HealthHomeScreen() {
             const isWeekend = ['Sat', 'Sun'].includes(todayDay);
             return todayReminders.filter((r: any) => {
               if (!r.is_enabled) return false;
+              if (r.mode !== 'health') return false;
               const repeat = r.repeat_type || 'Daily';
               if (repeat === 'Daily') return true;
               if (repeat === 'Weekdays') return isWeekday;

@@ -635,8 +635,8 @@ export const notificationService = {
 
           await Notifications.scheduleNotificationAsync({
             content: {
-              title: `NutriSnap AI: ${rule.title}`,
-              body: message,
+              title: '🔔 NutriSnap AI',
+              body: `${rule.title}\n${message}`,
               data: { 
                 type: rule.type,
                 mode: rule.mode,
@@ -677,8 +677,19 @@ export const notificationService = {
     if (!Notifications) return;
     let channelId = Platform.OS === 'android' ? 'nutrisnap-reminders' : undefined;
     
+    // Format professional popup notification
+    const originalTitle = content.title || 'Reminder';
+    const originalBody = content.body || '';
+    const formattedContent = {
+      ...content,
+      title: '🔔 NutriSnap AI',
+      body: `${originalTitle}\n${originalBody}`,
+      priority: Notifications.AndroidNotificationPriority?.MAX || 'max',
+      vibrate: [0, 500, 200, 500]
+    };
+    
     if (Platform.OS === 'android') {
-      const mode = content.data?.mode || 'health';
+      const mode = formattedContent.data?.mode || 'health';
       const prefs = useAppStore.getState();
       const soundFile = mode === 'gym' ? prefs.gymNotificationSound : prefs.healthNotificationSound;
       
@@ -703,7 +714,7 @@ export const notificationService = {
       const days = [2, 3, 4, 5, 6]; // Monday to Friday
       for (const day of days) {
         await Notifications.scheduleNotificationAsync({
-          content: { ...content, sound: channelId ? undefined : true },
+          content: { ...formattedContent, sound: channelId ? undefined : true },
           trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId }
         });
       }
@@ -711,14 +722,14 @@ export const notificationService = {
       const days = [1, 7]; // Sunday, Saturday
       for (const day of days) {
         await Notifications.scheduleNotificationAsync({
-          content: { ...content, sound: channelId ? undefined : true },
+          content: { ...formattedContent, sound: channelId ? undefined : true },
           trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId }
         });
       }
     } else {
       // Daily or Custom Days (fallback to daily)
       await Notifications.scheduleNotificationAsync({
-        content: { ...content, sound: channelId ? undefined : true },
+        content: { ...formattedContent, sound: channelId ? undefined : true },
         trigger: { hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId }
       });
     }

@@ -37,11 +37,19 @@ export default function WelcomeScreen() {
         const profile = useAppStore.getState().userProfile;
         if (profile && profile.email) {
           
-          // Background sync for latest user data (like profile image) across devices
+          // Background sync for latest user data (like profile image and physical stats) across devices
           apiService.getMe().then(userResp => {
-            if (userResp && userResp.data && userResp.data.profile_image_url) {
-              useAppStore.getState().updateUserProfile('profileImage', userResp.data.profile_image_url);
-              useAppStore.getState().saveStoredData();
+            if (userResp && userResp.data) {
+              const uData = userResp.data;
+              const updates = {};
+              if (uData.profile_image_url) updates.profileImage = uData.profile_image_url;
+              if (uData.profile) {
+                Object.assign(updates, uData.profile);
+              }
+              if (Object.keys(updates).length > 0) {
+                useAppStore.getState().setUserProfile(updates);
+                useAppStore.getState().saveStoredData();
+              }
             }
           }).catch(e => console.log('Background sync user err:', e));
 
