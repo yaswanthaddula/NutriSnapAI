@@ -97,22 +97,11 @@ const CircularWebTimePickerModal = ({ visible, initialValue, onClose, onSave, th
 
     // Render Hand
     items.push(
-      <View key="hand-container" style={{ position: 'absolute', top: center, left: center, width: 0, height: 0, zIndex: 1 }}>
-        <View style={{
-          position: 'absolute',
-          width: 2,
-          height: radius,
-          backgroundColor: '#1976D2',
-          bottom: radius / 2,
-          left: -1,
-          transform: [
-            { translateY: radius / 2 },
-            { rotate: `${rotation}deg` },
-            { translateY: -radius / 2 }
-          ]
-        }} />
-        <View style={{ position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: '#1976D2', left: -4, top: -4 }} />
-      </View>
+      <View key="hand-container" style={{ position: 'absolute', top: center - radius, left: center - 1, width: 2, height: radius * 2, zIndex: 1, transform: [{ rotate: `${rotation}deg` }] }}>
+        <View style={{ width: 2, height: radius, backgroundColor: '#1976D2' }} />
+        <View style={{ width: 2, height: radius, backgroundColor: 'transparent' }} />
+      </View>,
+      <View key="center-dot" style={{ position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: '#1976D2', left: center - 4, top: center - 4, zIndex: 2 }} />
     );
 
     // Render Numbers
