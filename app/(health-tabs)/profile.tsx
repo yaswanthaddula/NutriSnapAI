@@ -105,7 +105,7 @@ export default function ProfileScreen() {
                 />
               ) : (
                 <View style={[styles.avatarImage, { backgroundColor: getAvatarColor(userProfile.name), justifyContent: 'center', alignItems: 'center', borderWidth: 0 }]}>
-                  <Text style={[styles.avatarText, { color: '#FFF' }]}>
+                  <Text style={[styles.avatarText, { color: '#006064' }]}>
                     {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
                   </Text>
                 </View>

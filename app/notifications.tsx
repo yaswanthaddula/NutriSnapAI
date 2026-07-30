@@ -38,8 +38,6 @@ const CircularWebTimePickerModal = ({ visible, initialValue, onClose, onSave, th
     }
   }, [visible, initialValue]);
 
-  if (!visible) return null;
-
   const clockSize = 240;
   const center = clockSize / 2;
   const radius = clockSize * 0.38;
@@ -73,6 +71,8 @@ const CircularWebTimePickerModal = ({ visible, initialValue, onClose, onSave, th
       }
     })
   ).current;
+
+  if (!visible) return null;
 
   const getCoordinates = (value: number, total: number) => {
     const angle = (value / total) * 2 * Math.PI - Math.PI / 2;
