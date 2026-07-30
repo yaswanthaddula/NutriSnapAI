@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: Platform.OS === 'android' ? 45 : 10, paddingBottom: 15 },
   backBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   headerTitle: { fontSize: 18, fontWeight: 'bold' },
-  scroll: { paddingHorizontal: 25, paddingBottom: 50 },
+  scroll: { paddingHorizontal: 25, paddingBottom: 50, width: '100%', maxWidth: 800, alignSelf: 'center' },
   videoCard: { width: '100%', height: 220, borderRadius: 25, overflow: 'hidden', backgroundColor: '#000', marginBottom: 20, borderWidth: 1 },
   video: { width: '100%', height: '100%' },
   titleSection: { marginBottom: 20 },

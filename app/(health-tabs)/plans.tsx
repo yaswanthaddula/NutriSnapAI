@@ -177,14 +177,25 @@ const CardVideo = ({ url, isDark }: { url: string, isDark: boolean }) => {
 
             {/* PREVIEW IMAGE (YouTube Thumbnail) */}
             <View style={[styles.videoWrapper, { borderColor: theme.border }]}>
-               <Image 
-                source={{ uri: `https://img.youtube.com/vi/${item.videoId}/0.jpg` }} 
-                style={styles.cardVideo}
-                resizeMode="cover"
-               />
-               <View style={styles.videoOverlay}>
-                  <Ionicons name="play" size={20} color="white" />
-               </View>
+               {Platform.OS === 'web' ? (
+                 <iframe 
+                   src={`https://www.youtube.com/embed/${item.videoId}?controls=0`} 
+                   style={{ width: '100%', height: '100%', border: 'none' }} 
+                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                   allowFullScreen
+                 />
+               ) : (
+                 <>
+                   <Image 
+                    source={{ uri: `https://img.youtube.com/vi/${item.videoId}/0.jpg` }} 
+                    style={styles.cardVideo}
+                    resizeMode="cover"
+                   />
+                   <View style={styles.videoOverlay}>
+                      <Ionicons name="play" size={20} color="white" />
+                   </View>
+                 </>
+               )}
             </View>
           </TouchableOpacity>
         ))}
@@ -199,7 +210,7 @@ const styles = StyleSheet.create({
   header: { padding: 25, paddingTop: Platform.OS === 'android' ? 45 : 25 },
   headerTitle: { fontSize: 24, fontWeight: 'bold' },
   headerSub: { fontSize: 14, marginTop: 4 },
-  scroll: { padding: 20, paddingBottom: 100 },
+  scroll: { padding: 20, paddingBottom: 100, width: '100%', maxWidth: 800, alignSelf: 'center' },
   focusCard: { backgroundColor: '#00C853', borderRadius: 25, padding: 20, marginBottom: 25, elevation: 5, shadowColor: '#00C853', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10 },
   focusHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   focusIconBg: { width: 45, height: 45, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },

@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: Platform.OS === 'android' ? 45 : 10, paddingBottom: 15 },
   backBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   headerTitle: { fontSize: 18, fontWeight: 'bold' },
-  scroll: { paddingHorizontal: 25, paddingBottom: 50 },
+  scroll: { paddingHorizontal: 25, paddingBottom: 50, width: '100%', maxWidth: 800, alignSelf: 'center' },
   interactiveCard: { padding: 20, borderRadius: 25, borderWidth: 1, marginBottom: 25 },
   interactiveTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15 },
   activityRow: { flexDirection: 'row', alignItems: 'center' },
