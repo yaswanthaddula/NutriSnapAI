@@ -6,16 +6,14 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
-  Dimensions,
   SafeAreaView,
-  Animated
+  Animated,
+  useWindowDimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const { width, height } = Dimensions.get('window');
 
 const ONBOARDING_DATA = [
   {
@@ -64,6 +62,7 @@ const ONBOARDING_DATA = [
 ];
 
 export default function OnboardingScreen() {
+  const { width, height } = useWindowDimensions();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -94,10 +93,10 @@ export default function OnboardingScreen() {
 
   const renderItem = ({ item, index }: { item: typeof ONBOARDING_DATA[0], index: number }) => {
     return (
-      <View style={styles.slide}>
-        <View style={styles.imageContainer}>
-          <View style={styles.imageGlow} />
-          <Image source={item.image} style={styles.image} resizeMode="contain" />
+      <View style={[styles.slide, { width }]}>
+        <View style={[styles.imageContainer, { height: height * 0.45 }]}>
+          <View style={[styles.imageGlow, { width: Math.min(width * 0.7, 400), height: Math.min(width * 0.7, 400), borderRadius: Math.min(width * 0.7, 400) / 2 }]} />
+          <Image source={item.image} style={[styles.image, { width: Math.min(width * 0.85, 450) }]} resizeMode="contain" />
         </View>
         <View style={styles.textContainer}>
           <Text style={styles.title}>{item.title}</Text>
@@ -249,27 +248,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   slide: {
-    width,
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingTop: 20,
   },
   imageContainer: {
-    height: height * 0.45,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   imageGlow: {
     position: 'absolute',
-    width: width * 0.7,
-    height: width * 0.7,
-    borderRadius: (width * 0.7) / 2,
     backgroundColor: '#00E676',
     opacity: 0.08,
   },
   image: {
-    width: width * 0.85,
     height: '100%',
   },
   textContainer: {
@@ -296,6 +289,8 @@ const styles = StyleSheet.create({
   },
   featuresContainer: {
     width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
     alignItems: 'flex-start',
     paddingHorizontal: 10,
   },
@@ -338,6 +333,8 @@ const styles = StyleSheet.create({
   },
   finalButtonsContainer: {
     width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
     alignItems: 'center',
     marginTop: 10,
   },
