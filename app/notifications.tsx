@@ -91,8 +91,8 @@ const CircularWebTimePickerModal = ({ visible, initialValue, onClose, onSave, th
     const step = isHour ? 1 : 5;
     const items = [];
 
-    const selectedValue = isHour ? parseInt(h, 10) % 12 : parseInt(m, 10);
-    const rotation = getRotation(selectedValue, total);
+    const selectedValue = isHour ? (parseInt(h, 10) || 0) % 12 : (parseInt(m, 10) || 0);
+    const rotation = getRotation(selectedValue, total) || 0;
 
     // Render Hand
     items.push(
@@ -149,11 +149,11 @@ const CircularWebTimePickerModal = ({ visible, initialValue, onClose, onSave, th
           <View style={{ backgroundColor: '#1976D2', padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
               <TouchableOpacity onPress={() => setMode('hour')}>
-                <Text style={{ fontSize: 48, color: mode === 'hour' ? '#FFF' : 'rgba(255,255,255,0.6)', fontWeight: 'bold', padding: 0, margin: 0, minWidth: 60, textAlign: 'center' }}>{h}</Text>
+                <Text style={{ fontSize: 48, color: mode === 'hour' ? '#FFF' : 'rgba(255,255,255,0.6)', fontWeight: 'bold' }}>{h}</Text>
               </TouchableOpacity>
               <Text style={{ fontSize: 48, color: 'rgba(255,255,255,0.6)', fontWeight: 'bold', marginHorizontal: 5 }}>:</Text>
               <TouchableOpacity onPress={() => setMode('minute')}>
-                <Text style={{ fontSize: 48, color: mode === 'minute' ? '#FFF' : 'rgba(255,255,255,0.6)', fontWeight: 'bold', padding: 0, margin: 0, minWidth: 60, textAlign: 'center' }}>{m}</Text>
+                <Text style={{ fontSize: 48, color: mode === 'minute' ? '#FFF' : 'rgba(255,255,255,0.6)', fontWeight: 'bold' }}>{m}</Text>
               </TouchableOpacity>
             </View>
             <View style={{ marginLeft: 15, justifyContent: 'center' }}>
