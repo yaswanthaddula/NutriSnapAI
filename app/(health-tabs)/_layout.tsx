@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { View, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../_layout'; 
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HealthTabLayout() {
   const { isDark } = useTheme();
@@ -15,8 +16,14 @@ export default function HealthTabLayout() {
   };
 
   return (
-    <Tabs
-      screenOptions={{
+    <View style={{ flex: 1 }}>
+      <LinearGradient
+        colors={isDark ? ['#121212', '#1E1E1E'] : ['#E0F7FA', '#E8F5E9']}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <Tabs
+        sceneContainerStyle={{ backgroundColor: 'transparent' }}
+        screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.activeColor,
         tabBarInactiveTintColor: theme.inactiveColor,
@@ -93,6 +100,7 @@ export default function HealthTabLayout() {
         }}
       />
     </Tabs>
+    </View>
   );
 }
 

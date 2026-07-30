@@ -90,7 +90,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
       
       {/* --- TOP GREEN HEADER --- */}
       <LinearGradient colors={['#4CAF50', '#2E7D32']} style={styles.greenHeader}>

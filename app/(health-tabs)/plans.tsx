@@ -117,7 +117,7 @@ const CardVideo = ({ url, isDark }: { url: string, isDark: boolean }) => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
       <View style={[styles.header, { backgroundColor: theme.headerBg }]}>
         <Text style={[styles.headerTitle, { color: theme.text }]}>Weekly Health Plan 🌿</Text>
         <Text style={[styles.headerSub, { color: theme.subText }]}>Your personalized wellness journey</Text>

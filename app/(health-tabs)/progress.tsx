@@ -84,7 +84,7 @@ export default function HealthProgress() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
       {/* HEADER */}
       <View style={[styles.header, { backgroundColor: theme.card }]}>
         <Text style={[styles.headerTitle, { color: theme.text }]}>Weekly Analytics</Text>
