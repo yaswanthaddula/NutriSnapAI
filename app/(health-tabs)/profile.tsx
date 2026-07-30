@@ -292,6 +292,7 @@ const styles = StyleSheet.create({
   },
   avatarCircle: { width: 84, height: 84, borderRadius: 42, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
   avatarImage: { width: '100%', height: '100%' },
+  avatarText: { fontSize: 40, fontWeight: 'bold' },
   nameContainer: { alignItems: 'center' },
   userName: { color: '#FFF', fontSize: 26, fontWeight: '900' },
   userAge: { color: 'rgba(255,255,255,0.8)', fontSize: 16, marginTop: 4, fontWeight: '600' },

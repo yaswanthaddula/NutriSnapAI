@@ -112,7 +112,7 @@ export default function HealthNutritionScreen() {
            try {
               const uploadResp = await apiService.uploadMealPhoto(addResp.data.id, uploadUri);
               if (uploadResp.data && uploadResp.data.url) {
-                  mealObject.meal_image_url = uploadResp.data.url;
+                  mealObject.imageUri = uploadResp.data.url;
               }
            } catch(e) { console.log('Image upload failed', e); }
         }
