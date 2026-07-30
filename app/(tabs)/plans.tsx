@@ -8,7 +8,7 @@ import {
   SafeAreaView, 
   Platform 
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { WORKOUT_PLANS } from '../../src/data/workoutPlans';
 import { useTheme } from '../_layout';
@@ -17,6 +17,19 @@ export default function PlansScreen() {
   const { isDark } = useTheme();
   const handleNavigation = (day: string) => {
     router.push({ pathname: '/workout-day-detail', params: { day } });
+  };
+
+  const getModernIcon = (day: string) => {
+    switch (day.toUpperCase()) {
+      case 'CHEST DAY': return { icon: 'weight-lifter', color: '#FF5722', bg: 'rgba(255, 87, 34, 0.1)' };
+      case 'BACK DAY': return { icon: 'human-handsdown', color: '#2196F3', bg: 'rgba(33, 150, 243, 0.1)' };
+      case 'SHOULDER DAY': return { icon: 'dumbbell', color: '#E91E63', bg: 'rgba(233, 30, 99, 0.1)' };
+      case 'LEG DAY': return { icon: 'shoe-sneaker', color: '#4CAF50', bg: 'rgba(76, 175, 80, 0.1)' };
+      case 'ARMS DAY': return { icon: 'arm-flex', color: '#FF9800', bg: 'rgba(255, 152, 0, 0.1)' };
+      case 'FULL BODY': return { icon: 'human-handsup', color: '#9C27B0', bg: 'rgba(156, 39, 176, 0.1)' };
+      case 'REST DAY': return { icon: 'flower', color: '#00BCD4', bg: 'rgba(0, 188, 212, 0.1)' };
+      default: return { icon: 'fitness-center', color: '#00C853', bg: 'rgba(0, 200, 83, 0.1)' };
+    }
   };
 
   const theme = {
@@ -46,15 +59,17 @@ export default function PlansScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {WORKOUT_PLANS.map((item, index) => (
+        {WORKOUT_PLANS.map((item, index) => {
+          const iconConfig = getModernIcon(item.day);
+          return (
           <TouchableOpacity 
             key={index} 
             style={[styles.planCard, { backgroundColor: theme.card, shadowColor: isDark ? '#000' : '#CCC' }]}
             onPress={() => handleNavigation(item.day)}
             activeOpacity={0.7}
           >
-            <View style={[styles.emojiContainer, { backgroundColor: isDark ? '#2A2A2A' : '#F8F9FA' }]}>
-              <Text style={styles.emoji}>{item.icon}</Text>
+            <View style={[styles.emojiContainer, { backgroundColor: iconConfig.bg }]}>
+              <MaterialCommunityIcons name={iconConfig.icon as any} size={32} color={iconConfig.color} />
             </View>
             
             <View style={styles.cardContent}>
@@ -67,7 +82,7 @@ export default function PlansScreen() {
             
             <Ionicons name="chevron-forward" size={20} color={isDark ? '#444' : '#CCC'} />
           </TouchableOpacity>
-        ))}
+        )})}
       </ScrollView>
     </SafeAreaView>
   );
