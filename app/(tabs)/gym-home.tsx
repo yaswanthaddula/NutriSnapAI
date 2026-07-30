@@ -721,8 +721,8 @@ export default function GymHomeScreen() {
             {userProfile.profileImage ? (
               <Image source={{ uri: userProfile.profileImage }} style={{ width: '100%', height: '100%', borderRadius: 30 }} />
             ) : (
-              <View style={[styles.avatarCircle, { backgroundColor: isDark ? '#333' : '#E0E0E0', justifyContent: 'center', alignItems: 'center', borderWidth: 0 }]}>
-                <Ionicons name="person" size={30} color={isDark ? '#AAA' : '#777'} />
+              <View style={[styles.avatarCircle, { backgroundColor: getAvatarColor(userProfile.name), borderWidth: 0 }]}>
+                <Text style={styles.avatarLetter}>{userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -1345,8 +1345,8 @@ export default function GymHomeScreen() {
                     {userProfile.profileImage ? (
                       <Image source={{ uri: userProfile.profileImage }} style={{ width: 28, height: 28, borderRadius: 14 }} />
                     ) : (
-                      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: isDark ? '#333' : '#E0E0E0', justifyContent: 'center', alignItems: 'center' }}>
-                        <Ionicons name="person" size={16} color={isDark ? '#AAA' : '#777'} />
+                      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: getAvatarColor(userProfile.name), justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ color: '#FFF', fontSize: 14, fontWeight: 'bold' }}>{userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}</Text>
                       </View>
                     )}
                   </View>
