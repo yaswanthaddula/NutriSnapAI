@@ -120,9 +120,9 @@ export default function ProfileScreen() {
           <View style={styles.avatarRing}>
             <TouchableOpacity style={styles.avatarCircle} onPress={pickImage} activeOpacity={0.8}>
               {userProfile.profileImage ? (
-                <Image source={{ uri: userProfile.profileImage }} style={{ width: '100%', height: '100%' }} />
+                <Image source={{ uri: userProfile.profileImage }} style={{ width: '100%', height: '100%', borderRadius: 42 }} />
               ) : (
-                <View style={{ width: '100%', height: '100%', backgroundColor: getAvatarColor(userProfile.name), justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ width: '100%', height: '100%', borderRadius: 42, backgroundColor: getAvatarColor(userProfile.name), justifyContent: 'center', alignItems: 'center' }}>
                   <Text style={{ color: '#FFF', fontSize: 40, fontWeight: 'bold' }}>{userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}</Text>
                 </View>
               )}
