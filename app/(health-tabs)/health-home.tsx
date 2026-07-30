@@ -1107,7 +1107,9 @@ export default function HealthHomeScreen() {
               const colorObj = statusColors[status as keyof typeof statusColors] || statusColors['Upcoming'];
 
               let timeStr = '';
-              if (reminder.next_trigger_at) {
+              if (reminder.reminder_time) {
+                timeStr = reminder.reminder_time;
+              } else if (reminder.next_trigger_at) {
                 const d = new Date(reminder.next_trigger_at);
                 timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
               } else if (reminder.time) {

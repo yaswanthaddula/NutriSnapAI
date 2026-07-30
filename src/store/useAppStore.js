@@ -85,6 +85,14 @@ const useAppStore = create((set, get) => ({
     set((state) => ({ medicineReminders: (state.medicineReminders || []).filter(r => r.id !== id) }));
     get().saveStoredData();
   },
+
+  activePopup: null,
+  setActivePopup: (popup) => set({ activePopup: popup }),
+  markReminderCompleted: (type) => {
+    // You can hook this up to backend if needed
+    console.log(`Marked reminder ${type} as completed from popup.`);
+  },
+
   todayReminders: [], // Reminders explicitly for today
   
   fetchTodayReminders: async () => {
@@ -771,6 +779,23 @@ const useAppStore = create((set, get) => ({
       ...notif 
     };
     set({ notifications: [newNotif, ...notifications] });
+    
+    // Automatically show popup for in-app web notifications
+    get().setActivePopup(newNotif);
+    
+    // Trigger native browser notification on web
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'granted') {
+        new Notification(newNotif.title, { body: newNotif.message });
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            new Notification(newNotif.title, { body: newNotif.message });
+          }
+        });
+      }
+    }
+    
     get().saveStoredData();
     
     // Sync to backend (fire and forget)
