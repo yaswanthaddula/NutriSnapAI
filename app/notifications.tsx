@@ -103,10 +103,13 @@ const CircularWebTimePickerModal = ({ visible, initialValue, onClose, onSave, th
           width: 2,
           height: radius,
           backgroundColor: '#1976D2',
-          bottom: 0,
+          bottom: radius / 2,
           left: -1,
-          transformOrigin: 'bottom center',
-          transform: [{ rotate: `${rotation}deg` }]
+          transform: [
+            { translateY: radius / 2 },
+            { rotate: `${rotation}deg` },
+            { translateY: -radius / 2 }
+          ]
         }} />
         <View style={{ position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: '#1976D2', left: -4, top: -4 }} />
       </View>
