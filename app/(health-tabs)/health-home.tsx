@@ -24,6 +24,11 @@ import { getAvatarColor } from '../../src/utils/avatarUtils';
 import { calculateMealTotals, formatTo12Hour } from '../../src/utils/calculations';
 import { chatWithAi } from '../../src/services/chatGeminiService';
 import { Pedometer } from 'expo-sensors';
+import { LayoutAnimation, UIManager, Platform as RNPlatform2 } from 'react-native';
+
+if (RNPlatform2.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 import { KeyboardAvoidingView } from 'react-native';
 import apiService from '../../src/services/apiService';
 import { notificationService } from '../../src/services/notificationService';
@@ -1089,59 +1094,97 @@ export default function HealthHomeScreen() {
               
               let status = reminder.status || 'Upcoming';
               if (!status || status.trim() === '') status = 'Upcoming';
-              const statusColor = status === 'Dismissed' || status === 'Missed' ? '#F44336' : status === 'Completed' ? '#4CAF50' : status === 'Active' ? '#FF9800' : '#2196F3';
               
-              return (
-                <View key={index} style={[styles.mealItem, { borderBottomColor: themeColors.border, paddingVertical: 12, flexDirection: 'column', alignItems: 'stretch' }]}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <View style={[styles.reminderIconBox, { backgroundColor: iconColor + '20' }]}>
-                      <MaterialCommunityIcons name={iconName} size={24} color={iconColor} />
-                    </View>
-                    <View style={{flex: 1, marginLeft: 15}}>
-                      <Text style={[styles.mealName, {color: themeColors.text}]}>{title}</Text>
-                      <Text style={{ color: statusColor, fontSize: 13, marginTop: 4, fontWeight: 'bold' }}>
-                        Status: {status === 'Completed' ? 'Completed ✅' : status === 'Missed' ? 'Missed ❌' : status}
-                      </Text>
-                    </View>
-                    <Ionicons name={status === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={status === 'Completed' ? "#4CAF50" : statusColor} />
-                    <TouchableOpacity 
-                      style={{ marginLeft: 10 }}
-                      onPress={() => {
-                        Alert.alert("Delete Reminder", "Are you sure?", [
-                          { text: "Cancel", style: "cancel" },
-                          { text: "Delete", style: "destructive", onPress: async () => {
-                              await useAppStore.getState().deleteReminder(reminder.id);
-                              Alert.alert("Success", "Reminder deleted.");
-                          }}
-                        ]);
-                      }}
-                    >
-                      <Ionicons name="trash-outline" size={20} color="#FF5252" />
-                    </TouchableOpacity>
-                  </View>
+              const statusColors = {
+                'Completed': { bg: '#E8F5E9', text: '#4CAF50', dot: '#4CAF50' },
+                'Upcoming': { bg: '#E3F2FD', text: '#2196F3', dot: '#2196F3' },
+                'Pending': { bg: '#FFF3E0', text: '#FF9800', dot: '#FF9800' },
+                'Active': { bg: '#FFF3E0', text: '#FF9800', dot: '#FF9800' },
+                'Missed': { bg: '#FFEBEE', text: '#F44336', dot: '#F44336' },
+                'Dismissed': { bg: '#FFEBEE', text: '#F44336', dot: '#F44336' },
+                'Snoozed': { bg: '#FFF3E0', text: '#FF9800', dot: '#FF9800' }
+              };
+              const colorObj = statusColors[status as keyof typeof statusColors] || statusColors['Upcoming'];
 
-                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10, gap: 10 }}>
+              let timeStr = '';
+              if (reminder.next_trigger_at) {
+                const d = new Date(reminder.next_trigger_at);
+                timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              } else if (reminder.time) {
+                timeStr = reminder.time;
+              }
+
+              let description = '';
+              if (status === 'Completed') description = `Your ${title.toLowerCase()} has been completed successfully.`;
+              else if (status === 'Missed') description = `You missed your ${title.toLowerCase()}. Try to stay on track tomorrow!`;
+              else if (status === 'Snoozed') description = `Your ${title.toLowerCase()} is snoozed.`;
+              else description = `Don't forget your ${title.toLowerCase()} today.`;
+
+              const handleAction = (actionFn: () => void) => {
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                actionFn();
+              };
+
+              return (
+                <View key={index} style={{
+                  backgroundColor: themeColors.card,
+                  borderRadius: 16,
+                  padding: 16,
+                  marginBottom: 12,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 8,
+                  elevation: 3,
+                  borderWidth: 1,
+                  borderColor: themeColors.border || '#F0F0F0'
+                }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                    <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: iconColor + '15', justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                      <MaterialCommunityIcons name={iconName} size={26} color={iconColor} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: themeColors.text, marginBottom: 4 }}>{title}</Text>
+                      {timeStr ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Ionicons name="time-outline" size={14} color={themeColors.subText} />
+                          <Text style={{ fontSize: 13, color: themeColors.subText, marginLeft: 4 }}>{timeStr}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                    <View style={{ backgroundColor: colorObj.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
+                      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colorObj.dot, marginRight: 6 }} />
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: colorObj.text }}>{status}</Text>
+                    </View>
+                  </View>
+                  
+                  <Text style={{ fontSize: 14, color: themeColors.subText, lineHeight: 20, marginBottom: 16 }}>{description}</Text>
+                  
+                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
                     {status !== 'Completed' && (
                       <TouchableOpacity 
-                        style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#4CAF50', borderRadius: 4 }}
-                        onPress={() => useAppStore.getState().markReminderDone(reminder.id)}
+                        style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#E8F5E9', borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
+                        onPress={() => handleAction(() => useAppStore.getState().markReminderDone(reminder.id))}
                       >
-                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>Done</Text>
+                        <Ionicons name="checkmark-circle-outline" size={16} color="#4CAF50" style={{ marginRight: 4 }} />
+                        <Text style={{ color: '#4CAF50', fontSize: 13, fontWeight: '700' }}>Done</Text>
                       </TouchableOpacity>
                     )}
                     {(status === 'Active' || status === 'Upcoming' || status === 'Snoozed') && (
                       <TouchableOpacity 
-                        style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#FF9800', borderRadius: 4 }}
-                        onPress={() => useAppStore.getState().snoozeReminder(reminder.id, 10)}
+                        style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#FFF3E0', borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
+                        onPress={() => handleAction(() => useAppStore.getState().snoozeReminder(reminder.id, 10))}
                       >
-                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>Remind Later</Text>
+                        <Ionicons name="alarm-outline" size={16} color="#FF9800" style={{ marginRight: 4 }} />
+                        <Text style={{ color: '#FF9800', fontSize: 13, fontWeight: '700' }}>Snooze</Text>
                       </TouchableOpacity>
                     )}
                     <TouchableOpacity 
-                      style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#757575', borderRadius: 4 }}
-                      onPress={() => useAppStore.getState().dismissReminder(reminder.id)}
+                      style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: isDark ? '#333' : '#F5F5F5', borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
+                      onPress={() => handleAction(() => useAppStore.getState().dismissReminder(reminder.id))}
                     >
-                      <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>Dismiss</Text>
+                      <Ionicons name="close-circle-outline" size={16} color={themeColors.subText} style={{ marginRight: 4 }} />
+                      <Text style={{ color: themeColors.subText, fontSize: 13, fontWeight: '700' }}>Dismiss</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
