@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -6,7 +6,8 @@ import {
   ScrollView, 
   TouchableOpacity, 
   SafeAreaView, 
-  Platform
+  Platform,
+  Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -15,61 +16,90 @@ import useAppStore from '../src/store/useAppStore';
 
 export default function NotificationCenterScreen() {
   const { isDark } = useTheme();
-  const { notifications, markAsRead, markAllAsRead, fetchNotifications } = useAppStore();
-  
+  const { notifications, markAsRead, clearNotification, fetchNotifications } = useAppStore();
   const { fromMode } = useLocalSearchParams();
-  const initialFilter = fromMode === 'gym' ? 'Fitness' : (fromMode === 'health' ? 'Health' : 'All');
-  const [activeFilter, setActiveFilter] = useState(initialFilter);
-  const filters = ['All', 'Health', 'Fitness'];
-
-  useEffect(() => {
-    if (fromMode === 'gym') setActiveFilter('Fitness');
-    else if (fromMode === 'health') setActiveFilter('Health');
-  }, [fromMode]);
 
   useEffect(() => {
     fetchNotifications();
   }, []);
 
+  const mode = fromMode === 'gym' ? 'gym' : 'health';
+
   const themeColors = {
-    bg: isDark ? '#111827' : '#F9FAFB',
-    card: isDark ? '#1F2937' : '#FFFFFF',
-    text: isDark ? '#F9FAFB' : '#111827',
-    subText: isDark ? '#9CA3AF' : '#6B7280',
-    border: isDark ? '#374151' : '#E5E7EB',
-    accent: isDark ? '#3B82F6' : '#2563EB',
-    iconBg: isDark ? '#374151' : '#F3F4F6'
+    bg: isDark ? '#121212' : '#F4F7FA',
+    card: isDark ? '#1E1E1E' : '#FFFFFF',
+    text: isDark ? '#F9FAFB' : '#011627',
+    subText: isDark ? '#9CA3AF' : '#7D8592',
+    border: isDark ? '#333333' : '#E0E6ED',
+    healthAccent: '#4CAF50',
+    gymAccent: '#FF9800',
+    iconBg: isDark ? '#2A2A2A' : '#F3F4F6'
   };
+
+  const accentColor = mode === 'gym' ? themeColors.gymAccent : themeColors.healthAccent;
 
   const activeNotifs = notifications.filter(n => n.status !== 'cleared');
 
+  // Exact filtering based on User's explicit requirements
   const filteredNotifications = activeNotifs.filter((n) => {
-    if (activeFilter === 'Health') {
-      return n.type?.match(/meal|breakfast|lunch|dinner|snack|water|medicine|pill|sleep|recover|insight|bmi/i) || n.title?.match(/meal|breakfast|lunch|dinner|snack|water|medicine|pill|sleep|recover|insight|bmi/i);
+    const title = (n.title || '').toLowerCase();
+    const type = (n.type || '').toLowerCase();
+    
+    if (mode === 'health') {
+      // ONLY: Breakfast, Lunch, Dinner, Water, Medicine, Sleep, BMI Update, Health Tips
+      return /(breakfast|lunch|dinner|snack|meal|water|medicine|pill|sleep|recover|bmi|tip|insight)/.test(type) ||
+             /(breakfast|lunch|dinner|snack|meal|water|medicine|pill|sleep|recover|bmi|tip|insight)/.test(title);
     }
-    if (activeFilter === 'Fitness') {
-      return n.type?.match(/workout|gym|protein|exercise|calorie|streak/i) || n.title?.match(/workout|gym|protein|exercise|calorie|streak/i);
+    
+    if (mode === 'gym') {
+      // ONLY: Workout, Exercise, Protein, Calories Burned, Fitness Progress, Weekly Fitness Report
+      return /(workout|gym|exercise|protein|calorie|fitness|streak|report)/.test(type) ||
+             /(workout|gym|exercise|protein|calorie|fitness|streak|report)/.test(title);
     }
-    return true;
+    return false;
   });
 
   // Sort by newest first
   const sortedNotifications = filteredNotifications.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
+  // Grouping logic
+  const now = new Date();
+  const groups = {
+    'Today': [] as any[],
+    'Yesterday': [] as any[],
+    'Earlier': [] as any[]
+  };
+
+  sortedNotifications.forEach(notif => {
+    const d = new Date(notif.createdAt || 0);
+    const diffMs = now.getTime() - d.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+      groups['Today'].push(notif);
+    } else if (diffDays === 1 || (diffDays === 0 && d.getDate() !== now.getDate())) {
+      groups['Yesterday'].push(notif);
+    } else {
+      groups['Earlier'].push(notif);
+    }
+  });
+
   const getIconForType = (type: string, title: string) => {
     const t = (type || '').toLowerCase();
     const txt = (title || '').toLowerCase();
-    if (t.includes('breakfast')) return { emoji: '🍳', color: '#F59E0B' };
-    if (t.includes('lunch')) return { emoji: '🍱', color: '#10B981' };
-    if (t.includes('dinner')) return { emoji: '🍽️', color: '#8B5CF6' };
-    if (t.includes('water')) return { emoji: '💧', color: '#3B82F6' };
-    if (t.includes('medicine') || t.includes('pill')) return { emoji: '💊', color: '#EF4444' };
-    if (t.includes('workout') || t.includes('gym')) return { emoji: '🏋', color: '#EF4444' };
-    if (t.includes('insight') || txt.includes('ai')) return { emoji: '🤖', color: '#6366F1' };
-    if (t.includes('streak') || txt.includes('achieve')) return { emoji: '🏆', color: '#F59E0B' };
-    if (t.includes('report')) return { emoji: '📊', color: '#10B981' };
-    if (t.includes('sleep') || t.includes('recover')) return { emoji: '😴', color: '#8B5CF6' };
-    return { emoji: '🔔', color: themeColors.accent };
+    if (t.includes('breakfast')) return { emoji: '🍳', color: '#F59E0B', bg: '#FEF3C7' };
+    if (t.includes('lunch')) return { emoji: '🍱', color: '#10B981', bg: '#D1FAE5' };
+    if (t.includes('dinner')) return { emoji: '🍽️', color: '#8B5CF6', bg: '#EDE9FE' };
+    if (t.includes('water')) return { emoji: '💧', color: '#3B82F6', bg: '#DBEAFE' };
+    if (t.includes('medicine') || t.includes('pill')) return { emoji: '💊', color: '#EF4444', bg: '#FEE2E2' };
+    if (t.includes('workout') || t.includes('gym') || t.includes('exercise')) return { emoji: '🏋', color: '#EF4444', bg: '#FEE2E2' };
+    if (t.includes('insight') || txt.includes('ai') || t.includes('tip')) return { emoji: '🤖', color: '#6366F1', bg: '#E0E7FF' };
+    if (t.includes('streak') || txt.includes('achieve') || t.includes('progress')) return { emoji: '🏆', color: '#F59E0B', bg: '#FEF3C7' };
+    if (t.includes('report')) return { emoji: '📊', color: '#10B981', bg: '#D1FAE5' };
+    if (t.includes('sleep') || t.includes('recover')) return { emoji: '😴', color: '#8B5CF6', bg: '#EDE9FE' };
+    if (t.includes('protein')) return { emoji: '🥩', color: '#F43F5E', bg: '#FFE4E6' };
+    if (t.includes('calorie')) return { emoji: '🔥', color: '#F97316', bg: '#FFEDD5' };
+    return { emoji: '🔔', color: accentColor, bg: isDark ? '#333' : '#E8F5E9' };
   };
 
   const getRelativeTime = (dateStr: string) => {
@@ -79,25 +109,22 @@ export default function NotificationCenterScreen() {
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
 
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffHours < 24) {
-      if (date.getDate() === now.getDate()) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-      return 'Yesterday';
-    }
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) {
-      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      return days[date.getDay()];
-    }
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${months[date.getMonth()]} ${date.getDate()}`;
+    if (diffHours < 24 && date.getDate() === now.getDate()) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    
+    let hours = date.getHours();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes} ${ampm}`;
   };
 
-  const handleNotificationTap = (notif: any) => {
+  const handleComplete = (notif: any) => {
     if (!notif.isRead) markAsRead(notif.id);
+    clearNotification(notif.id);
     
     const t = (notif.type || '').toLowerCase();
     if (t.includes('meal') || t.includes('breakfast') || t.includes('lunch') || t.includes('dinner') || t.includes('snack')) {
@@ -109,92 +136,86 @@ export default function NotificationCenterScreen() {
     }
   };
 
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.bg }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: themeColors.border, backgroundColor: themeColors.bg }]}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="arrow-back" size={22} color={themeColors.text} />
-            </View>
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: themeColors.text }]}>Notifications</Text>
-          <View style={{ width: 40 }} /> {/* Spacer to center title */}
-        </View>
+  const handleDismiss = (notif: any) => {
+    clearNotification(notif.id);
+  };
 
-        {/* Filters */}
-        <View style={styles.filterScrollWrapper}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-            {filters.map(f => {
-              const isActive = activeFilter === f;
-              return (
-                <TouchableOpacity 
-                  key={f} 
-                  style={[
-                    styles.filterChip, 
-                    { 
-                      backgroundColor: isActive ? themeColors.accent : (isDark ? '#374151' : '#F3F4F6'),
-                      borderColor: isActive ? themeColors.accent : themeColors.border
-                    }
-                  ]}
-                  onPress={() => setActiveFilter(f)}
-                >
-                  <Text style={[
-                    styles.filterText, 
-                    { color: isActive ? '#FFF' : themeColors.subText, fontWeight: isActive ? '600' : '500' }
-                  ]}>
-                    {f}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-      </View>
-
-      {/* List */}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
-        {sortedNotifications.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={{ fontSize: 50, marginBottom: 15 }}>🎉</Text>
-            <Text style={[styles.emptyTitle, { color: themeColors.text }]}>You're all caught up!</Text>
-            <Text style={[styles.emptySub, { color: themeColors.subText }]}>No new notifications.</Text>
-          </View>
-        ) : (
-          sortedNotifications.map((notif: any) => {
-            const iconInfo = getIconForType(notif.type, notif.title);
-            
-            return (
-              <TouchableOpacity 
-                key={notif.id}
-                activeOpacity={0.7}
-                onPress={() => handleNotificationTap(notif)}
-                style={[
-                  styles.notificationItem, 
-                  { 
-                    backgroundColor: notif.isRead ? themeColors.bg : (isDark ? '#1F2937' : '#EFF6FF'),
-                    borderBottomColor: themeColors.border 
-                  }
-                ]}
-              >
-                <View style={styles.iconContainer}>
+  const renderGroup = (title: string, items: any[]) => {
+    if (items.length === 0) return null;
+    return (
+      <View key={title} style={styles.groupContainer}>
+        <Text style={[styles.groupTitle, { color: themeColors.subText }]}>{title}</Text>
+        {items.map(notif => {
+          const iconInfo = getIconForType(notif.type, notif.title);
+          const isUnread = !notif.isRead;
+          
+          return (
+            <View key={notif.id} style={[styles.card, { backgroundColor: themeColors.card, shadowColor: isDark ? '#000' : '#888' }]}>
+              {isUnread && <View style={[styles.unreadDot, { backgroundColor: accentColor }]} />}
+              
+              <View style={styles.cardHeader}>
+                <View style={[styles.iconContainer, { backgroundColor: isDark ? themeColors.iconBg : iconInfo.bg }]}>
                   <Text style={styles.emojiIcon}>{iconInfo.emoji}</Text>
                 </View>
-                <View style={styles.contentContainer}>
-                  <Text style={[styles.titleText, { color: themeColors.text, fontWeight: notif.isRead ? '500' : '700' }]} numberOfLines={1}>
-                    {notif.title}
-                  </Text>
+                
+                <View style={styles.textContent}>
+                  <View style={styles.titleRow}>
+                    <Text style={[styles.titleText, { color: themeColors.text, fontWeight: isUnread ? '800' : '600' }]} numberOfLines={1}>
+                      {notif.title}
+                    </Text>
+                    <Text style={[styles.timeText, { color: themeColors.subText }]}>
+                      {getRelativeTime(notif.createdAt)}
+                    </Text>
+                  </View>
                   <Text style={[styles.descText, { color: themeColors.subText }]} numberOfLines={2}>
                     {notif.message}
                   </Text>
-                  <Text style={[styles.timeText, { color: themeColors.subText }]}>
-                    {getRelativeTime(notif.createdAt)}
-                  </Text>
                 </View>
-              </TouchableOpacity>
-            );
-          })
+              </View>
+              
+              <View style={[styles.actionsRow, { borderTopColor: themeColors.border }]}>
+                <TouchableOpacity style={styles.actionBtn} onPress={() => handleComplete(notif)}>
+                  <Text style={[styles.actionBtnText, { color: accentColor, fontWeight: '700' }]}>Complete</Text>
+                </TouchableOpacity>
+                <View style={[styles.actionDivider, { backgroundColor: themeColors.border }]} />
+                <TouchableOpacity style={styles.actionBtn} onPress={() => handleDismiss(notif)}>
+                  <Text style={[styles.actionBtnText, { color: themeColors.subText, fontWeight: '600' }]}>Dismiss</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.bg }]}>
+      <View style={[styles.header, { backgroundColor: themeColors.bg }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
+          <View style={[styles.iconCircle, { backgroundColor: themeColors.card }]}>
+            <Ionicons name="arrow-back" size={24} color={themeColors.text} />
+          </View>
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: themeColors.text }]}>Notifications</Text>
+        <View style={{ width: 44 }} /> 
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
+        {sortedNotifications.length === 0 ? (
+          <View style={styles.emptyState}>
+            <View style={[styles.emptyCircle, { backgroundColor: isDark ? '#2A2A2A' : '#E8F5E9' }]}>
+              <Ionicons name="notifications-off-outline" size={50} color={themeColors.subText} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: themeColors.text }]}>All Caught Up!</Text>
+            <Text style={[styles.emptySub, { color: themeColors.subText }]}>No new notifications right now.</Text>
+          </View>
+        ) : (
+          <>
+            {renderGroup('Today', groups['Today'])}
+            {renderGroup('Yesterday', groups['Yesterday'])}
+            {renderGroup('Earlier', groups['Earlier'])}
+          </>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -203,24 +224,87 @@ export default function NotificationCenterScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingTop: Platform.OS === 'android' ? 50 : 20, paddingBottom: 15, borderBottomWidth: 1 },
-  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20 },
-  backBtn: { padding: 5, marginLeft: -5 },
-  iconCircle: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 20, fontWeight: '700', letterSpacing: 0.2 },
-  filterScrollWrapper: { marginTop: 15 },
-  filterScroll: { paddingHorizontal: 20 },
-  filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginHorizontal: 4 },
-  filterText: { fontSize: 13, letterSpacing: 0.3 },
-  listContent: { paddingBottom: 40 },
-  emptyState: { alignItems: 'center', justifyContent: 'center', marginTop: 120 },
-  emptyTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 10, letterSpacing: 0.5 },
-  emptySub: { fontSize: 16 },
-  notificationItem: { flexDirection: 'row', padding: 16, borderBottomWidth: 1 },
-  iconContainer: { marginRight: 16, justifyContent: 'center' },
+  header: { 
+    paddingTop: Platform.OS === 'android' ? 50 : 20, 
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between',
+  },
+  backBtn: { padding: 0 },
+  iconCircle: { 
+    width: 44, 
+    height: 44, 
+    borderRadius: 22, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2
+  },
+  headerTitle: { fontSize: 22, fontWeight: '800', letterSpacing: 0.3 },
+  listContent: { paddingHorizontal: 20, paddingBottom: 40 },
+  groupContainer: { marginBottom: 25 },
+  groupTitle: { fontSize: 15, fontWeight: '700', marginBottom: 15, marginLeft: 5, textTransform: 'uppercase', letterSpacing: 1 },
+  card: {
+    borderRadius: 20,
+    marginBottom: 16,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  unreadDot: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    zIndex: 10
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    padding: 18,
+  },
+  iconContainer: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
   emojiIcon: { fontSize: 28 },
-  contentContainer: { flex: 1, justifyContent: 'center' },
-  titleText: { fontSize: 16, marginBottom: 4 },
-  descText: { fontSize: 14, lineHeight: 20, marginBottom: 6 },
-  timeText: { fontSize: 12, fontWeight: '500' }
+  textContent: { flex: 1, justifyContent: 'center' },
+  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  titleText: { fontSize: 17, flex: 1, paddingRight: 10 },
+  timeText: { fontSize: 13, fontWeight: '500' },
+  descText: { fontSize: 15, lineHeight: 22 },
+  actionsRow: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    height: 50,
+  },
+  actionBtn: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionDivider: {
+    width: 1,
+    height: '100%',
+  },
+  actionBtnText: {
+    fontSize: 15,
+    letterSpacing: 0.3,
+  },
+  emptyState: { alignItems: 'center', justifyContent: 'center', marginTop: 100 },
+  emptyCircle: { width: 120, height: 120, borderRadius: 60, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  emptyTitle: { fontSize: 24, fontWeight: '800', marginBottom: 10, letterSpacing: 0.5 },
+  emptySub: { fontSize: 16, textAlign: 'center', paddingHorizontal: 40, lineHeight: 24 }
 });
