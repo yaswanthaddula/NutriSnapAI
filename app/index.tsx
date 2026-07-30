@@ -36,6 +36,15 @@ export default function WelcomeScreen() {
 
         const profile = useAppStore.getState().userProfile;
         if (profile && profile.email) {
+          
+          // Background sync for latest user data (like profile image) across devices
+          apiService.getMe().then(userResp => {
+            if (userResp && userResp.data && userResp.data.profile_image_url) {
+              useAppStore.getState().updateUserProfile('profileImage', userResp.data.profile_image_url);
+              useAppStore.getState().saveStoredData();
+            }
+          }).catch(e => console.log('Background sync user err:', e));
+
           if (profile.selected_mode) {
             const mode = profile.selected_mode.toLowerCase();
             if (mode === 'gym') {
