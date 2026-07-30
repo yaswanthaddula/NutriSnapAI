@@ -8,9 +8,9 @@ import {
   SafeAreaView, 
   Switch, 
   Platform,
-  Alert,
   Modal,
-  TextInput
+  TextInput,
+  PanResponder
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -42,6 +42,36 @@ const CircularWebTimePickerModal = ({ visible, initialValue, onClose, onSave, th
   const clockSize = 240;
   const center = clockSize / 2;
   const radius = clockSize * 0.38;
+
+  const handleTouch = (evt: any) => {
+    const { locationX, locationY } = evt.nativeEvent;
+    const dx = locationX - center;
+    const dy = locationY - center;
+    let angle = Math.atan2(dy, dx) + Math.PI / 2;
+    if (angle < 0) angle += 2 * Math.PI;
+
+    if (mode === 'hour') {
+      let selectedHour = Math.round((angle / (2 * Math.PI)) * 12);
+      if (selectedHour === 0) selectedHour = 12;
+      setH(String(selectedHour).padStart(2, '0'));
+    } else {
+      let selectedMinute = Math.round((angle / (2 * Math.PI)) * 60);
+      if (selectedMinute === 60) selectedMinute = 0;
+      setM(String(selectedMinute).padStart(2, '0'));
+    }
+  };
+
+  const panResponder = React.useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: handleTouch,
+      onPanResponderMove: handleTouch,
+      onPanResponderRelease: () => {
+        if (mode === 'hour') setMode('minute');
+      }
+    })
+  ).current;
 
   const getCoordinates = (value: number, total: number) => {
     const angle = (value / total) * 2 * Math.PI - Math.PI / 2;
@@ -152,7 +182,10 @@ const CircularWebTimePickerModal = ({ visible, initialValue, onClose, onSave, th
 
           {/* Clock Face */}
           <View style={{ padding: 20, alignItems: 'center', backgroundColor: '#FFF' }}>
-            <View style={{ width: clockSize, height: clockSize, borderRadius: clockSize / 2, backgroundColor: '#F0F0F0', position: 'relative' }}>
+            <View 
+              {...panResponder.panHandlers}
+              style={{ width: clockSize, height: clockSize, borderRadius: clockSize / 2, backgroundColor: '#F0F0F0', position: 'relative' }}
+            >
               {renderClockNumbers()}
             </View>
           </View>
