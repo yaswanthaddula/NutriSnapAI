@@ -1250,8 +1250,10 @@ export default function HealthHomeScreen() {
               ))}
             </ScrollView>
           ) : (
-            <View style={[styles.emptyMeal, { borderColor: themeColors.border, backgroundColor: isDark ? '#1E1E1E' : '#F1FDF5' }]}>
-              <Text style={{fontSize: 32}}>🍎</Text>
+            <View style={[styles.emptyMeal, { borderColor: themeColors.border, backgroundColor: themeColors.card, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 }]}>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#E8F5E9', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+                <Ionicons name="fast-food" size={32} color="#00C853" />
+              </View>
               <Text style={[styles.emptyText, { color: themeColors.text }]}>No meals logged yet</Text>
               <Text style={[styles.emptySub, { color: themeColors.subText }]}>Tap Scan Food to track your first meal</Text>
             </View>
@@ -1259,62 +1261,77 @@ export default function HealthHomeScreen() {
         </View>
 
         {/* --- HEALTHY STREAK --- */}
-        <View style={styles.streakCard}>
+        <LinearGradient colors={['#FF8A65', '#FF5252']} start={{x: 0, y: 0}} end={{x: 1, y: 1}} style={[styles.streakCard, { padding: 20, borderRadius: 20, elevation: 8, shadowColor: '#FF5252', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10 }]}>
           <View style={styles.streakInfo}>
-            <View style={styles.fireIcon}><Text>🔥</Text></View>
-            <View>
-              <Text style={styles.streakTitle}>Healthy Streak</Text>
-              <Text style={styles.streakSub}>{streak} days strong!</Text>
+            <View style={[styles.fireIcon, { backgroundColor: 'rgba(255,255,255,0.2)', width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center' }]}>
+              <Ionicons name="flame" size={28} color="#FFF" />
+            </View>
+            <View style={{ marginLeft: 15 }}>
+              <Text style={[styles.streakTitle, { color: '#FFF', fontSize: 18, fontWeight: 'bold' }]}>Healthy Streak</Text>
+              <Text style={[styles.streakSub, { color: 'rgba(255,255,255,0.9)', fontSize: 14, marginTop: 2 }]}>{streak} days strong!</Text>
             </View>
           </View>
-          <View style={styles.streakBar}> 
-            {[1, 2, 3, 4, 5, 6, 7].map(i => (
-              <View key={i} style={[styles.barSegment, i <= streak && { backgroundColor: '#FFF' }]} />
-            ))}
+          <View style={[styles.streakBar, { marginTop: 20, height: 8, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 4, flexDirection: 'row', overflow: 'hidden' }]}> 
+            <View style={{ width: `${Math.min(100, (streak / 7) * 100)}%`, backgroundColor: '#FFF', height: '100%', borderRadius: 4 }} />
           </View>
-        </View>
+        </LinearGradient>
 
         {/* --- SLEEP SCORE --- */}
         <TouchableOpacity 
-          style={[styles.sleepCard, { backgroundColor: themeColors.card, borderColor: themeColors.border, borderWidth: 1 }]}
+          activeOpacity={0.8}
           onPress={() => {
             setSleepVal(todaySleep.toString());
             setShowSleepModal(true);
           }}
+          style={{ marginTop: 20, marginBottom: 5 }}
         >
-          <View style={styles.sleepHeader}>
-             <Text style={{fontSize: 24}}>🌙</Text>
-             <View style={{flex: 1, marginLeft: 15}}>
-                <Text style={[styles.cardTitle, { color: themeColors.text }]}>Sleep Score</Text>
-                <Text style={[styles.statSub, { color: themeColors.subText }]}>{todaySleep > 0 ? `${todaySleep} hours • ${getSleepStatus()}` : 'No sleep data yet'}</Text>
-             </View>
-             <Text style={styles.sleepScoreValue}>{todaySleep > 0 ? (todaySleep >= 7 ? 90 : (todaySleep >= 5 ? 70 : 40)) : '--'}</Text>
-          </View>
-          <View style={[styles.sleepProgressContainer, { backgroundColor: themeColors.border }]}>
-             <View style={[styles.sleepProgressBar, { width: `${Math.min(100, (todaySleep/8) * 100)}%` }]} />
-          </View>
+          <LinearGradient colors={['#5C6BC0', '#3949AB']} start={{x: 0, y: 0}} end={{x: 1, y: 1}} style={[styles.sleepCard, { padding: 20, borderRadius: 20, elevation: 8, shadowColor: '#3949AB', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, borderWidth: 0 }]}>
+            <View style={styles.sleepHeader}>
+               <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                 <Ionicons name="moon" size={24} color="#FFF" />
+               </View>
+               <View style={{flex: 1, marginLeft: 15}}>
+                  <Text style={[styles.cardTitle, { color: '#FFF', fontSize: 18 }]}>Sleep Score</Text>
+                  <Text style={[styles.statSub, { color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 2 }]}>{todaySleep > 0 ? `${todaySleep} hours • ${getSleepStatus()}` : 'No sleep data yet'}</Text>
+               </View>
+               <Text style={[styles.sleepScoreValue, { color: '#FFF', fontSize: 26, fontWeight: 'bold' }]}>{todaySleep > 0 ? (todaySleep >= 7 ? 90 : (todaySleep >= 5 ? 70 : 40)) : '--'}</Text>
+            </View>
+            <View style={[styles.sleepProgressContainer, { backgroundColor: 'rgba(255,255,255,0.2)', marginTop: 20, height: 8, borderRadius: 4 }]}>
+               <View style={[styles.sleepProgressBar, { width: `${Math.min(100, (todaySleep/8) * 100)}%`, backgroundColor: '#FFF', height: '100%', borderRadius: 4 }]} />
+            </View>
+          </LinearGradient>
         </TouchableOpacity>
 
         {/* --- MOOD TRACKER --- */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>How are you feeling today?</Text>
+        <View style={[styles.section, { paddingBottom: 15 }]}>
+          <Text style={[styles.sectionTitle, { color: themeColors.text, marginBottom: 15 }]}>How are you feeling today?</Text>
           <View style={styles.moodRow}>
-            {['Great', 'Good', 'Okay', 'Low'].map((m) => (
-              <TouchableOpacity 
-                key={m} 
-                style={[
-                  styles.moodCard, 
-                  { backgroundColor: themeColors.card, borderColor: themeColors.border, borderWidth: 1 }, 
-                  todayMood === m && { backgroundColor: isDark ? '#1A2E22' : '#E8F5E9', borderColor: '#00C853' }
-                ]} 
-                onPress={() => setMood(m)}
-              >
-                <Text style={{fontSize: 24}}>
-                  {m === 'Great' ? '😊' : m === 'Good' ? '😌' : m === 'Okay' ? '😐' : '😔'}
-                </Text>
-                <Text style={[styles.moodText, { color: themeColors.subText }]}>{m}</Text>
-              </TouchableOpacity>
-            ))}
+            {['Great', 'Good', 'Okay', 'Low'].map((m) => {
+              const isActive = todayMood === m;
+              let iconName = 'happy-outline';
+              let iconColor = '#888';
+              
+              if (m === 'Great') { iconName = isActive ? 'happy' : 'happy-outline'; iconColor = isActive ? '#00C853' : '#A5D6A7'; }
+              if (m === 'Good') { iconName = isActive ? 'happy' : 'happy-outline'; iconColor = isActive ? '#8BC34A' : '#C5E1A5'; }
+              if (m === 'Okay') { iconName = isActive ? 'remove-circle' : 'remove-circle-outline'; iconColor = isActive ? '#FFB300' : '#FFE082'; }
+              if (m === 'Low') { iconName = isActive ? 'sad' : 'sad-outline'; iconColor = isActive ? '#FF5252' : '#EF9A9A'; }
+
+              return (
+                <TouchableOpacity 
+                  key={m}
+                  activeOpacity={0.6}
+                  style={[
+                    styles.moodCard, 
+                    { backgroundColor: themeColors.card, borderColor: themeColors.border, borderWidth: 1, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 }, 
+                    isActive && { backgroundColor: isDark ? '#1A2E22' : '#F1FDF5', borderColor: iconColor, borderWidth: 2, elevation: 6, shadowColor: iconColor, shadowOpacity: 0.2, transform: [{ scale: 1.05 }] }
+                  ]} 
+                  onPress={() => setMood(m)}
+                >
+                  <Ionicons name={iconName as any} size={32} color={iconColor} style={{ marginBottom: 8 }} />
+                  <Text style={[styles.moodText, { color: isActive ? iconColor : themeColors.subText, fontWeight: isActive ? 'bold' : 'normal' }]}>{m}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
