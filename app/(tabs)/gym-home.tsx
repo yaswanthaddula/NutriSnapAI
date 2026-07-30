@@ -253,7 +253,7 @@ export default function GymHomeScreen() {
             imageUri: bm.meal_image_url || localMatch?.imageUri || cachedImage || bm.image_url || null,
             mode: 'gym',
             time: formattedTime,
-            date: bm.date
+            date: bm.date || todayStr
           };
         });
         
@@ -980,7 +980,9 @@ export default function GymHomeScreen() {
               else description = `Don't forget your ${title.toLowerCase()} today.`;
 
               const handleAction = (actionFn: () => void) => {
-                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                if (Platform.OS !== 'web') {
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                }
                 actionFn();
               };
 

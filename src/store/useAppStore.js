@@ -974,8 +974,7 @@ const useAppStore = create((set, get) => ({
     if (storedTheme) set({ themeMode: storedTheme });
     if (storedSteps !== null) set({ steps: storedSteps });
     
-    get().generateSmartNotifications();
-    
+
     if (storedCaloriesBurned !== null) set({ caloriesBurned: storedCaloriesBurned });
     
     const storedStepDate = await storage.getData('lastStepDate');
@@ -1039,6 +1038,9 @@ const useAppStore = create((set, get) => ({
     
     // Always recalculate goal on load to ensure accuracy (e.g. after midnight reset or profile change)
     get().recalculateWaterGoal();
+    
+    // Generate smart notifications AFTER all stored state is hydrated
+    get().generateSmartNotifications();
   },
 
   checkNewDay: () => {

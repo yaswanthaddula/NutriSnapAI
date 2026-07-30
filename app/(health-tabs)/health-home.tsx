@@ -267,7 +267,7 @@ export default function HealthHomeScreen() {
             imageUri: bm.meal_image_url || localMatch?.imageUri || cachedImage || bm.image_url || null,
             mode: 'health',
             time: formattedTime,
-            date: bm.date
+            date: bm.date || todayStr
           };
         });
         
