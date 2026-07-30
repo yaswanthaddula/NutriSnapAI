@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../_layout'; 
 import useAppStore from '../../src/store/useAppStore';
+import { getAvatarColor } from '../../src/utils/avatarUtils';
 import apiService from '../../src/services/apiService';
 
 export default function ProfileScreen() {
@@ -126,9 +127,11 @@ export default function ProfileScreen() {
                   onError={(e) => console.log('Image failed to load', e.nativeEvent.error)}
                 />
               ) : (
-                <Text style={{fontSize: 40, color: '#1B5E20', fontWeight: 'bold'}}>
-                  {name ? name.charAt(0).toUpperCase() : '👤'}
-                </Text>
+                <View style={[styles.avatarImage, { backgroundColor: getAvatarColor(userProfile.name), justifyContent: 'center', alignItems: 'center' }]}>
+                  <Text style={{ fontSize: 32, color: '#FFF', fontWeight: 'bold' }}>
+                    {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
+                  </Text>
+                </View>
               )}
               <View style={styles.editIconBadge}>
                 <Ionicons name="camera" size={14} color="#FFF" />

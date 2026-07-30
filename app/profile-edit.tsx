@@ -18,6 +18,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAvatarColor } from '../src/utils/avatarUtils';
 import { useTheme } from './_layout'; 
 import useAppStore from '../src/store/useAppStore';
 import apiService from '../src/services/apiService';
@@ -177,7 +178,9 @@ export default function EditProfile() {
                   {userProfile.profileImage ? (
                     <Image source={{ uri: userProfile.profileImage }} style={{ width: '100%', height: '100%' }} />
                   ) : (
-                    <Text style={{fontSize: 40}}>👤</Text>
+                    <View style={{ width: '100%', height: '100%', backgroundColor: getAvatarColor(userProfile.name), justifyContent: 'center', alignItems: 'center' }}>
+                      <Text style={{ color: '#FFF', fontSize: 40, fontWeight: 'bold' }}>{userProfile.name?.charAt(0).toUpperCase() || 'U'}</Text>
+                    </View>
                   )}
               </View>
             </View>

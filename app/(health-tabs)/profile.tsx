@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../_layout'; 
 import useAppStore from '../../src/store/useAppStore';
+import { getAvatarColor } from '../../src/utils/avatarUtils';
 import apiService from '../../src/services/apiService';
 
 export default function ProfileScreen() {
@@ -103,7 +104,11 @@ export default function ProfileScreen() {
                   resizeMode="cover"
                 />
               ) : (
-                <Text style={{fontSize: 40}}>👤</Text>
+                <View style={[styles.avatarImage, { backgroundColor: getAvatarColor(userProfile.name), justifyContent: 'center', alignItems: 'center', borderWidth: 0 }]}>
+                  <Text style={[styles.avatarText, { color: '#FFF' }]}>
+                    {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
+                  </Text>
+                </View>
               )}
             </View>
           </View>

@@ -20,6 +20,7 @@ import { Platform as RNPlatform } from 'react-native';
 const LottieView = RNPlatform.OS !== 'web' ? require('lottie-react-native').default : null;
 import { useTheme } from '../_layout';
 import useAppStore from '../../src/store/useAppStore';
+import { getAvatarColor } from '../../src/utils/avatarUtils';
 import { calculateMealTotals, formatTo12Hour } from '../../src/utils/calculations';
 import { chatWithAi } from '../../src/services/chatGeminiService';
 import { Pedometer } from 'expo-sensors';
@@ -776,7 +777,9 @@ export default function HealthHomeScreen() {
             {userProfile.profileImage ? (
               <Image source={{ uri: userProfile.profileImage }} style={{ width: '100%', height: '100%', borderRadius: 24 }} />
             ) : (
-              <Text style={styles.avatarLetter}>{userProfile.name?.charAt(0).toUpperCase() || 'U'}</Text>
+              <View style={[styles.avatarCircle, { backgroundColor: getAvatarColor(userProfile.name), borderWidth: 0 }]}>
+                <Text style={styles.avatarLetter}>{userProfile.name?.charAt(0).toUpperCase() || 'U'}</Text>
+              </View>
             )}
           </TouchableOpacity>
           <View style={styles.welcomeTextColumn}>
@@ -1096,7 +1099,9 @@ export default function HealthHomeScreen() {
                     </View>
                     <View style={{flex: 1, marginLeft: 15}}>
                       <Text style={[styles.mealName, {color: themeColors.text}]}>{title}</Text>
-                      <Text style={{ color: statusColor, fontSize: 13, marginTop: 4, fontWeight: 'bold' }}>Status: {status}</Text>
+                      <Text style={{ color: statusColor, fontSize: 13, marginTop: 4, fontWeight: 'bold' }}>
+                        Status: {status === 'Completed' ? 'Completed ✅' : status === 'Missed' ? 'Missed ❌' : status}
+                      </Text>
                     </View>
                     <Ionicons name={status === 'Completed' ? "checkmark-circle" : "notifications"} size={20} color={status === 'Completed' ? "#4CAF50" : statusColor} />
                     <TouchableOpacity 
@@ -1352,8 +1357,8 @@ export default function HealthHomeScreen() {
                     {userProfile.profileImage ? (
                       <Image source={{ uri: userProfile.profileImage }} style={{ width: 28, height: 28, borderRadius: 14 }} />
                     ) : (
-                      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#4CAF50', justifyContent: 'center', alignItems: 'center' }}>
-                        <Text style={{ fontSize: 14 }}>👤</Text>
+                      <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: getAvatarColor(userProfile.name), justifyContent: 'center', alignItems: 'center' }}>
+                         <Text style={{ color: '#FFF', fontSize: 14, fontWeight: 'bold' }}>{userProfile.name?.charAt(0).toUpperCase() || 'U'}</Text>
                       </View>
                     )}
                   </View>

@@ -91,6 +91,8 @@ const useAppStore = create((set, get) => ({
     try {
       const todayReminders = await apiService.getTodayReminders();
       set({ todayReminders });
+      // After fetching, silently check if any are missed
+      get().checkMissedReminders();
     } catch (error) {
       console.log('Error fetching today reminders:', error);
     }
@@ -119,29 +121,80 @@ const useAppStore = create((set, get) => ({
 
   markReminderDone: async (id) => {
     try {
+      // Optimistic UI Update
+      set((state) => ({
+        todayReminders: state.todayReminders.map(r => 
+          r.id === id ? { ...r, status: 'Completed' } : r
+        )
+      }));
       await apiService.markReminderDone(id);
       await get().fetchAndSyncReminders();
-      await get().fetchTodayReminders();
       await get().fetchNotifications();
     } catch (e) { console.log('Error marking reminder done', e); }
   },
 
   snoozeReminder: async (id, minutes) => {
     try {
+      // Optimistic UI Update
+      set((state) => ({
+        todayReminders: state.todayReminders.map(r => 
+          r.id === id ? { ...r, status: 'Snoozed' } : r
+        )
+      }));
       await apiService.snoozeReminder(id, minutes);
       await get().fetchAndSyncReminders();
-      await get().fetchTodayReminders();
       await get().fetchNotifications();
     } catch (e) { console.log('Error snoozing reminder', e); }
   },
 
   dismissReminder: async (id) => {
     try {
+      // Optimistic UI Update
+      set((state) => ({
+        todayReminders: state.todayReminders.map(r => 
+          r.id === id ? { ...r, status: 'Dismissed' } : r
+        )
+      }));
       await apiService.dismissReminder(id);
       await get().fetchAndSyncReminders();
-      await get().fetchTodayReminders();
       await get().fetchNotifications();
     } catch (e) { console.log('Error dismissing reminder', e); }
+  },
+
+  checkMissedReminders: async () => {
+    try {
+      const { todayReminders } = get();
+      if (!todayReminders || todayReminders.length === 0) return;
+      
+      let missedFound = false;
+      const now = new Date();
+      
+      for (const r of todayReminders) {
+        if (r.status === 'Active' || r.status === 'Pending' || r.status === 'Upcoming') {
+          // Compare times
+          if (r.next_trigger_at) {
+            const triggerTime = new Date(r.next_trigger_at);
+            // If it's more than 30 mins past the trigger time
+            if (now.getTime() - triggerTime.getTime() > 30 * 60000) {
+              await apiService.updateReminderStatus(r.id, 'Missed');
+              missedFound = true;
+              
+              // Add a missing notification
+              get().addNotification({
+                 title: `${r.reminder_type.charAt(0).toUpperCase() + r.reminder_type.slice(1)} Missing`,
+                 message: `You have not logged your ${r.reminder_type} today.`,
+                 type: r.reminder_type,
+                 mode: ['workout', 'protein', 'gym'].includes(r.reminder_type.toLowerCase()) ? 'gym' : 'health'
+              });
+            }
+          }
+        }
+      }
+      
+      if (missedFound) {
+        await get().fetchTodayReminders();
+      }
+    } catch(e) { console.log('Error checking missed reminders', e); }
   },
 
   deleteReminder: async (id) => {
@@ -271,6 +324,28 @@ const useAppStore = create((set, get) => ({
       });
     }
     set({ meals: [mealWithDate, ...get().meals] });
+    
+    // Automatic Reminder Completion
+    const hour = parseInt(mealWithDate.time ? mealWithDate.time.split(':')[0] : new Date().getHours());
+    let mealType = 'snack';
+    if (hour >= 5 && hour < 11) mealType = 'breakfast';
+    else if (hour >= 11 && hour < 15) mealType = 'lunch';
+    else if (hour >= 15 && hour < 18) mealType = 'snack';
+    else if (hour >= 18) mealType = 'dinner';
+    
+    const { todayReminders, markReminderDone, addNotification } = get();
+    if (todayReminders) {
+       const matchedReminder = todayReminders.find(r => r.reminder_type === mealType && (r.status === 'Pending' || r.status === 'Active' || r.status === 'Upcoming'));
+       if (matchedReminder) {
+           markReminderDone(matchedReminder.id);
+           addNotification({
+              title: `✅ ${mealType.charAt(0).toUpperCase() + mealType.slice(1)} Completed`,
+              message: `Great job! Your ${mealType} has been logged.`,
+              type: mealType,
+              mode: 'health'
+           });
+       }
+    }
   },
   setMeals: (meals) => set({ meals }),
   deleteMeal: (id) => set({ meals: get().meals.filter(meal => meal.id !== id) }),
@@ -347,7 +422,21 @@ const useAppStore = create((set, get) => ({
       });
       get().recalculateWaterGoal();
       saveStoredData();
-      saveStoredData();
+      
+      // Automatic Reminder Completion
+      const { todayReminders, markReminderDone, addNotification } = get();
+      if (todayReminders) {
+         const matchedReminder = todayReminders.find(r => r.reminder_type === 'workout' && (r.status === 'Pending' || r.status === 'Active' || r.status === 'Upcoming'));
+         if (matchedReminder) {
+             markReminderDone(matchedReminder.id);
+             addNotification({
+                title: `✅ Workout Completed`,
+                message: `Great job! You crushed your workout today.`,
+                type: 'workout',
+                mode: 'gym'
+             });
+         }
+      }
     }
   },
 
@@ -418,12 +507,42 @@ const useAppStore = create((set, get) => ({
     set({ waterHistory: history });
 
     get().saveStoredData();
+    
+    // Automatic Reminder Completion
+    const { todayReminders, markReminderDone, addNotification } = get();
+    if (newAmount >= (current.waterGoal || 2500) && todayReminders) {
+       const matchedReminder = todayReminders.find(r => r.reminder_type === 'water' && (r.status === 'Pending' || r.status === 'Active' || r.status === 'Upcoming'));
+       if (matchedReminder) {
+           markReminderDone(matchedReminder.id);
+           addNotification({
+              title: `✅ Water Goal Completed`,
+              message: `Great job! You met your hydration goal.`,
+              type: 'water',
+              mode: 'health'
+           });
+       }
+    }
   },
 
   setWaterIntake: (amount) => {
     const today = new Date().toISOString().split('T')[0];
     set({ waterData: { ...get().waterData, date: today, waterIntake: amount } });
     get().saveStoredData();
+    
+    // Automatic Reminder Completion
+    const { waterData, todayReminders, markReminderDone, addNotification } = get();
+    if (waterData.waterIntake >= (waterData.waterGoal || 2500) && todayReminders) {
+       const matchedReminder = todayReminders.find(r => r.reminder_type === 'water' && (r.status === 'Pending' || r.status === 'Active' || r.status === 'Upcoming'));
+       if (matchedReminder) {
+           markReminderDone(matchedReminder.id);
+           addNotification({
+              title: `✅ Water Goal Completed`,
+              message: `Great job! You met your hydration goal.`,
+              type: 'water',
+              mode: 'health'
+           });
+       }
+    }
   },
   
   recalculateWaterGoal: () => {
