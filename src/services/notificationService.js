@@ -614,11 +614,17 @@ export const notificationService = {
       if (newNotif) {
         showWebNotification(rule.title, message, screenRoute, rule.type);
         try {
-          let channelId = 'high_priority_v2';
-          if (Platform.OS === 'android') {
+          let channelId = Platform.OS === 'android' ? 'nutrisnap-reminders' : undefined;
+          let iosSound = true;
+          
+          if (Platform.OS === 'android' || Platform.OS === 'ios') {
+            const prefs = useAppStore.getState();
             const soundFile = rule.mode === 'gym' ? prefs.gymNotificationSound : prefs.healthNotificationSound;
+            
             if (soundFile && soundFile !== 'default' && soundFile !== 'default_bell') {
-              channelId = `nutrisnap-${soundFile}`;
+              iosSound = `${soundFile}.wav`;
+              if (Platform.OS === 'android') {
+                channelId = `nutrisnap-${soundFile}`;
               await Notifications.setNotificationChannelAsync(channelId, {
                 name: `Smart Events (${soundFile})`,
                 importance: Notifications.AndroidImportance.MAX,
@@ -630,19 +636,20 @@ export const notificationService = {
                 lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
                 bypassDnd: true
               });
+              }
             }
           }
 
           await Notifications.scheduleNotificationAsync({
             content: {
-              title: '🔔 NutriSnap AI',
-              body: `${rule.title}\n${message}`,
+              title: rule.title,
+              body: message,
               data: { 
                 type: rule.type,
                 mode: rule.mode,
                 screen: screenRoute
               },
-              sound: channelId === 'high_priority_v2' ? true : undefined,
+              sound: iosSound,
               vibrate: [0, 250, 250, 250],
               priority: Notifications.AndroidNotificationPriority.MAX,
               channelId: channelId,
@@ -677,25 +684,27 @@ export const notificationService = {
     if (!Notifications) return;
     let channelId = Platform.OS === 'android' ? 'nutrisnap-reminders' : undefined;
     
-    // Format professional popup notification
-    const originalTitle = content.title || 'Reminder';
-    const originalBody = content.body || '';
+    // Format standard popup notification
     const formattedContent = {
       ...content,
-      title: '🔔 NutriSnap AI',
-      body: `${originalTitle}\n${originalBody}`,
+      title: content.title || 'Reminder',
+      body: content.body || '',
       priority: Notifications.AndroidNotificationPriority?.MAX || 'max',
       vibrate: [0, 500, 200, 500]
     };
     
-    if (Platform.OS === 'android') {
+    let iosSound = true;
+    
+    if (Platform.OS === 'android' || Platform.OS === 'ios') {
       const mode = formattedContent.data?.mode || 'health';
       const prefs = useAppStore.getState();
       const soundFile = mode === 'gym' ? prefs.gymNotificationSound : prefs.healthNotificationSound;
       
       if (soundFile && soundFile !== 'default' && soundFile !== 'default_bell') {
-        const dynamicChannelId = `nutrisnap-${soundFile}`;
-        await Notifications.setNotificationChannelAsync(dynamicChannelId, {
+        iosSound = `${soundFile}.wav`;
+        if (Platform.OS === 'android') {
+          const dynamicChannelId = `nutrisnap-${soundFile}`;
+          await Notifications.setNotificationChannelAsync(dynamicChannelId, {
           name: `Reminders (${soundFile})`,
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 500, 200, 500],
@@ -706,7 +715,8 @@ export const notificationService = {
           lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
           bypassDnd: true
         });
-        channelId = dynamicChannelId;
+          channelId = dynamicChannelId;
+        }
       }
     }
     
@@ -714,7 +724,7 @@ export const notificationService = {
       const days = [2, 3, 4, 5, 6]; // Monday to Friday
       for (const day of days) {
         await Notifications.scheduleNotificationAsync({
-          content: { ...formattedContent, sound: channelId ? undefined : true },
+          content: { ...formattedContent, sound: iosSound },
           trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId }
         });
       }
@@ -722,14 +732,14 @@ export const notificationService = {
       const days = [1, 7]; // Sunday, Saturday
       for (const day of days) {
         await Notifications.scheduleNotificationAsync({
-          content: { ...formattedContent, sound: channelId ? undefined : true },
+          content: { ...formattedContent, sound: iosSound },
           trigger: { weekday: day, hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId }
         });
       }
     } else {
       // Daily or Custom Days (fallback to daily)
       await Notifications.scheduleNotificationAsync({
-        content: { ...formattedContent, sound: channelId ? undefined : true },
+        content: { ...formattedContent, sound: iosSound },
         trigger: { hour: parsed.hour, minute: parsed.minute, second: 0, repeats: true, channelId }
       });
     }
