@@ -15,6 +15,8 @@ import useAppStore from '../src/store/useAppStore';
 import apiService from '../src/services/apiService';
 
 export default function WelcomeScreen() {
+  const FORCE_ONBOARDING = true; // Set to false to enable AsyncStorage check later
+
   const [loading, setLoading] = useState(true);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const { loadStoredData, setUserProfile, saveStoredData } = useAppStore();
@@ -30,7 +32,9 @@ export default function WelcomeScreen() {
         if (!token) {
           console.log("No token found (ephemeral session cleared), forcing login.");
           useAppStore.getState().resetStore();
-          setIsCheckingSession(false);
+          if (!FORCE_ONBOARDING) {
+             // router.replace('/login');
+          }
           return;
         }
 
@@ -54,11 +58,13 @@ export default function WelcomeScreen() {
           }).catch(e => console.log('Background sync user err:', e));
 
           if (profile.selected_mode) {
-            const mode = profile.selected_mode.toLowerCase();
-            if (mode === 'gym') {
-              router.replace('/(tabs)/gym-home');
-            } else {
-              router.replace('/(health-tabs)/health-home');
+            if (!FORCE_ONBOARDING) {
+              const mode = profile.selected_mode.toLowerCase();
+              if (mode === 'gym') {
+                router.replace('/(tabs)/gym-home');
+              } else {
+                router.replace('/(health-tabs)/health-home');
+              }
             }
             return;
           } else {
@@ -76,18 +82,22 @@ export default function WelcomeScreen() {
                 });
                 await saveStoredData();
                 
-                const mode = profileData.selected_mode.toLowerCase();
-                if (mode === 'gym') {
-                  router.replace('/(tabs)/gym-home');
-                } else {
-                  router.replace('/(health-tabs)/health-home');
+                if (!FORCE_ONBOARDING) {
+                  const mode = profileData.selected_mode.toLowerCase();
+                  if (mode === 'gym') {
+                    router.replace('/(tabs)/gym-home');
+                  } else {
+                    router.replace('/(health-tabs)/health-home');
+                  }
                 }
                 return;
               }
             } catch (backendErr) {
               console.log("No profile found on backend, routing to setup:", backendErr);
             }
-            router.replace('/profile-setup');
+            if (!FORCE_ONBOARDING) {
+              router.replace('/profile-setup');
+            }
             return;
           }
         }
@@ -100,18 +110,26 @@ export default function WelcomeScreen() {
     checkUserSession();
 
     // Start animations once the component mounts
-    Animated.sequence([
-      Animated.spring(logoPop, {
-        toValue: 1,
-        friction: 4,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeContent, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(logoPop, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(logoPop, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    Animated.timing(fadeContent, {
+      toValue: 1,
+      duration: 1200,
+      useNativeDriver: true,
+    }).start();
   }, []);
 
   if (isCheckingSession) {
@@ -125,12 +143,16 @@ export default function WelcomeScreen() {
   return (
     <LinearGradient colors={['#E8F5E9', '#A5D6A7']} style={styles.gradientBg}>
       <SafeAreaView style={styles.container}>
+        {/* Subtle Glowing Background Effect */}
+        <View style={styles.glowOrbTop} />
+        <View style={styles.glowOrbBottom} />
+        
         <View style={styles.content}>
         
         {/* Animated 3D Logo Area */}
         <Animated.View style={[
           styles.logoWrapper, 
-          { transform: [{ scale: logoPop }] }
+          { transform: [{ translateY: logoPop.interpolate({ inputRange: [0, 1], outputRange: [0, -15] }) }] }
         ]}>
           <View style={styles.logoCircle}>
             {/* 3D Apple Image from a Remote URL */}
@@ -159,13 +181,15 @@ export default function WelcomeScreen() {
         </Animated.View>
 
         {/* Button Area */}
-        <Animated.View style={{ opacity: fadeContent, width: '100%' }}>
+        <Animated.View style={{ opacity: fadeContent, width: '100%', paddingBottom: 20 }}>
           <TouchableOpacity 
-            style={styles.button} 
-            activeOpacity={0.8}
+            style={styles.buttonContainer} 
+            activeOpacity={0.9}
             onPress={() => router.push('/onboarding')}
           >
-            <Text style={styles.buttonText}>Get Started</Text>
+            <LinearGradient colors={['#00E676', '#00C853']} style={styles.buttonGradient} start={{x: 0, y: 0}} end={{x: 1, y: 0}}>
+              <Text style={styles.buttonText}>Get Started</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
 
@@ -178,71 +202,45 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   gradientBg: { flex: 1 },
   container: { flex: 1, backgroundColor: 'transparent' },
+  glowOrbTop: {
+    position: 'absolute', top: -50, right: -50, width: 250, height: 250, borderRadius: 125,
+    backgroundColor: '#FFFFFF', opacity: 0.15,
+  },
+  glowOrbBottom: {
+    position: 'absolute', bottom: 100, left: -100, width: 300, height: 300, borderRadius: 150,
+    backgroundColor: '#FFFFFF', opacity: 0.1,
+  },
   content: { 
-    flex: 1, 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    paddingVertical: 80, 
-    paddingHorizontal: 40 
+    flex: 1, alignItems: 'center', justifyContent: 'space-between', 
+    paddingTop: 100, paddingBottom: 50, paddingHorizontal: 40 
   },
-  logoWrapper: { marginTop: 40 },
+  logoWrapper: { marginTop: 20 },
   logoCircle: { 
-    width: 200, 
-    height: 200, 
-    borderRadius: 100, 
-    backgroundColor: '#00C853', 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
+    width: 220, height: 220, borderRadius: 110, backgroundColor: '#FFFFFF', 
+    justifyContent: 'center', alignItems: 'center',
+    elevation: 25, shadowColor: '#00C853', shadowOffset: { width: 0, height: 15 },
+    shadowOpacity: 0.25, shadowRadius: 30,
   },
-  appleImage: {
-    width: 130,
-    height: 130,
-  },
-  loader: {
-    position: 'absolute',
-  },
+  appleImage: { width: 140, height: 140 },
+  loader: { position: 'absolute' },
   appName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#00C853',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    marginBottom: 10,
+    fontSize: 18, fontWeight: '800', color: '#1B5E20', letterSpacing: 3,
+    textTransform: 'uppercase', marginBottom: 15,
   },
   title: { 
-    fontSize: 28, 
-    fontWeight: '800', 
-    textAlign: 'center', 
-    marginBottom: 15, 
-    color: '#011627' 
+    fontSize: 32, fontWeight: '900', textAlign: 'center', marginBottom: 20, 
+    color: '#003300', lineHeight: 40,
   },
   subtitle: { 
-    fontSize: 16, 
-    textAlign: 'center', 
-    color: '#707070', 
-    lineHeight: 24,
-    paddingHorizontal: 10 
+    fontSize: 16, textAlign: 'center', color: '#33691E', lineHeight: 26,
+    paddingHorizontal: 15, opacity: 0.9,
   },
-  button: { 
-    backgroundColor: '#2E7D32', 
-    width: '100%', 
-    padding: 20, 
-    borderRadius: 20, 
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#2E7D32',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10
+  buttonContainer: {
+    width: '100%', elevation: 12, shadowColor: '#00C853',
+    shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 15,
   },
-  buttonText: { 
-    color: '#fff', 
-    fontSize: 18, 
-    fontWeight: '900' 
-  }
+  buttonGradient: {
+    width: '100%', paddingVertical: 20, borderRadius: 30, alignItems: 'center',
+  },
+  buttonText: { color: '#ffffff', fontSize: 18, fontWeight: '800', letterSpacing: 1 }
 });

@@ -8,52 +8,77 @@ import {
   TouchableOpacity,
   Dimensions,
   SafeAreaView,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
+  Animated
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
 const ONBOARDING_DATA = [
   {
     id: '1',
-    title: 'AI Food Scanner',
-    description: 'Scan food & get instant nutrition analysis.',
+    title: 'Welcome to NutriSnap AI',
+    subtitle: 'Your personal AI-powered nutrition and fitness companion.',
     image: require('../assets/onboarding/scanner.png'),
+    features: [
+      { icon: 'scan-outline', text: 'AI Food Scanner' },
+      { icon: 'nutrition-outline', text: 'Nutrition Tracking' },
+      { icon: 'analytics-outline', text: 'Smart Health Analysis' }
+    ]
   },
   {
     id: '2',
-    title: 'Health & Fitness Tracking',
-    description: 'Track your health, steps, water intake & more.',
+    title: 'Track Every Meal',
+    subtitle: 'Scan food instantly and automatically calculate calories, protein, carbs, fats, and other nutrition values.',
     image: require('../assets/onboarding/tracking.png'),
+    features: [
+      { icon: 'camera-outline', text: 'AI Scan' },
+      { icon: 'flame-outline', text: 'Calories & Macros' },
+      { icon: 'barbell-outline', text: 'Protein' },
+      { icon: 'water-outline', text: 'Water Tracking' }
+    ]
   },
   {
     id: '3',
-    title: 'Personalized Recommendations',
-    description: 'Get AI powered health & diet suggestions.',
+    title: 'Achieve Your Fitness Goals',
+    subtitle: 'Track workouts, monitor progress, receive reminders, and stay motivated every day.',
     image: require('../assets/onboarding/recommendations.png'),
+    features: [
+      { icon: 'fitness-outline', text: 'Workout & Exercise' },
+      { icon: 'calendar-outline', text: 'Weekly Progress' },
+      { icon: 'notifications-outline', text: 'Smart Reminders' },
+      { icon: 'flag-outline', text: 'Goal Tracking' }
+    ]
   },
+  {
+    id: '4',
+    title: "Let's Build a Healthier You",
+    subtitle: 'Start your AI-powered health journey today.',
+    // Reusing tracking image for 4th screen as we only have 3 assets
+    image: require('../assets/onboarding/tracking.png'),
+    features: []
+  }
 ];
 
 export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+  const scrollX = useRef(new Animated.Value(0)).current;
 
-  const handleNext = () => {
-    if (currentIndex < ONBOARDING_DATA.length - 1) {
-      flatListRef.current?.scrollToIndex({
-        index: currentIndex + 1,
-        animated: true,
-      });
-    } else {
-      router.replace('/login');
-    }
+  const handleFinish = async () => {
+    try {
+      await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+    } catch (e) {}
+    router.replace('/login'); // We can navigate to sign up flow if we wanted to
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    try {
+      await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+    } catch (e) {}
     router.replace('/login');
   };
 
@@ -67,33 +92,79 @@ export default function OnboardingScreen() {
     itemVisiblePercentThreshold: 50,
   }).current;
 
-  const renderItem = ({ item }: { item: typeof ONBOARDING_DATA[0] }) => (
-    <View style={styles.slide}>
-      <View style={styles.imageContainer}>
-        <Image source={item.image} style={styles.image} resizeMode="contain" />
+  const renderItem = ({ item, index }: { item: typeof ONBOARDING_DATA[0], index: number }) => {
+    return (
+      <View style={styles.slide}>
+        <View style={styles.imageContainer}>
+          <View style={styles.imageGlow} />
+          <Image source={item.image} style={styles.image} resizeMode="contain" />
+        </View>
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.subtitle}>{item.subtitle}</Text>
+          
+          <View style={styles.featuresContainer}>
+            {item.features.map((feat, idx) => (
+              <View key={idx} style={styles.featureRow}>
+                <View style={styles.featureIconContainer}>
+                  <Ionicons name={feat.icon as any} size={20} color="#00C853" />
+                </View>
+                <Text style={styles.featureText}>{feat.text}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
       </View>
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.description}>{item.description}</Text>
-      </View>
-    </View>
-  );
+    );
+  };
 
-  const getItemLayout = (_: any, index: number) => ({
-    length: width,
-    offset: width * index,
-    index,
-  });
+  const renderIndicator = () => {
+    return (
+      <View style={styles.indicatorContainer}>
+        {ONBOARDING_DATA.map((_, i) => {
+          const inputRange = [(i - 1) * width, i * width, (i + 1) * width];
+          const dotWidth = scrollX.interpolate({
+            inputRange,
+            outputRange: [10, 30, 10],
+            extrapolate: 'clamp',
+          });
+          const opacity = scrollX.interpolate({
+            inputRange,
+            outputRange: [0.3, 1, 0.3],
+            extrapolate: 'clamp',
+          });
+          return (
+            <Animated.View
+              key={i}
+              style={[
+                styles.dot,
+                { width: dotWidth, opacity }
+              ]}
+            />
+          );
+        })}
+      </View>
+    );
+  };
 
   return (
-    <LinearGradient colors={['#F1F8E9', '#FFFFFF']} style={styles.gradientBg}>
-      <SafeAreaView style={styles.container}>
-        {/* Skip Button */}
-      <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-        <Text style={styles.skipText}>Skip</Text>
-      </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      <LinearGradient colors={['#F4F9F4', '#E8F5E9', '#FFFFFF']} style={styles.gradientBg} />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.logoContainer}>
+          <Image source={require('../assets/logo.png')} style={styles.miniLogo} resizeMode="contain" />
+          <Text style={styles.logoText}>NutriSnap AI</Text>
+        </View>
+        {currentIndex !== ONBOARDING_DATA.length - 1 && (
+          <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+            <Text style={styles.skipText}>Skip</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
-      <FlatList
+      <Animated.FlatList
         ref={flatListRef}
         data={ONBOARDING_DATA}
         renderItem={renderItem}
@@ -102,126 +173,201 @@ export default function OnboardingScreen() {
         showsHorizontalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
-        getItemLayout={getItemLayout}
+        bounces={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { useNativeDriver: false }
+        )}
         keyExtractor={(item) => item.id}
       />
 
       <View style={styles.footer}>
-        {/* Pagination Dots */}
-        <View style={styles.pagination}>
-          {ONBOARDING_DATA.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.dot,
-                currentIndex === index ? styles.activeDot : styles.inactiveDot,
-              ]}
-            />
-          ))}
-        </View>
-
-          <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-            <LinearGradient colors={['#4CAF50', '#2E7D32']} style={styles.nextGradient}>
-              <Ionicons name="arrow-forward" size={24} color="#fff" />
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    </LinearGradient>
+        {renderIndicator()}
+        
+        {currentIndex === ONBOARDING_DATA.length - 1 ? (
+          <View style={styles.finalButtonsContainer}>
+            <TouchableOpacity 
+              style={styles.primaryButton} 
+              activeOpacity={0.9}
+              onPress={handleFinish}
+            >
+              <LinearGradient colors={['#00E676', '#00C853']} style={styles.primaryGradient} start={{x: 0, y: 0}} end={{x: 1, y: 0}}>
+                <Text style={styles.primaryButtonText}>Get Started</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.secondaryButton} onPress={handleFinish}>
+              <Text style={styles.secondaryButtonText}>Already have an account? <Text style={{fontWeight: '800', color: '#00C853'}}>Sign In</Text></Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={{ height: 120 }} /> // Spacer to keep indicators aligned
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  gradientBg: { flex: 1 },
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: '#FFFFFF',
   },
-  skipButton: {
-    position: 'absolute',
-    top: 50,
-    right: 30,
+  gradientBg: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 25,
+    paddingTop: 20,
+    height: 60,
     zIndex: 10,
   },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  miniLogo: {
+    width: 24,
+    height: 24,
+    marginRight: 8,
+  },
+  logoText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#2E7D32',
+    letterSpacing: 1,
+  },
+  skipButton: {
+    padding: 10,
+  },
   skipText: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#707070',
     fontWeight: '600',
   },
   slide: {
     width,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
+    justifyContent: 'flex-start',
+    paddingTop: 20,
   },
   imageContainer: {
-    flex: 0.6,
+    height: height * 0.45,
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
+  },
+  imageGlow: {
+    position: 'absolute',
+    width: width * 0.7,
+    height: width * 0.7,
+    borderRadius: (width * 0.7) / 2,
+    backgroundColor: '#00E676',
+    opacity: 0.08,
   },
   image: {
-    width: width * 0.8,
-    height: width * 0.8,
+    width: width * 0.85,
+    height: '100%',
   },
   textContainer: {
-    flex: 0.4,
+    flex: 1,
+    width: '100%',
+    paddingHorizontal: 30,
+    paddingTop: 10,
     alignItems: 'center',
-    paddingTop: 20,
   },
   title: {
     fontSize: 28,
     fontWeight: '900',
     color: '#1B5E20',
     textAlign: 'center',
-    marginBottom: 15,
+    marginBottom: 12,
+    lineHeight: 34,
   },
-  description: {
-    fontSize: 16,
-    color: '#707070',
+  subtitle: {
+    fontSize: 15,
+    color: '#555',
     textAlign: 'center',
     lineHeight: 24,
+    marginBottom: 25,
+  },
+  featuresContainer: {
+    width: '100%',
+    alignItems: 'flex-start',
+    paddingHorizontal: 10,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  featureIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#E8F5E9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  featureText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '600',
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 30,
     paddingBottom: 40,
+    alignItems: 'center',
   },
-  pagination: {
+  indicatorContainer: {
     flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 40,
+    marginBottom: 10,
   },
   dot: {
     height: 8,
-    width: 8,
     borderRadius: 4,
-    marginHorizontal: 4,
-  },
-  activeDot: {
     backgroundColor: '#00C853',
-    width: 20,
+    marginHorizontal: 5,
   },
-  inactiveDot: {
-    backgroundColor: '#E0E0E0',
-  },
-  nextButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
+  finalButtonsContainer: {
+    width: '100%',
     alignItems: 'center',
+    marginTop: 10,
+  },
+  primaryButton: {
+    width: '100%',
     elevation: 8,
-    shadowColor: '#4CAF50',
+    shadowColor: '#00C853',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.3,
     shadowRadius: 10,
+    marginBottom: 20,
   },
-  nextGradient: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
+  primaryGradient: {
+    width: '100%',
+    paddingVertical: 18,
+    borderRadius: 25,
     alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  secondaryButton: {
+    paddingVertical: 10,
+  },
+  secondaryButtonText: {
+    color: '#555',
+    fontSize: 15,
+    fontWeight: '500',
   }
 });
