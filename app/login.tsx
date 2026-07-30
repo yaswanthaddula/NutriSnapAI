@@ -68,8 +68,8 @@ export default function LoginScreen() {
         await apiService.login(email, password);
       } catch (firstErr: any) {
         if (!firstErr.response) {
-          console.log("Network error on first login attempt (possible cold start). Retrying in 3 seconds...");
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          console.log("Network error on first login attempt (possible cold start). Retrying in 500ms...");
+          await new Promise(resolve => setTimeout(resolve, 500));
           await apiService.login(email, password);
         } else {
           throw firstErr;

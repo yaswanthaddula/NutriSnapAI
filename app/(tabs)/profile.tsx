@@ -120,17 +120,10 @@ export default function ProfileScreen() {
           <View style={styles.avatarRing}>
             <TouchableOpacity style={styles.avatarCircle} onPress={pickImage} activeOpacity={0.8}>
               {userProfile.profileImage ? (
-                <Image 
-                  source={{ uri: userProfile.profileImage }} 
-                  style={[styles.avatarImage, { overflow: 'hidden' }]} 
-                  resizeMode="cover"
-                  onError={(e) => console.log('Image failed to load', e.nativeEvent.error)}
-                />
+                <Image source={{ uri: userProfile.profileImage }} style={{ width: '100%', height: '100%' }} />
               ) : (
-                <View style={[styles.avatarImage, { backgroundColor: getAvatarColor(userProfile.name), justifyContent: 'center', alignItems: 'center' }]}>
-                  <Text style={{ fontSize: 32, color: '#FFF', fontWeight: 'bold' }}>
-                    {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
-                  </Text>
+                <View style={{ width: '100%', height: '100%', backgroundColor: isDark ? '#333' : '#E0E0E0', justifyContent: 'center', alignItems: 'center' }}>
+                  <Ionicons name="person" size={50} color={isDark ? '#AAA' : '#777'} />
                 </View>
               )}
               <View style={styles.editIconBadge}>

@@ -178,8 +178,8 @@ export default function EditProfile() {
                   {userProfile.profileImage ? (
                     <Image source={{ uri: userProfile.profileImage }} style={{ width: '100%', height: '100%' }} />
                   ) : (
-                    <View style={{ width: '100%', height: '100%', backgroundColor: getAvatarColor(userProfile.name), justifyContent: 'center', alignItems: 'center' }}>
-                      <Text style={{ color: '#FFF', fontSize: 40, fontWeight: 'bold' }}>{userProfile.name?.charAt(0).toUpperCase() || 'U'}</Text>
+                    <View style={{ width: '100%', height: '100%', backgroundColor: isDark ? '#333' : '#E0E0E0', justifyContent: 'center', alignItems: 'center' }}>
+                      <Ionicons name="person" size={50} color={isDark ? '#AAA' : '#777'} />
                     </View>
                   )}
               </View>

@@ -104,10 +104,8 @@ export default function ProfileScreen() {
                   resizeMode="cover"
                 />
               ) : (
-                <View style={[styles.avatarImage, { backgroundColor: getAvatarColor(userProfile.name), justifyContent: 'center', alignItems: 'center', borderWidth: 0 }]}>
-                  <Text style={[styles.avatarText, { color: '#FFF' }]}>
-                    {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
-                  </Text>
+                <View style={{ width: '100%', height: '100%', backgroundColor: isDark ? '#333' : '#E0E0E0', justifyContent: 'center', alignItems: 'center' }}>
+                  <Ionicons name="person" size={50} color={isDark ? '#AAA' : '#777'} />
                 </View>
               )}
             </View>
