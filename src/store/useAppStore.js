@@ -97,7 +97,33 @@ const useAppStore = create((set, get) => ({
   
   fetchTodayReminders: async () => {
     try {
-      const todayReminders = await apiService.getTodayReminders();
+      let todayReminders = await apiService.getTodayReminders();
+      const todayStr = new Date().toISOString().split('T')[0];
+      
+      // Fallback: If backend hasn't generated today's instances yet, generate locally
+      if (!todayReminders || todayReminders.length === 0 || todayReminders.every((r) => r.date && r.date !== todayStr)) {
+         const allSchedules = get().reminders;
+         if (allSchedules && allSchedules.length > 0) {
+            todayReminders = allSchedules.map((r) => ({
+               ...r,
+               id: 'local_' + r.id + '_' + todayStr,
+               reminder_id: r.id,
+               status: 'Upcoming',
+               date: todayStr
+            }));
+         }
+      }
+
+      // Enforce strict mode mapping based on reminder type
+      todayReminders = (todayReminders || []).map((r) => {
+         const type = (r.reminder_type || r.title || '').toLowerCase();
+         const isGym = ['workout', 'exercise', 'recovery', 'fitness'].some(k => type.includes(k)) || r.mode === 'gym';
+         return {
+           ...r,
+           mode: isGym ? 'gym' : 'health'
+         };
+      });
+
       set({ todayReminders });
       // After fetching, silently check if any are missed
       get().checkMissedReminders();
@@ -122,8 +148,60 @@ const useAppStore = create((set, get) => ({
       set({ notificationPrefs: updatedPrefs });
 
       get().saveStoredData();
+      get().fetchTodayReminders(); // Instantly sync Home Dashboard
     } catch (e) {
       console.log("Error fetching reminders:", e);
+    }
+  },
+
+  syncAllUserData: async () => {
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      
+      const [mealsResp, healthResp, gymResp] = await Promise.allSettled([
+        apiService.getTodayMeals(),
+        apiService.getTodayHealthLog(),
+        apiService.getTodayGymLog()
+      ]);
+
+      const storeUpdates = {};
+
+      if (mealsResp.status === 'fulfilled' && mealsResp.value) {
+        storeUpdates.meals = mealsResp.value.map(bm => ({
+          id: bm.id,
+          name: bm.food_name || bm.name || 'Unknown Food',
+          calories: bm.calories,
+          protein: bm.protein,
+          carbs: bm.carbs,
+          fat: bm.fat,
+          quantity: bm.quantity,
+          unit: bm.unit,
+          emoji: '🍽️',
+          imageUri: bm.meal_image_url || bm.image_url || null,
+          mode: bm.mode || 'health',
+          time: bm.time ? bm.time.slice(0, 5) : '00:00',
+          date: bm.date || todayStr
+        }));
+      }
+
+      if (healthResp.status === 'fulfilled' && healthResp.value) {
+        storeUpdates.waterData = {
+          date: todayStr,
+          waterIntake: healthResp.value.water_consumed || 0,
+          waterGoal: healthResp.value.water_goal || 2500
+        };
+      }
+
+      if (gymResp.status === 'fulfilled' && gymResp.value) {
+        storeUpdates.caloriesBurned = gymResp.value.workout_calories_burned || 0;
+      }
+
+      if (Object.keys(storeUpdates).length > 0) {
+        set(storeUpdates);
+        await get().saveStoredData();
+      }
+    } catch (e) {
+      console.log('Error syncing user data:', e);
     }
   },
 
@@ -1088,9 +1166,11 @@ const useAppStore = create((set, get) => ({
         todayMood: null, 
         todaySleep: 0, 
         lastActiveDate: today,
-        reminderStatuses: {}
+        reminderStatuses: {},
+        todayReminders: []
       });
       needsSave = true;
+      get().fetchTodayReminders();
     }
 
     if (needsSave) {

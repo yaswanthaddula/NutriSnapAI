@@ -151,6 +151,7 @@ export default function LoginScreen() {
             useAppStore.setState(storeUpdates);
             await useAppStore.getState().saveStoredData();
           }
+          await useAppStore.getState().syncAllUserData();
         }).catch(err => console.log("Background sync error:", err));
 
         // Navigate to correct dashboard based on selected_mode
