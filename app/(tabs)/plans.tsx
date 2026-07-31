@@ -73,7 +73,7 @@ export default function PlansScreen() {
             </View>
             
             <View style={styles.cardContent}>
-              <Text style={styles.dayName}>{item.day}</Text>
+              <Text style={styles.dayName}>{item.dayOfWeek ? item.dayOfWeek.toUpperCase() : item.day.toUpperCase()}</Text>
               <Text style={[styles.workoutName, { color: theme.text }]}>{item.day === 'Rest Day' ? 'Recovery' : item.day}</Text>
               <Text style={[styles.details, { color: theme.subText }]}>
                 {item.exercises.length} exercises • {item.duration}

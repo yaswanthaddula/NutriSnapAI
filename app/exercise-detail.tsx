@@ -33,6 +33,7 @@ export default function ExerciseDetailScreen() {
 
   const [playing, setPlaying] = useState(true);
   const [videoError, setVideoError] = useState(false);
+  const [showGuide, setShowGuide] = useState(!exercise.videoId && !exercise.youtubeUrl);
 
   // Helper to extract YouTube Video ID
   const getYoutubeId = (url) => {
@@ -184,37 +185,55 @@ export default function ExerciseDetailScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* VIDEO SECTION */}
-        <View style={[styles.videoContainer, { backgroundColor: '#000' }]}>
-          {videoError ? (
-            <YoutubePlayer
-              height={width * 0.6}
-              width={width}
-              play={playing}
-              videoId="aclHkVaku9U" // Final hard fallback to generic demo
-              onChangeState={(event) => {
-                if (event === 'ended') setPlaying(false);
-              }}
-            />
-          ) : isYoutube ? (
-            <YoutubePlayer
-              height={width * 0.6}
-              width={width}
-              play={playing}
-              videoId={youtubeId}
-              onError={() => setVideoError(true)}
-              onChangeState={(event) => {
-                if (event === 'ended') setPlaying(false);
-              }}
-            />
-          ) : (
-            <VideoView
-              player={player}
-              style={styles.video}
-              nativeControls={true}
-            />
-          )}
-        </View>
+        {/* MEDIA SECTION */}
+        {showGuide ? (
+          <View style={[styles.guideContainer, { backgroundColor: isDark ? '#222' : '#F5F5F5', borderColor: theme.border }]}>
+             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 15 }}>
+               <Text style={{ fontSize: 24, marginRight: 10 }}>💡</Text>
+               <View>
+                 <Text style={{ color: theme.text, fontSize: 18, fontWeight: 'bold' }}>Form & Technique Guide</Text>
+                 <Text style={{ color: theme.subText, fontSize: 13 }}>Follow the instructions below carefully</Text>
+               </View>
+             </View>
+             <View style={styles.guideTip}>
+                <Ionicons name="information-circle" size={20} color="#2196F3" style={{ marginRight: 8 }} />
+                <Text style={{ color: theme.text, fontSize: 14, flex: 1 }}>Focus on your breathing and maintain a steady pace. Quality over quantity.</Text>
+             </View>
+             {(exercise.videoId || exercise.youtubeUrl) && (
+               <TouchableOpacity onPress={() => { setShowGuide(false); setVideoError(false); }} style={{ marginTop: 15, alignSelf: 'flex-start', padding: 8, backgroundColor: 'rgba(0,200,83,0.1)', borderRadius: 8 }}>
+                 <Text style={{ color: '#00C853', fontWeight: 'bold', fontSize: 12 }}>🔄 Try Loading Video Again</Text>
+               </TouchableOpacity>
+             )}
+          </View>
+        ) : (
+          <View style={[styles.videoContainer, { backgroundColor: '#000' }]}>
+            {isYoutube ? (
+              <YoutubePlayer
+                height={width * 0.6}
+                width={width}
+                play={playing}
+                videoId={youtubeId}
+                onError={() => { setVideoError(true); setShowGuide(true); }}
+                onChangeState={(event) => {
+                  if (event === 'ended') setPlaying(false);
+                }}
+              />
+            ) : (
+              <VideoView
+                player={player}
+                style={styles.video}
+                nativeControls={true}
+              />
+            )}
+            
+            <TouchableOpacity 
+              style={styles.brokenVideoBtn}
+              onPress={() => setShowGuide(true)}
+            >
+               <Text style={styles.brokenVideoText}>Video Broken? View Guide</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.infoSection}>
           <View style={styles.mainInfo}>
@@ -319,6 +338,36 @@ const styles = StyleSheet.create({
     position: 'relative'
   },
   video: { width: width, height: width * 0.6 },
+  brokenVideoBtn: { 
+    position: 'absolute', 
+    bottom: 10, 
+    right: 10, 
+    backgroundColor: 'rgba(0,0,0,0.8)', 
+    paddingHorizontal: 12, 
+    paddingVertical: 8, 
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)'
+  },
+  brokenVideoText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
+  guideContainer: {
+    margin: 20,
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 }
+  },
+  guideTip: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 5
+  },
   videoFallback: { alignItems: 'center' },
   fallbackText: { color: '#666', marginTop: 10, fontSize: 16 },
   loadingOverlay: { 
