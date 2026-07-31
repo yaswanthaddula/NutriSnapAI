@@ -839,6 +839,7 @@ export default function GymHomeScreen() {
                
                todayReminders?.forEach((r: any) => {
                  if (!r.is_enabled) return;
+                 if (r.mode !== 'gym') return;
                  // Date filtering
                  const repeat = r.repeat_type || 'Daily';
                  let validToday = false;
@@ -920,6 +921,8 @@ export default function GymHomeScreen() {
               if (!r.is_enabled) return false;
               
               if (r.mode !== 'gym') return false; // Strictly Gym Dashboard
+              
+              if (r.status === 'Completed' || r.status === 'Dismissed' || r.status === 'Missed') return false; // Hide from list if done/dismissed
               
               // Date filtering
               const repeat = r.repeat_type || 'Daily';

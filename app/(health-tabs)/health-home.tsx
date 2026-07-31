@@ -977,6 +977,7 @@ export default function HealthHomeScreen() {
                
                todayReminders?.forEach((r: any) => {
                  if (!r.is_enabled) return;
+                 if (r.mode !== 'health') return;
                  // Date filtering
                  const repeat = r.repeat_type || 'Daily';
                  let validToday = false;
@@ -1059,6 +1060,8 @@ export default function HealthHomeScreen() {
               if (!r.is_enabled) return false;
               
               if (r.mode !== 'health') return false; // Strictly Health Dashboard
+              
+              if (r.status === 'Completed' || r.status === 'Dismissed' || r.status === 'Missed') return false; // Hide from list if done/dismissed
               
               // Date filtering
               const repeat = r.repeat_type || 'Daily';
