@@ -705,7 +705,7 @@ const useAppStore = create((set, get) => ({
   },
 
   generateSmartNotifications: () => {
-    const { userProfile, meals, workouts, waterData, addNotification, notificationPrefs, reminders } = get();
+    const { userProfile, meals, workouts, waterData, addNotification, notificationPrefs, reminders, medicineReminders } = get();
     const todayStr = new Date().toISOString().split('T')[0];
     const now = new Date();
     const currentHour = now.getHours();
