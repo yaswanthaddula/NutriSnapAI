@@ -297,7 +297,7 @@ export default function HealthHomeScreen() {
         console.log("Failed to sync health log:", e);
       }
     };
-    if (userProfile.id) syncHealthLog();
+    if (userProfile?.email) syncHealthLog();
   }, [waterData.waterIntake, todaySleep, todayMood, steps, caloriesBurned]);
 
   useEffect(() => {
