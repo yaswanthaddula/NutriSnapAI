@@ -43,31 +43,38 @@ const CardVideo = ({ url, isDark }: { url: string, isDark: boolean }) => {
   const days = [
     { 
       id: 1, day: 'Monday', task: '8,000 Steps + Stretching', icon: '👣', iconType: 'emoji', color: '#E3F2FD', path: '/monday-detail',
-      subtitle: 'Stay active and improve flexibility.', videoId: null
+      subtitle: 'Stay active and improve flexibility.',
+      guideTime: '45 Min', guideKcal: '250 kcal', guideBenefits: ['Improves joint flexibility', 'Boosts daily step count', 'Enhances circulation']
     },
     { 
       id: 2, day: 'Tuesday', task: 'Low Sugar Day + 3L Water', icon: '💧', iconType: 'emoji', color: '#E1F5FE', path: '/tuesday-detail',
-      subtitle: 'Hydrate well and flush out toxins.', videoId: null
+      subtitle: 'Hydrate well and flush out toxins.',
+      guideTime: 'All Day', guideKcal: 'N/A', guideBenefits: ['Reduces sugar crashes', 'Keeps skin hydrated', 'Supports kidney health']
     },
     { 
       id: 3, day: 'Wednesday', task: '30 Min Walk + Early Sleep', icon: '🚶', iconType: 'emoji', color: '#E8F5E9', path: '/wednesday-detail',
-      subtitle: 'Keep moving and rest up early.', videoId: 'lCg_gh_fuyI'
+      subtitle: 'Keep moving and rest up early.',
+      guideTime: '30 Min', guideKcal: '180 kcal', guideBenefits: ['Improves heart health', 'Burns calories effectively', 'Supports better sleep']
     },
     { 
       id: 4, day: 'Thursday', task: 'Yoga + Balanced Meals', icon: '🧘', iconType: 'emoji', color: '#F3E5F5', path: '/thursday-detail',
-      subtitle: 'Focus on balance and nutrition.', videoId: 'v7AYKMP6rOE'
+      subtitle: 'Focus on balance and nutrition.',
+      guideTime: '40 Min', guideKcal: '200 kcal', guideBenefits: ['Increases mindfulness', 'Improves body posture', 'Provides steady energy']
     },
     { 
       id: 5, day: 'Friday', task: 'Cardio Walk + Stress Relief', icon: '❤️', iconType: 'emoji', color: '#FCE4EC', path: '/friday-detail',
-      subtitle: 'End the week with a strong heart.', videoId: 'X65504ISbxA'
+      subtitle: 'End the week with a strong heart.',
+      guideTime: '45 Min', guideKcal: '300 kcal', guideBenefits: ['Elevates heart rate', 'Reduces weekly stress', 'Improves endurance']
     },
     { 
       id: 6, day: 'Saturday', task: 'Outdoor Activity + Fruit Focus', icon: '🌳', iconType: 'emoji', color: '#F1F8E9', path: '/saturday-detail',
-      subtitle: 'Get some fresh air and vitamins.', videoId: 'ml6cT4AZdqI'
+      subtitle: 'Get some fresh air and vitamins.',
+      guideTime: '60 Min', guideKcal: '400 kcal', guideBenefits: ['Provides natural Vitamin D', 'Boosts mental health', 'Increases antioxidant intake']
     },
     { 
       id: 7, day: 'Sunday', task: 'Recovery + Relaxation', icon: '🌙', iconType: 'emoji', color: '#FFF3E0', path: '/sunday-detail',
-      subtitle: 'Recharge for the week ahead.', videoId: 'f_6v9Wn_XmY'
+      subtitle: 'Recharge for the week ahead.',
+      guideTime: '20 Min', guideKcal: '100 kcal', guideBenefits: ['Allows muscle repair', 'Lowers cortisol levels', 'Prepares body for new week']
     },
   ];
 
@@ -189,54 +196,32 @@ const CardVideo = ({ url, isDark }: { url: string, isDark: boolean }) => {
               </View>
             </View>
 
-            {/* PREVIEW IMAGE OR EXERCISE GUIDE */}
-            {item.videoId ? (
-              <View style={[styles.videoWrapper, { borderColor: theme.border }]}>
-                 <Image 
-                  source={{ uri: `https://img.youtube.com/vi/${item.videoId}/0.jpg` }} 
-                  style={styles.cardVideo}
-                  resizeMode="cover"
-                 />
-                 <View style={{ position: 'absolute', top: 12, left: 12, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
-                    <Text style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>15:00</Text>
+            {/* EXERCISE GUIDE */}
+            <View style={[styles.guideWrapper, { backgroundColor: isDark ? '#222' : '#F8F9FA', borderColor: theme.border }]}>
+               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                 <Text style={{ fontSize: 18, marginRight: 8 }}>🏃</Text>
+                 <Text style={{ color: theme.text, fontSize: 16, fontWeight: 'bold' }}>Exercise Guide</Text>
+               </View>
+               
+               <View style={{ flexDirection: 'row', marginBottom: 14 }}>
+                 <View style={styles.guideStat}>
+                   <Ionicons name="time-outline" size={16} color={theme.subText} />
+                   <Text style={[styles.guideStatText, { color: theme.text }]}>{item.guideTime}</Text>
                  </View>
-                 <View style={styles.videoOverlay}>
-                    <Ionicons name="play" size={26} color="white" style={{ marginLeft: 3 }} />
+                 <View style={[styles.guideStat, { marginLeft: 18 }]}>
+                   <Ionicons name="flame-outline" size={16} color="#FF9800" />
+                   <Text style={[styles.guideStatText, { color: theme.text }]}>{item.guideKcal}</Text>
                  </View>
-              </View>
-            ) : (
-              <View style={[styles.guideWrapper, { backgroundColor: isDark ? '#222' : '#F8F9FA', borderColor: theme.border }]}>
-                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                   <Text style={{ fontSize: 18, marginRight: 8 }}>🏃</Text>
-                   <Text style={{ color: theme.text, fontSize: 16, fontWeight: 'bold' }}>Exercise Guide</Text>
-                 </View>
-                 
-                 <View style={{ flexDirection: 'row', marginBottom: 14 }}>
-                   <View style={styles.guideStat}>
-                     <Ionicons name="time-outline" size={16} color={theme.subText} />
-                     <Text style={[styles.guideStatText, { color: theme.text }]}>30 Min</Text>
-                   </View>
-                   <View style={[styles.guideStat, { marginLeft: 18 }]}>
-                     <Ionicons name="flame-outline" size={16} color="#FF9800" />
-                     <Text style={[styles.guideStatText, { color: theme.text }]}>180 kcal</Text>
-                   </View>
-                 </View>
+               </View>
 
-                 <Text style={{ color: theme.subText, fontSize: 12, fontWeight: 'bold', marginBottom: 8, textTransform: 'uppercase' }}>Benefits</Text>
-                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+               <Text style={{ color: theme.subText, fontSize: 12, fontWeight: 'bold', marginBottom: 8, textTransform: 'uppercase' }}>Benefits</Text>
+               {item.guideBenefits.map((benefit, index) => (
+                 <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
                    <Ionicons name="checkmark-circle" size={14} color="#00C853" style={{ marginRight: 6 }} />
-                   <Text style={{ color: theme.text, fontSize: 13 }}>Improves heart health</Text>
+                   <Text style={{ color: theme.text, fontSize: 13 }}>{benefit}</Text>
                  </View>
-                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                   <Ionicons name="checkmark-circle" size={14} color="#00C853" style={{ marginRight: 6 }} />
-                   <Text style={{ color: theme.text, fontSize: 13 }}>Burns calories effectively</Text>
-                 </View>
-                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                   <Ionicons name="checkmark-circle" size={14} color="#00C853" style={{ marginRight: 6 }} />
-                   <Text style={{ color: theme.text, fontSize: 13 }}>Supports better sleep & recovery</Text>
-                 </View>
-              </View>
-            )}
+               ))}
+            </View>
           </TouchableOpacity>
           );
         })}
