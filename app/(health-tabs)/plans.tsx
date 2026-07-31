@@ -42,32 +42,32 @@ const CardVideo = ({ url, isDark }: { url: string, isDark: boolean }) => {
 
   const days = [
     { 
-      id: 1, day: 'Monday', task: '8,000 Steps + Stretching', icon: 'shoe-print', iconType: 'MCI', color: '#E3F2FD', path: '/monday-detail',
-      videoId: null
+      id: 1, day: 'Monday', task: '8,000 Steps + Stretching', icon: '👣', iconType: 'emoji', color: '#E3F2FD', path: '/monday-detail',
+      subtitle: 'Stay active and improve flexibility.', videoId: null
     },
     { 
-      id: 2, day: 'Tuesday', task: 'Low Sugar Day + 3L Water', icon: 'water', iconType: 'Ionicons', color: '#E1F5FE', path: '/tuesday-detail',
-      videoId: null
+      id: 2, day: 'Tuesday', task: 'Low Sugar Day + 3L Water', icon: '💧', iconType: 'emoji', color: '#E1F5FE', path: '/tuesday-detail',
+      subtitle: 'Hydrate well and flush out toxins.', videoId: null
     },
     { 
-      id: 3, day: 'Wednesday', task: '30 Min Walk + Early Sleep', icon: 'walk', iconType: 'Ionicons', color: '#E8F5E9', path: '/wednesday-detail',
-      videoId: 'lCg_gh_fuyI'
+      id: 3, day: 'Wednesday', task: '30 Min Walk + Early Sleep', icon: '🚶', iconType: 'emoji', color: '#E8F5E9', path: '/wednesday-detail',
+      subtitle: 'Keep moving and rest up early.', videoId: 'lCg_gh_fuyI'
     },
     { 
-      id: 4, day: 'Thursday', task: 'Yoga + Balanced Meals', icon: 'self-improvement', iconType: 'Material', color: '#F3E5F5', path: '/thursday-detail',
-      videoId: 'v7AYKMP6rOE'
+      id: 4, day: 'Thursday', task: 'Yoga + Balanced Meals', icon: '🧘', iconType: 'emoji', color: '#F3E5F5', path: '/thursday-detail',
+      subtitle: 'Focus on balance and nutrition.', videoId: 'v7AYKMP6rOE'
     },
     { 
-      id: 5, day: 'Friday', task: 'Cardio Walk + Stress Relief', icon: 'heart', iconType: 'Ionicons', color: '#FCE4EC', path: '/friday-detail',
-      videoId: 'X65504ISbxA'
+      id: 5, day: 'Friday', task: 'Cardio Walk + Stress Relief', icon: '❤️', iconType: 'emoji', color: '#FCE4EC', path: '/friday-detail',
+      subtitle: 'End the week with a strong heart.', videoId: 'X65504ISbxA'
     },
     { 
-      id: 6, day: 'Saturday', task: 'Outdoor Activity + Fruit Focus', icon: 'tree', iconType: 'MCI', color: '#F1F8E9', path: '/saturday-detail',
-      videoId: 'ml6cT4AZdqI'
+      id: 6, day: 'Saturday', task: 'Outdoor Activity + Fruit Focus', icon: '🌳', iconType: 'emoji', color: '#F1F8E9', path: '/saturday-detail',
+      subtitle: 'Get some fresh air and vitamins.', videoId: 'ml6cT4AZdqI'
     },
     { 
-      id: 7, day: 'Sunday', task: 'Recovery + Relaxation', icon: 'flower', iconType: 'MCI', color: '#FFF3E0', path: '/sunday-detail',
-      videoId: 'f_6v9Wn_XmY'
+      id: 7, day: 'Sunday', task: 'Recovery + Relaxation', icon: '🌙', iconType: 'emoji', color: '#FFF3E0', path: '/sunday-detail',
+      subtitle: 'Recharge for the week ahead.', videoId: 'f_6v9Wn_XmY'
     },
   ];
 
@@ -147,65 +147,99 @@ const CardVideo = ({ url, isDark }: { url: string, isDark: boolean }) => {
           <Text style={styles.progressText}>{presentDayOf7}/7 days progress</Text>
         </View>
 
-        {days.map((item) => (
+        {days.map((item) => {
+          let statusText = "Upcoming";
+          let statusBg = isDark ? '#333' : '#F5F5F5';
+          let statusColor = isDark ? '#AAA' : '#777';
+          
+          if (completedDayIds.includes(item.id)) {
+            statusText = "Completed";
+            statusBg = isDark ? 'rgba(0,200,83,0.15)' : '#E8F5E9';
+            statusColor = '#00C853';
+          } else if (item.id === presentDayOf7) {
+            statusText = "Today's Goal";
+            statusBg = isDark ? 'rgba(33,150,243,0.15)' : '#E3F2FD';
+            statusColor = '#2196F3';
+          }
+
+          return (
           <TouchableOpacity 
             key={item.id} 
             style={[styles.dayCard, { backgroundColor: theme.card, borderColor: theme.border }]} 
             onPress={() => handleDayPress(item)} 
-            activeOpacity={0.7}
+            activeOpacity={0.8}
           >
+            {/* BADGE ROW */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+               <Text style={[styles.dayLabel, { color: theme.subText }]}>{item.day.toUpperCase()}</Text>
+               <View style={{ backgroundColor: statusBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 16 }}>
+                 <Text style={{ color: statusColor, fontSize: 11, fontWeight: '700' }}>{statusText}</Text>
+               </View>
+            </View>
+
+            {/* INFO ROW */}
             <View style={styles.cardTopRow}>
               <View style={[styles.iconBox, { backgroundColor: isDark ? '#2A2A2A' : item.color }]}>
-                {item.iconType === 'MCI' && <MaterialCommunityIcons name={item.icon as any} size={24} color={isDark ? '#00C853' : '#555'} />}
-                {item.iconType === 'Ionicons' && <Ionicons name={item.icon as any} size={24} color={isDark ? '#00C853' : '#555'} />}
-                {item.iconType === 'Material' && <MaterialCommunityIcons name="meditation" size={24} color={isDark ? '#00C853' : '#555'} />}
+                <Text style={{ fontSize: 26 }}>{item.icon}</Text>
               </View>
 
               <View style={styles.dayInfo}>
-                <Text style={[styles.dayLabel, { color: theme.subText }]}>{item.day}</Text>
                 <Text style={[styles.taskText, { color: theme.text }]}>{item.task}</Text>
-              </View>
-
-              <View style={styles.checkArea}>
-                {completedDayIds.includes(item.id) ? (
-                  <Ionicons name="checkmark-circle" size={28} color="#00C853" />
-                ) : (
-                  <Ionicons name="play-circle" size={28} color="#00C853" />
-                )}
+                <Text style={[styles.subtitleText, { color: theme.subText }]} numberOfLines={1}>{item.subtitle}</Text>
               </View>
             </View>
 
-            {/* PREVIEW IMAGE (YouTube Thumbnail) */}
+            {/* PREVIEW IMAGE OR EXERCISE GUIDE */}
             {item.videoId ? (
               <View style={[styles.videoWrapper, { borderColor: theme.border }]}>
-                 {Platform.OS === 'web' ? (
-                   <iframe 
-                     src={`https://www.youtube.com/embed/${item.videoId}?controls=0`} 
-                     style={{ width: '100%', height: '100%', border: 'none' }} 
-                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                     allowFullScreen
-                   />
-                 ) : (
-                   <>
-                     <Image 
-                      source={{ uri: `https://img.youtube.com/vi/${item.videoId}/0.jpg` }} 
-                      style={styles.cardVideo}
-                      resizeMode="cover"
-                     />
-                     <View style={styles.videoOverlay}>
-                        <Ionicons name="play" size={20} color="white" />
-                     </View>
-                   </>
-                 )}
+                 <Image 
+                  source={{ uri: `https://img.youtube.com/vi/${item.videoId}/0.jpg` }} 
+                  style={styles.cardVideo}
+                  resizeMode="cover"
+                 />
+                 <View style={{ position: 'absolute', top: 12, left: 12, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                    <Text style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>15:00</Text>
+                 </View>
+                 <View style={styles.videoOverlay}>
+                    <Ionicons name="play" size={26} color="white" style={{ marginLeft: 3 }} />
+                 </View>
               </View>
             ) : (
-              <View style={[styles.videoWrapper, { borderColor: theme.border, backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5', justifyContent: 'center', alignItems: 'center' }]}>
-                <Ionicons name="videocam-off-outline" size={32} color={theme.subText} style={{ marginBottom: 5 }} />
-                <Text style={{ color: theme.text, fontSize: 14, fontWeight: '500' }}>Video not available for this task</Text>
+              <View style={[styles.guideWrapper, { backgroundColor: isDark ? '#222' : '#F8F9FA', borderColor: theme.border }]}>
+                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                   <Text style={{ fontSize: 18, marginRight: 8 }}>🏃</Text>
+                   <Text style={{ color: theme.text, fontSize: 16, fontWeight: 'bold' }}>Exercise Guide</Text>
+                 </View>
+                 
+                 <View style={{ flexDirection: 'row', marginBottom: 14 }}>
+                   <View style={styles.guideStat}>
+                     <Ionicons name="time-outline" size={16} color={theme.subText} />
+                     <Text style={[styles.guideStatText, { color: theme.text }]}>30 Min</Text>
+                   </View>
+                   <View style={[styles.guideStat, { marginLeft: 18 }]}>
+                     <Ionicons name="flame-outline" size={16} color="#FF9800" />
+                     <Text style={[styles.guideStatText, { color: theme.text }]}>180 kcal</Text>
+                   </View>
+                 </View>
+
+                 <Text style={{ color: theme.subText, fontSize: 12, fontWeight: 'bold', marginBottom: 8, textTransform: 'uppercase' }}>Benefits</Text>
+                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                   <Ionicons name="checkmark-circle" size={14} color="#00C853" style={{ marginRight: 6 }} />
+                   <Text style={{ color: theme.text, fontSize: 13 }}>Improves heart health</Text>
+                 </View>
+                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                   <Ionicons name="checkmark-circle" size={14} color="#00C853" style={{ marginRight: 6 }} />
+                   <Text style={{ color: theme.text, fontSize: 13 }}>Burns calories effectively</Text>
+                 </View>
+                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                   <Ionicons name="checkmark-circle" size={14} color="#00C853" style={{ marginRight: 6 }} />
+                   <Text style={{ color: theme.text, fontSize: 13 }}>Supports better sleep & recovery</Text>
+                 </View>
               </View>
             )}
           </TouchableOpacity>
-        ))}
+          );
+        })}
 
       </ScrollView>
     </SafeAreaView>
@@ -228,23 +262,26 @@ const styles = StyleSheet.create({
   segmentActive: { backgroundColor: '#FFF' },
   progressText: { color: 'white', fontSize: 12, fontWeight: '600' },
   dayCard: { 
-    borderRadius: 25, 
-    padding: 15, 
+    borderRadius: 24, 
+    padding: 20, 
     marginBottom: 20,
-    elevation: 3,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
     borderWidth: 1
   },
-  cardTopRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-  iconBox: { width: 50, height: 50, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
-  dayInfo: { flex: 1, marginLeft: 15 },
-  dayLabel: { fontSize: 13, fontWeight: '600', textTransform: 'uppercase' },
-  taskText: { fontSize: 16, fontWeight: 'bold', marginTop: 2 },
-  checkArea: { width: 40, alignItems: 'center' },
-  videoWrapper: { width: '100%', height: 160, borderRadius: 20, overflow: 'hidden', backgroundColor: '#000', borderWidth: 1 },
+  cardTopRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  iconBox: { width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center' },
+  dayInfo: { flex: 1, marginLeft: 16 },
+  dayLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
+  taskText: { fontSize: 18, fontWeight: 'bold', marginTop: 3 },
+  subtitleText: { fontSize: 13, marginTop: 2, fontStyle: 'italic' },
+  videoWrapper: { width: '100%', height: 180, borderRadius: 16, overflow: 'hidden', backgroundColor: '#000', borderWidth: 1 },
   cardVideo: { width: '100%', height: '100%' },
-  videoOverlay: { position: 'absolute', bottom: 10, right: 10, width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }
+  videoOverlay: { position: 'absolute', top: '50%', left: '50%', marginTop: -24, marginLeft: -24, width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(0,200,83,0.9)', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 5 },
+  guideWrapper: { width: '100%', padding: 20, borderRadius: 16, borderWidth: 1 },
+  guideStat: { flexDirection: 'row', alignItems: 'center' },
+  guideStatText: { fontSize: 14, fontWeight: '600', marginLeft: 6 }
 });
