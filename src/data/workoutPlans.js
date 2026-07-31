@@ -533,8 +533,8 @@ export const WORKOUT_PLANS = [
         sets: 3,
         reps: 15,
         equipment: "Cable Machine",
-        youtubeUrl: "https://www.youtube.com/watch?v=2-LAMcpzHLU",
-        videoId: "2-LAMcpzHLU",
+        youtubeUrl: null,
+        videoId: null,
         thumbnail: "https://images.unsplash.com/photo-1590487988256-9ed24133863e?q=80&w=400&auto=format&fit=crop",
         instructions: [
           "Grip bar or rope at chest height.",
