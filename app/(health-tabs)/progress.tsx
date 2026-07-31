@@ -66,8 +66,8 @@ export default function HealthProgress() {
   });
 
   const consumedData = last7Days.map(date => {
-    const dayMeals = meals.filter(m => m.date === date && m.mode === 'health');
-    const total = dayMeals.reduce((acc, m) => acc + (m.calories || 0), 0);
+    const dayMeals = meals.filter(m => m.date === date && (m.mode === 'health' || !m.mode));
+    const total = dayMeals.reduce((acc, m) => acc + (Number(m.calories) || 0), 0);
     return Math.min(100, (total / 2000) * 100);
   });
 

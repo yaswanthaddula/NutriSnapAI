@@ -43,11 +43,11 @@ const CardVideo = ({ url, isDark }: { url: string, isDark: boolean }) => {
   const days = [
     { 
       id: 1, day: 'Monday', task: '8,000 Steps + Stretching', icon: 'shoe-print', iconType: 'MCI', color: '#E3F2FD', path: '/monday-detail',
-      videoId: '9_U_KzH4R3Q'
+      videoId: null
     },
     { 
       id: 2, day: 'Tuesday', task: 'Low Sugar Day + 3L Water', icon: 'water', iconType: 'Ionicons', color: '#E1F5FE', path: '/tuesday-detail',
-      videoId: 'g_tea8l96BM'
+      videoId: null
     },
     { 
       id: 3, day: 'Wednesday', task: '30 Min Walk + Early Sleep', icon: 'walk', iconType: 'Ionicons', color: '#E8F5E9', path: '/wednesday-detail',
@@ -176,27 +176,34 @@ const CardVideo = ({ url, isDark }: { url: string, isDark: boolean }) => {
             </View>
 
             {/* PREVIEW IMAGE (YouTube Thumbnail) */}
-            <View style={[styles.videoWrapper, { borderColor: theme.border }]}>
-               {Platform.OS === 'web' ? (
-                 <iframe 
-                   src={`https://www.youtube.com/embed/${item.videoId}?controls=0`} 
-                   style={{ width: '100%', height: '100%', border: 'none' }} 
-                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                   allowFullScreen
-                 />
-               ) : (
-                 <>
-                   <Image 
-                    source={{ uri: `https://img.youtube.com/vi/${item.videoId}/0.jpg` }} 
-                    style={styles.cardVideo}
-                    resizeMode="cover"
+            {item.videoId ? (
+              <View style={[styles.videoWrapper, { borderColor: theme.border }]}>
+                 {Platform.OS === 'web' ? (
+                   <iframe 
+                     src={`https://www.youtube.com/embed/${item.videoId}?controls=0`} 
+                     style={{ width: '100%', height: '100%', border: 'none' }} 
+                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                     allowFullScreen
                    />
-                   <View style={styles.videoOverlay}>
-                      <Ionicons name="play" size={20} color="white" />
-                   </View>
-                 </>
-               )}
-            </View>
+                 ) : (
+                   <>
+                     <Image 
+                      source={{ uri: `https://img.youtube.com/vi/${item.videoId}/0.jpg` }} 
+                      style={styles.cardVideo}
+                      resizeMode="cover"
+                     />
+                     <View style={styles.videoOverlay}>
+                        <Ionicons name="play" size={20} color="white" />
+                     </View>
+                   </>
+                 )}
+              </View>
+            ) : (
+              <View style={[styles.videoWrapper, { borderColor: theme.border, backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5', justifyContent: 'center', alignItems: 'center' }]}>
+                <Ionicons name="videocam-off-outline" size={32} color={theme.subText} style={{ marginBottom: 5 }} />
+                <Text style={{ color: theme.text, fontSize: 14, fontWeight: '500' }}>Video not available for this task</Text>
+              </View>
+            )}
           </TouchableOpacity>
         ))}
 
