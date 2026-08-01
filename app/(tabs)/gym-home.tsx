@@ -217,8 +217,7 @@ export default function GymHomeScreen() {
 
   const syncBackendMeals = async () => {
     try {
-      const backendMeals = await apiService.getTodayMeals();
-      console.log("Fetched gym meals:", backendMeals);
+      const backendMeals = await apiService.getMealsToday();
 
       let mealImagesCache: any = {};
       try {
@@ -294,9 +293,7 @@ export default function GymHomeScreen() {
   const loadChatHistory = async () => {
     try {
       // 1. Fetch from Backend (Source of truth)
-      console.log("Fetching AI chat history for mode: gym");
-      const backendHistory = await apiService.getChatHistory('gym');
-      console.log("Fetched AI chat history:", backendHistory);
+      const backendHistory = await apiService.getAiChatHistory('gym');
 
       if (backendHistory && backendHistory.length > 0) {
         const formattedHistory = backendHistory.map((h: any) => ({
@@ -934,8 +931,6 @@ export default function GymHomeScreen() {
               }
               return true; // Fallback
             }) || [];
-            
-            console.log("Filtered reminders for dashboard:", filteredReminders);
             
             return filteredReminders.map((reminder: any, index: number) => {
               let iconName: any = 'clock-outline';

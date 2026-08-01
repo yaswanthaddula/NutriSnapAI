@@ -58,8 +58,6 @@ const deleteToken = async () => {
 api.interceptors.request.use(async (config) => {
   try {
     const token = await getToken();
-    console.log("API URL:", config.baseURL + (config.url || ''));
-    console.log("Auth token exists:", !!token);
     if (token) {
       config.headers = config.headers || {};
       config.headers['Authorization'] = `Bearer ${token}`;

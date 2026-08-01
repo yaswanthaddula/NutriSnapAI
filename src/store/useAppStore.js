@@ -135,7 +135,6 @@ const useAppStore = create((set, get) => ({
   fetchAndSyncReminders: async () => {
     try {
       const fetchedReminders = await apiService.getReminders();
-      console.log("Refetched reminders:", fetchedReminders);
       set({ reminders: fetchedReminders });
       
       // Sync local UI toggles (notificationPrefs) with actual backend state
@@ -894,7 +893,6 @@ const useAppStore = create((set, get) => ({
   fetchNotifications: async () => {
     try {
       const fetched = await apiService.getNotifications();
-      console.log("Notification bell response:", fetched);
       if (fetched && Array.isArray(fetched)) {
         const mapped = fetched.map(n => ({
           ...n,

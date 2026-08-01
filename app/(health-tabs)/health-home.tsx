@@ -447,9 +447,7 @@ export default function HealthHomeScreen() {
   const loadChatHistory = async () => {
     try {
       // 1. Fetch from Backend (Source of truth)
-      console.log("Fetching AI chat history for mode: health");
-      const backendHistory = await apiService.getChatHistory('health');
-      console.log("Fetched AI chat history:", backendHistory);
+      const backendHistory = await apiService.getAiChatHistory('health');
 
       if (backendHistory && backendHistory.length > 0) {
         const formattedHistory = backendHistory.map((h: any) => ({
@@ -1073,8 +1071,6 @@ export default function HealthHomeScreen() {
               }
               return true; // Fallback
             }) || [];
-            
-            console.log("Filtered reminders for dashboard:", filteredReminders);
             
             return filteredReminders.map((reminder: any, index: number) => {
               let iconName: any = 'clock-outline';
