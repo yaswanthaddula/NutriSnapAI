@@ -28,6 +28,10 @@ const getToken = async () => {
 
 const setToken = async (value) => {
   try {
+    if (value === null || value === undefined) {
+      await deleteToken();
+      return;
+    }
     if (Platform.OS === 'web') {
       if (typeof window !== 'undefined') window.sessionStorage.setItem(TOKEN_KEY, value);
     } else {
