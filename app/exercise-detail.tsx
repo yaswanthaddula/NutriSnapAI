@@ -20,6 +20,7 @@ import YoutubePlayer from 'react-native-youtube-iframe';
 import { WORKOUT_PLANS } from '../src/data/workoutPlans';
 import { useTheme } from './_layout';
 import useAppStore from '../src/store/useAppStore';
+import analyticsService from '../src/services/analyticsService';
 
 const { width } = Dimensions.get('window');
 
@@ -60,6 +61,10 @@ export default function ExerciseDetailScreen() {
       player.play();
     }
   }, [player, isYoutube]);
+
+  useEffect(() => {
+    analyticsService.logActivity('VIDEO_PLAY', `Played ${exercise.name} video`);
+  }, []);
 
   // Stop video when leaving screen
   useEffect(() => {

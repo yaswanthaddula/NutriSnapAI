@@ -32,6 +32,7 @@ if (RNPlatform2.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimen
 import { KeyboardAvoidingView } from 'react-native';
 import apiService from '../../src/services/apiService';
 import { notificationService } from '../../src/services/notificationService';
+import analyticsService from '../../src/services/analyticsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const WELLNESS_TIPS = [
@@ -160,6 +161,7 @@ export default function HealthHomeScreen() {
 
   // 2. SYNC NAME AND MEAL DATA
   useEffect(() => {
+    analyticsService.logActivity('SCREEN_VIEW', 'Viewed Health Dashboard');
     // Trigger animations on mount
     Animated.parallel([
       Animated.timing(fadeAnim, {

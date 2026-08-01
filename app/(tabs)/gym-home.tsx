@@ -34,6 +34,7 @@ if (RNPlatform2.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimen
 import { notificationService } from '../../src/services/notificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiService from '../../src/services/apiService';
+import analyticsService from '../../src/services/analyticsService';
 
 export default function GymHomeScreen() {
   const params = useLocalSearchParams();
@@ -170,6 +171,7 @@ export default function GymHomeScreen() {
 
   // 2. EFFECTS
   useEffect(() => {
+    analyticsService.logActivity('SCREEN_VIEW', 'Viewed Gym Dashboard');
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,

@@ -331,3 +331,20 @@ class DailyStepResponse(DailyStepBase):
 
     class Config:
         from_attributes = True
+
+# Analytics Schemas
+class ActivityLogBase(BaseModel):
+    action_type: str
+    description: Optional[str] = None
+    platform: Optional[str] = None
+
+class ActivityLogCreate(ActivityLogBase):
+    pass
+
+class ActivityLogResponse(ActivityLogBase):
+    id: int
+    user_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
