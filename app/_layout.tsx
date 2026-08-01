@@ -71,7 +71,6 @@ export default function RootLayout() {
       const granted = await notificationService.registerForPushNotificationsAsync();
       if (granted) {
         console.log("Notification permissions granted.");
-        await notificationService.scheduleDailyReminders();
       } else {
         console.log("Notification permissions denied.");
       }
