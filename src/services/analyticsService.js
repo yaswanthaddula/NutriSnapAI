@@ -1,4 +1,4 @@
-import api from './api';
+import { api } from './apiService';
 import { Platform } from 'react-native';
 
 export const analyticsService = {

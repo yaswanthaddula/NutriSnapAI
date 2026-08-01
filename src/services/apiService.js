@@ -422,4 +422,5 @@ export const apiService = {
   getToken,
 };
 
+export { api };
 export default apiService;
