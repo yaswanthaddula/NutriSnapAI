@@ -30,8 +30,7 @@ export default function WelcomeScreen() {
         
         const token = await apiService.getToken();
         if (!token) {
-          console.log("No token found (ephemeral session cleared), forcing login.");
-          useAppStore.getState().resetStore();
+          useAppStore.getState().logout();
           if (!FORCE_ONBOARDING) {
              // router.replace('/login');
           }
